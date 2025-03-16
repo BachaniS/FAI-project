@@ -36,6 +36,7 @@ def load_subject_data():
     return subjects_df, outcomes_df, prereqs, coreqs
 
 def calculate_alignment(student_data, subject_code, outcomes_df):
+    test
     desired = set(student_data['desired_outcomes'].split(','))
     subject_outcomes = set(outcomes_df[outcomes_df['subject_code'] == subject_code]['outcome'])
     overlap = len(desired & subject_outcomes) / len(desired) if desired else 0
