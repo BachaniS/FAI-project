@@ -174,6 +174,40 @@ def find_matching_courses(student_data, subjects_df, outcomes_df, prereqs_df, co
     matching_courses.sort(key=lambda x: (x['is_core'], x['match_score'] * 0.7 + x['likelihood'] * 0.3), reverse=True)
     return matching_courses
 
+def get_additional_interests():
+    """Get additional interests from the user"""
+    print("\nWhat other areas are you interested in? (Select one or more numbers, separated by commas)")
+    interests = {
+        1: "artificial intelligence",
+        2: "web development",
+        3: "data science",
+        4: "cybersecurity",
+        5: "mobile development",
+        6: "systems programming",
+        7: "cloud computing",
+        8: "software engineering",
+        9: "database systems",
+        10: "computer vision",
+        11: "natural language processing",
+        12: "algorithms",
+        13: "networking",
+        14: "robotics"
+    }
+    
+    for num, interest in interests.items():
+        print(f"{num}. {interest}")
+    
+    try:
+        choices = input("\nEnter numbers (e.g., 1,3,5) or 'skip' to continue: ").strip()
+        if choices.lower() == 'skip':
+            return []
+        
+        selected = [interests[int(num.strip())] for num in choices.split(',')]
+        return selected
+    except:
+        print("Invalid input. Continuing with current recommendations.")
+        return []
+
 def recommend_schedule(nuid):
     subjects_df, outcomes_df, prereqs_df, coreqs_df = load_subject_data()
     try:
@@ -185,61 +219,145 @@ def recommend_schedule(nuid):
     
     semester = int(input("Which semester are you in? "))
     
-    student_data = {
-        'NUid': student_df['NUid'].iloc[0],
-        'semester': semester,
-        'completed_courses': set(str(course).upper() for course in 
-            str(student_df['completed_courses'].iloc[0]).split(',') 
-            if pd.notna(student_df['completed_courses'].iloc[0]) and str(student_df['completed_courses'].iloc[0]).strip()),
-        'core_subjects': str(student_df['core_subjects'].iloc[0]).upper(),
-        'interests': student_df['desired_outcomes'].iloc[0] if pd.notna(student_df['desired_outcomes'].iloc[0]) else 'computer science'
-    }
+    # Keep track of recommended courses to avoid repetition
+    recommended_history = set()
+    
+    def get_recommendations(additional_interests=None):
+        student_data = {
+            'NUid': student_df['NUid'].iloc[0],
+            'semester': semester,
+            'completed_courses': set(str(course).upper() for course in 
+                str(student_df['completed_courses'].iloc[0]).split(',') 
+                if pd.notna(student_df['completed_courses'].iloc[0]) and str(student_df['completed_courses'].iloc[0]).strip()),
+            'core_subjects': str(student_df['core_subjects'].iloc[0]).upper(),
+            'interests': (
+                str(student_df['desired_outcomes'].iloc[0]) if pd.notna(student_df['desired_outcomes'].iloc[0]) 
+                else 'computer science'
+            )
+        }
+        
+        # Add additional interests if provided
+        if additional_interests:
+            student_data['interests'] += ',' + ','.join(additional_interests)
+        
+        # Find matching courses
+        matching_courses = find_matching_courses(student_data, subjects_df, outcomes_df, prereqs_df, coreqs_df)
+        
+        # Filter out previously recommended courses
+        new_matches = [course for course in matching_courses 
+                      if course['subject_code'] not in recommended_history]
+        
+        # Separate into recommended and highly competitive
+        recommended_courses = []
+        highly_competitive_courses = []
+        
+        for course in new_matches:
+            if course['likelihood'] < 0.3:  # Very competitive
+                if len(highly_competitive_courses) < 5:
+                    highly_competitive_courses.append(course)
+                    recommended_history.add(course['subject_code'])
+            else:
+                if len(recommended_courses) < 5:
+                    recommended_courses.append(course)
+                    recommended_history.add(course['subject_code'])
+        
+        return recommended_courses, highly_competitive_courses
 
-    # Find matching courses with all required parameters
-    matching_courses = find_matching_courses(student_data, subjects_df, outcomes_df, prereqs_df, coreqs_df)
-    
-    # Separate into recommended and highly competitive
-    recommended_courses = []
-    highly_competitive_courses = []
-    
-    for course in matching_courses:
-        if course['likelihood'] < 0.3:  # Very competitive
-            if len(highly_competitive_courses) < 5:
-                highly_competitive_courses.append(course)
+    def get_enrollment_status(seats, enrollments):
+        """Get enrollment status message based on seats and enrollments"""
+        if seats <= 0 or enrollments <= 0:
+            return "⚠️ Enrollment data not available"
+        
+        seats_remaining = seats - enrollments
+        enrollment_ratio = enrollments / seats
+        
+        if enrollment_ratio >= 1:
+            return "🔴 This class is currently full. Very difficult to enroll - consider for future semesters"
+        elif enrollment_ratio >= 0.9:
+            return "🟠 Limited seats available (>90% full). Enroll immediately if interested"
+        elif enrollment_ratio >= 0.75:
+            return "🟡 Class is filling up quickly (>75% full). Enroll soon to secure your spot"
         else:
-            if len(recommended_courses) < 5:
-                recommended_courses.append(course)
-    
-    # Display recommendations
-    print("\n🎯 Recommended Courses:")
-    if recommended_courses:
-        for i, course in enumerate(recommended_courses, 1):
-            print(f"\n{i}. {course['subject_code']}: {course['name']}")
-            print(f"   Match Score: {course['match_score']:.1%}")
-            print(f"   Reasons for recommendation:")
-            for reason in course['reasons']:
-                print(f"   • {reason}")
-            print(f"   Seats: {course['seats']}, Current Enrollments: {course['enrollments']}")
-            likelihood_percent = course['likelihood'] * 100
-            print(f"   Enrollment Likelihood: {likelihood_percent:.1f}%")
-    else:
-        print("No courses found matching your immediate criteria.")
-    
-    # Display highly competitive courses
-    if highly_competitive_courses:
-        print("\n⚠️ Highly Competitive Courses (Consider for Future Semesters):")
-        for i, course in enumerate(highly_competitive_courses, 1):
-            print(f"\n{i}. {course['subject_code']}: {course['name']}")
-            print(f"   Match Score: {course['match_score']:.1%}")
-            print(f"   Reasons for recommendation:")
-            for reason in course['reasons']:
-                print(f"   • {reason}")
-            print(f"   Seats: {course['seats']}, Current Enrollments: {course['enrollments']}")
-            likelihood_percent = course['likelihood'] * 100
-            print(f"   Current Enrollment Likelihood: {likelihood_percent:.1f}%")
-            print("   🔄 Recommendation: Consider taking this course in a future semester when you'll have higher priority")
+            return "🟢 Good availability. Enroll at your convenience but don't wait too long"
 
-    return recommended_courses, highly_competitive_courses
+    def display_recommendations(recommended_courses, highly_competitive_courses, round_num=1):
+        print(f"\n=== Round {round_num} Recommendations ===")
+        
+        # Display recommendations
+        print("\n🎯 Recommended Courses:")
+        if recommended_courses:
+            for i, course in enumerate(recommended_courses, 1):
+                seats = course['seats']
+                enrollments = course['enrollments']
+                
+                print(f"\n{i}. {course['subject_code']}: {course['name']}")
+                print(f"   Match Score: {course['match_score']:.1%}")
+                print(f"   Reasons for recommendation:")
+                for reason in course['reasons']:
+                    print(f"   • {reason}")
+                
+                # Enrollment status
+                print(f"   Current Status: {seats - enrollments} seats remaining ({enrollments}/{seats} filled)")
+                enrollment_status = get_enrollment_status(seats, enrollments)
+                print(f"   {enrollment_status}")
+                
+                # Show likelihood only if relevant
+                if seats > enrollments:
+                    likelihood_percent = course['likelihood'] * 100
+                    print(f"   Enrollment Likelihood: {likelihood_percent:.1f}%")
+        else:
+            print("No new courses found matching your immediate criteria.")
+        
+        # Display highly competitive courses
+        if highly_competitive_courses:
+            print("\n⚠️ Highly Competitive Courses:")
+            for i, course in enumerate(highly_competitive_courses, 1):
+                seats = course['seats']
+                enrollments = course['enrollments']
+                
+                print(f"\n{i}. {course['subject_code']}: {course['name']}")
+                print(f"   Match Score: {course['match_score']:.1%}")
+                print(f"   Reasons for recommendation:")
+                for reason in course['reasons']:
+                    print(f"   • {reason}")
+                
+                # Enrollment status
+                print(f"   Current Status: {seats - enrollments} seats remaining ({enrollments}/{seats} filled)")
+                enrollment_status = get_enrollment_status(seats, enrollments)
+                print(f"   {enrollment_status}")
+                
+                # Additional warning for highly competitive courses
+                print("   ⚠️ Note: This is a highly competitive course due to high demand")
+                if seats <= enrollments:
+                    print("   💡 Tip: Consider registering for this course in a future semester when you'll have higher priority")
+                else:
+                    print("   💡 Tip: If interested, prepare to register immediately when registration opens")
+
+    # Initial recommendations
+    round_num = 1
+    recommended_courses, highly_competitive_courses = get_recommendations()
+    display_recommendations(recommended_courses, highly_competitive_courses, round_num)
+    
+    # Continue recommending until user is satisfied or no more courses
+    while True:
+        if not (recommended_courses or highly_competitive_courses):
+            print("\nNo more courses available matching your criteria.")
+            break
+            
+        choice = input("\nWould you like to see more recommendations? (yes/no): ").lower().strip()
+        if choice != 'yes':
+            break
+            
+        # Get additional interests
+        print("\nLet's find more courses based on additional interests!")
+        additional_interests = get_additional_interests()
+        
+        # Get new recommendations
+        round_num += 1
+        recommended_courses, highly_competitive_courses = get_recommendations(additional_interests)
+        display_recommendations(recommended_courses, highly_competitive_courses, round_num)
+
+    return recommended_history
 
 def get_all_prereqs(subject, prereqs_df, subjects_df, collected=None):
     if collected is None:
