@@ -1,10 +1,53 @@
 import pandas as pd
 import json
+import textwrap
+
+PROGRAMMING_LANGUAGES = [
+    "Python", "Java", "C++", "JavaScript", "C#", "R", "MATLAB", 
+    "Go", "Rust", "Swift", "Kotlin", "PHP", "Ruby", "TypeScript",
+    "SQL", "Scala", "Julia", "Haskell", "Perl", "Assembly"
+]
+
+MATH_AREAS = [
+    "Calculus", "Linear Algebra", "Statistics", "Probability", 
+    "Discrete Mathematics", "Number Theory", "Graph Theory", 
+    "Differential Equations", "Numerical Analysis", "Real Analysis",
+    "Complex Analysis", "Topology", "Abstract Algebra", "Optimization",
+    "Game Theory", "Set Theory", "Logic", "Geometry", "Trigonometry",
+    "Combinatorics"
+]
+
+def display_tags_simple(tags, category_name):
+    """Display tags in a simple numbered list format"""
+    print(f"\nAvailable {category_name} ({len(tags)} total):")
+    print("-" * 50)
+    
+    # Print items in a single column numbered list
+    for i, tag in enumerate(tags):
+        print(f"{i+1:2}. {tag}")
+    
+    print("-" * 50)
 
 def get_student_input():
     nuid = input("Enter your NUid: ")
-    prog_exp = input("Enter your programming experience (e.g., Python, Java): ")
-    math_exp = input("Enter your math experience (e.g., Linear Algebra, Calculus): ")
+    display_tags_simple(PROGRAMMING_LANGUAGES, "Select From Given Programming Languages")
+    prog_languages = input("Enter your programming languages (comma-separated, e.g., Python, Java, C++): ").split(',')
+    prog_exp = {}
+    for lang in prog_languages:
+        lang = lang.strip()
+        if lang:
+            proficiency = int(input(f"Rate your proficiency in {lang} (1-5, where 5 is expert): "))
+            prog_exp[lang] = proficiency
+
+    display_tags_simple(MATH_AREAS, "Select From Given Math Areas")
+    math_areas = input("Enter your math areas (comma-separated, e.g., Linear Algebra, Calculus, Statistics): ").split(',')
+    math_exp = {}
+    for area in math_areas:
+        area = area.strip()
+        if area:
+            proficiency = int(input(f"Rate your proficiency in {area} (1-5, where 5 is expert): "))
+            math_exp[area] = proficiency
+    
     completed = input("Have you completed any courses? (yes/no): ").lower()
     
     completed_courses = {}
