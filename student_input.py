@@ -94,12 +94,12 @@ def get_student_input():
     # Save to CSV
     df = pd.DataFrame([{
         "NUid": nuid,
-        "programming_experience": prog_exp,
-        "math_experience": math_exp,
+        "programming_experience": json.dumps(prog_exp),
+        "math_experience": json.dumps(math_exp),
         "completed_courses": ",".join(completed_courses.keys()) if completed_courses else "",
         "core_subjects": core_subjects,
         "desired_outcomes": desired_outcomes,
-        "completed_courses_details": json.dumps(completed_courses)  # Store details as JSON string
+        "completed_courses_details": json.dumps(completed_courses) 
     }])
     df.to_csv(f"student_{nuid}.csv", index=False)
     
@@ -108,3 +108,4 @@ def get_student_input():
 if __name__ == "__main__":
     student_data = get_student_input()
     print(f"Student data saved to student_{student_data['NUid']}.csv")
+    print("*** ", student_data)
