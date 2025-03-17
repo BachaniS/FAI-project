@@ -119,18 +119,75 @@ def calculate_prerequisite_mismatch_factor(student_data, subject_code, requireme
 
     
 def calculate_stress_factor(student_data, subject_code, subjects_df):
-    #TODO
-    return
+    subject = subjects_df[subjects_df['subject_code'] == subject_code].iloc[0]
+    if subject_code in student_data['completed_courses']:
+        # Use student's actual performance if available
+        completed_course = student_data['completed_courses'][subject_code]
+        GA = completed_course.get('Avg Assignment Grade', subject['avg_assignment_grade'])
+        GE = completed_course.get('Avg Exam Grade', subject['avg_exam_grade'])
+        GP = completed_course.get('Avg Project Grade', subject['avg_project_grade'])
+    else:
+        # Use average grades from subject data
+        GA = subject['avg_assignment_grade']
+        GE = subject['avg_exam_grade']
+        GP = subject['avg_project_grade']
 
-def course_alignment(student_data, subject_code, outcomes_df):
+    # Get weights
+    Aw = subject['assignment_weight']
+    Ew = subject['exam_weight']
+    Pw = subject['project_weight']
+
+    # Calculate stress components
+    total_weight = Aw + Ew + Pw
+    if total_weight == 0:
+        return 0
+    
+    stress_assignments = ((100 - GA) / 100) ** 2 * Aw
+    stress_exams = ((100 - GE) / 100) ** 2 * Ew
+    stress_projects = ((100 - GP) / 100) ** 2 * Pw
+    
+    S_prime = (stress_assignments + stress_exams + stress_projects) / total_weight
+    
+    return S_prime
+
+def jaccard_similarity(set1, set2):
     '''
-    Calculate outcome alignment Score
-    OAS = Similarity(User Desired Outcomes, Course Outcomes)
+    Calculate Jaccard similarity between two sets 
+    '''
+    # Handle empty sets
+    if not set1 or not set2:
+        return 0
+        
+    # Calculate intersection and union
+    intersection = len(set1.intersection(set2))
+    union = len(set1.union(set2))
+    
+    # Prevent division by zero
+    if union == 0:
+        return 0
+        
+    return intersection / union
+
+
+def calculate_outcome_alignment_score(student_data, subject_code, outcomes_df):
+    '''
+    Calculate outcome alignment score (OAS) using Jaccard similarity
+    OAS = similarity(User Desired Outcomes, Course Outcomes)
     __
     Use Jacquard Similarity: https://www.geeksforgeeks.org/how-to-calculate-jaccard-similarity-in-python/ 
     '''
-    # TODO
-    return
+    # If no desired outcomes, return 0
+    if not student_data.get('desired_outcomes'):
+        return 0
+    
+    # Get student's desired outcomes as a set
+    student_outcomes = set([outcome.strip() for outcome in student_data['desired_outcomes'].split(',')])
+    
+    # Get subject outcomes as a set
+    subject_outcomes = set(outcomes_df[outcomes_df['subject_code'] == subject_code]['outcome'])
+    
+    # Calculate Jaccard similarity
+    return jaccard_similarity(student_outcomes, subject_outcomes)
 
 def calculate_utility():
     '''
@@ -144,11 +201,26 @@ def calculate_burnout():
     return
 
 def calculate_scores(nuid):
-    '''
-    Calculate burnout scores for all subjects for a given student
-    '''
-    #TODO
-    return
+    subjects_df, outcomes_df, prereqs_df, _ = load_subject_data()
+    student_df = pd.read_csv(f'student_{nuid}.csv')
+    student_data = {
+        'NUid': student_df['NUid'].iloc[0],
+        'programming_experience': student_df['programming_experience'].iloc[0],
+        'math_experience': student_df['math_experience'].iloc[0],
+        'completed_courses': json.loads(student_df['completed_courses_details'].iloc[0]),
+        ''
+        'subjects': student_df['core_subjects'].iloc[0],
+        'desired_outcomes': student_df['desired_outcomes'].iloc[0]
+    }
+    
+    scores = []
+    for subject_code in subjects_df['subject_code']:
+        burnout = calculate_burnout(student_data, subject_code, subjects_df, prereqs_df, outcomes_df)
+        scores.append({'subject_code': subject_code, 'burnout_score': burnout})
+    
+    scores_df = pd.DataFrame(scores)
+    scores_df.to_csv(f'burnout_scores_{nuid}.csv', index=False)
+    print(f"Burnout scores saved to burnout_scores_{nuid}.csv")
 
 if __name__ == "__main__":
     nuid = input("Enter NUid to calculate burnout scores: ")
