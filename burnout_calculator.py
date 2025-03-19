@@ -6,12 +6,13 @@ def load_subject_data():
     df = pd.read_csv('subject_analysis.csv')
     subjects_df = df[['Subject', 'Subject Names', 'Weekly Workload (hours)', 'Assignments #', 'Hours per Assignment', 
                       'Assignment Weight', 'Avg Assignment Grade', 'Project Weight', 'Avg Project Grade', 'Exam #', 
-                      'Avg Exam Grade', 'Exam Weight', 'Avg Final Grade']].rename(columns={
+                      'Avg Exam Grade', 'Exam Weight', 'Avg Final Grade', 'Seats', "Enrollments"]].rename(columns={
         'Subject': 'subject_code', 'Subject Names': 'name', 'Weekly Workload (hours)': 'hours_per_week', 
         'Assignments #': 'num_assignments', 'Hours per Assignment': 'hours_per_assignment', 
         'Assignment Weight': 'assignment_weight', 'Avg Assignment Grade': 'avg_assignment_grade', 
         'Project Weight': 'project_weight', 'Avg Project Grade': 'avg_project_grade', 'Exam #': 'exam_count', 
-        'Avg Exam Grade': 'avg_exam_grade', 'Exam Weight': 'exam_weight', 'Avg Final Grade': 'avg_final_grade'
+        'Avg Exam Grade': 'avg_exam_grade', 'Exam Weight': 'exam_weight', 'Avg Final Grade': 'avg_final_grade',
+        'Seats': 'Seats', 'Enrollments': 'Enrollments',
     })
     outcomes = []
     for _, row in df.iterrows():
@@ -96,7 +97,7 @@ def calculate_prerequisite_mismatch_factor(student_data, subject_code, requireme
     if T == 0:
         return 0 
     
-    sum = 0
+    total_mismatch = 0
 
     for _, req in subject_reqs.iterrows():
         req_type = req['type']
@@ -116,6 +117,7 @@ def calculate_prerequisite_mismatch_factor(student_data, subject_code, requireme
 
 
     M_prime = (1/T) * (total_mismatch)
+    return M_prime
 
     
 def calculate_stress_factor(student_data, subject_code, subjects_df):
@@ -177,7 +179,7 @@ def calculate_outcome_alignment_score(student_data, subject_code, outcomes_df):
     Use Jacquard Similarity: https://www.geeksforgeeks.org/how-to-calculate-jaccard-similarity-in-python/ 
     '''
     # If no desired outcomes, return 0
-    if not student_data.get('desired_outcomes'):
+    if not student_data.get('desired_outcomes') or not isinstance(student_data['desired_outcomes'], str):
         return 0
     
     # Get student's desired outcomes as a set
@@ -189,39 +191,132 @@ def calculate_outcome_alignment_score(student_data, subject_code, outcomes_df):
     # Calculate Jaccard similarity
     return jaccard_similarity(student_outcomes, subject_outcomes)
 
-def calculate_utility():
+def calculate_burnout(student_data, subject_code, subjects_df, requirements_df, prereqs_df, outcomes_df, weights=None):
     '''
-    Calculating utility function
+    Calculate the normalized burnout probability
+    P' = w1*W' + w2*M' + w3*S'
+    Pfinal = 1 / (1 + e^-k(P'-P0))
     '''
-    #TODO 
-    return
+    # Default weights if not provided
+    if weights is None:
+        weights = {
+            'w1': 0.4,  # Weight for workload factor
+            'w2': 0.3,  # Weight for prerequisite mismatch
+            'w3': 0.3,  # Weight for stress factor
+            'k': 4.0,   # Scaling factor for sigmoid
+            'P0': 0.5   # Baseline burnout level
+        }
+    
+    # Calculate individual factors
+    W_prime = workload_factor(subject_code, subjects_df)
+    M_prime = calculate_prerequisite_mismatch_factor(student_data, subject_code, requirements_df, prereqs_df)
+    S_prime = calculate_stress_factor(student_data, subject_code, subjects_df)
+    
+    # Calculate combined burnout score
+    P_prime = weights['w1'] * W_prime + weights['w2'] * M_prime + weights['w3'] * S_prime
+    
+    # Normalize to [0,1] using sigmoid function
+    P_final = 1 / (1 + np.exp(-weights['k'] * (P_prime - weights['P0'])))
+    
+    return P_final
 
-def calculate_burnout():
-    #TODO
-    return
+
+def calculate_utility(student_data, subject_code, subjects_df, requirements_df, prereqs_df, outcomes_df, utility_weights=None):
+    '''
+    Calculate the overall utility function with prerequisite penalty
+    U = α·I + β·(1-Pfinal) + γ·OAS - δ·PrereqPenalty
+    '''
+    # Default utility weights
+    if utility_weights is None:
+        utility_weights = {
+            'alpha': 0.4,  # Weight for interest/relevance
+            'beta': 0.3,   # Weight for burnout avoidance
+            'gamma': 0.3,  # Weight for outcome alignment
+            'delta': 0.5   # Weight for prerequisite penalty
+        }
+    
+    # Calculate burnout probability
+    burnout_prob = calculate_burnout(student_data, subject_code, subjects_df, requirements_df, prereqs_df, outcomes_df)
+    
+    # Calculate outcome alignment score
+    oas = calculate_outcome_alignment_score(student_data, subject_code, outcomes_df)
+    
+    # Use outcome alignment as proxy for interest score
+    interest_score = oas
+    
+    # Check prerequisites
+    prereq_courses = list(prereqs_df[prereqs_df['subject_code'] == subject_code]['prereq_subject_code'])
+    prereq_penalty = 0
+    
+    if prereq_courses:
+        prereqs_satisfied = all(prereq in student_data.get('completed_courses', {}) for prereq in prereq_courses)
+        if not prereqs_satisfied:
+            prereq_penalty = 1  # Apply full penalty if prerequisites are not satisfied
+    
+    # Calculate overall utility
+    utility = (
+        utility_weights['alpha'] * interest_score + 
+        utility_weights['beta'] * (1 - burnout_prob) + 
+        utility_weights['gamma'] * oas - 
+        utility_weights['delta'] * prereq_penalty
+    )
+    
+    return utility
 
 def calculate_scores(nuid):
-    subjects_df, outcomes_df, prereqs_df, _ = load_subject_data()
-    student_df = pd.read_csv(f'student_{nuid}.csv')
-    student_data = {
-        'NUid': student_df['NUid'].iloc[0],
-        'programming_experience': student_df['programming_experience'].iloc[0],
-        'math_experience': student_df['math_experience'].iloc[0],
-        'completed_courses': json.loads(student_df['completed_courses_details'].iloc[0]),
-        ''
-        'subjects': student_df['core_subjects'].iloc[0],
-        'desired_outcomes': student_df['desired_outcomes'].iloc[0]
-    }
+    '''
+    Calculate burnout scores and utility for all subjects for a given student
+    '''
+    subjects_df, outcomes_df, prereqs_df, coreqs_df, requirements_df = load_subject_data()
     
-    scores = []
-    for subject_code in subjects_df['subject_code']:
-        burnout = calculate_burnout(student_data, subject_code, subjects_df, prereqs_df, outcomes_df)
-        scores.append({'subject_code': subject_code, 'burnout_score': burnout})
+    try:
+        student_df = pd.read_csv(f'student_{nuid}.csv')
+        
+        # Parse student data
+        student_data = {
+            'NUid': student_df['NUid'].iloc[0],
+            'programming_experience': json.loads(student_df['programming_experience'].iloc[0]),
+            'math_experience': json.loads(student_df['math_experience'].iloc[0]),
+            'completed_courses': json.loads(student_df['completed_courses_details'].iloc[0]),
+            'core_subjects': student_df['core_subjects'].iloc[0],
+            'desired_outcomes': student_df['desired_outcomes'].iloc[0]
+        }
+        
+        # Calculate scores for each subject
+        scores = []
+        for subject_code in subjects_df['subject_code']:
+            burnout = calculate_burnout(student_data, subject_code, subjects_df, requirements_df, prereqs_df, outcomes_df)
+            utility = calculate_utility(student_data, subject_code, subjects_df, requirements_df, prereqs_df, outcomes_df)
+            
+            # Get prerequisite info for this subject
+            prereqs = list(prereqs_df[prereqs_df['subject_code'] == subject_code]['prereq_subject_code'])
+            
+            # Check if prerequisites are satisfied
+            prereqs_satisfied = all(prereq in student_data.get('completed_courses', {}) for prereq in prereqs)
+            
+            scores.append({
+                'subject_code': subject_code,
+                'subject_name': subjects_df[subjects_df['subject_code'] == subject_code]['name'].iloc[0],
+                'burnout_score': round(burnout, 3),
+                'utility': round(utility, 3),
+                'prerequisites': prereqs,
+                'prerequisites_satisfied': prereqs_satisfied
+            })
+        
+        # Create DataFrame and sort by utility (descending)
+        scores_df = pd.DataFrame(scores)
+        scores_df = scores_df.sort_values(by='utility', ascending=False)
+        
+        # Save to CSV
+        scores_df.to_csv(f'burnout_scores_{nuid}.csv', index=False)
+        print(f"Burnout scores and utility values saved to burnout_scores_{nuid}.csv")
+        
+        return scores_df
+        
+    except FileNotFoundError:
+        print(f"Error: Student data file for NUid {nuid} not found.")
+        return None
     
-    scores_df = pd.DataFrame(scores)
-    scores_df.to_csv(f'burnout_scores_{nuid}.csv', index=False)
-    print(f"Burnout scores saved to burnout_scores_{nuid}.csv")
-
 if __name__ == "__main__":
     nuid = input("Enter NUid to calculate burnout scores: ")
     calculate_scores(nuid)
