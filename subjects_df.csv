@@ -30,9 +30,6 @@ CS5933,Advanced Computer Science Topics for Teachers,Teaching methodologies,None
 CS5934,Introduction to Inclusive Computer Science Teaching,"Equity in CS education, accessibility",Varies,None,Teaching experience,5,5,4,0.3,85,0.3,88,1,86,0.4,86,,None,None,265,298
 CS5964,Projects for Professionals,Project management,None,None,Industry experience,5,4,5,0.3,86,0.4,89,0,0,0.0,88,,None,None,261,264
 CS5965,Engaging with Industry Partners for Rising Professionals,Industry collaboration,Varies,None,Industry experience,5,4,5,0.3,85,0.5,90,0,0,0.0,89,,None,None,298,297
-CS6120,Natural Language Processing,"Tokenization, Transformers, BERT/GPT, Sentiment Analysis, Python, NLP",None,Basic Statistics,None,4,4,5,0.35,82,0.25,85,1,88,0.4,85,,None,None,223,213
-CS6130,Affective Computing,"Emotion recognition, sentiment analysis",None,"Linear Algebra, Probabilities and Calculus",None,4,6,5,0.5,88,0.2,90,1,89,0.3,89,,None,None,268,265
-CS6140,Machine Learning,"Decision trees, neural networks, RL,DL, ML",None,"Probability, Linear Algebra",None,4,5,4,0.4,85,0.3,88,1,87,0.3,87,,CS5800,None,293,299
 CS6200,Information Retrieval,"TF-IDF, PageRank, vector space models, IR models",None,"Probability, Linear Algebra",None,4,5,4,0.4,85,0.3,88,1,87,0.3,87,,None,None,240,238
 DS5010,Introduction to Programming for Data Science,"Python/R, Pandas, Jupyter Notebooks, Data Cleaning, Data Processing",Python,None,None,4,5,5,0.35,86,0.3,88,1,87,0.35,87,,None,None,263,286
 DS5020,Introduction to Linear Algebra and Probability for Data Science,"Stats, probability, Linear algebra, Python",Python,"Basic knowledge of Stats, probability, Linear algebra, Matrix operations",None,6,5,5,0.35,85,0.3,87,1,86,0.35,86,,None,None,224,217
