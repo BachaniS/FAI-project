@@ -7,12 +7,13 @@ def load_subject_data():
     # Process into required structures
     subjects_df = df[['Subject', 'Subject Names', 'Weekly Workload (hours)', 'Assignments #', 'Hours per Assignment', 
                       'Assignment Weight', 'Avg Assignment Grade', 'Project Weight', 'Avg Project Grade', 'Exam #', 
-                      'Avg Exam Grade', 'Exam Weight', 'Avg Final Grade']].rename(columns={
+                      'Avg Exam Grade', 'Exam Weight', 'Avg Final Grade', 'Seats', 'Enrollments']].rename(columns={
         'Subject': 'subject_code', 'Subject Names': 'name', 'Weekly Workload (hours)': 'hours_per_week', 
         'Assignments #': 'num_assignments', 'Hours per Assignment': 'hours_per_assignment', 
         'Assignment Weight': 'assignment_weight', 'Avg Assignment Grade': 'avg_assignment_grade', 
         'Project Weight': 'project_weight', 'Avg Project Grade': 'avg_project_grade', 'Exam #': 'exam_count', 
-        'Avg Exam Grade': 'avg_exam_grade', 'Exam Weight': 'exam_weight', 'Avg Final Grade': 'avg_final_grade'
+        'Avg Exam Grade': 'avg_exam_grade', 'Exam Weight': 'exam_weight', 'Avg Final Grade': 'avg_final_grade', 
+        'Seats': 'Seats', 'Enrollments': 'Enrollments'
     })
     
     outcomes = []
