@@ -3,6 +3,7 @@ import random
 from deap import base, creator, tools, algorithms
 import json
 import numpy as np
+from burnout_calculator import calculate_burnout
 from difflib import SequenceMatcher
 
 def load_subject_data():
@@ -57,7 +58,6 @@ def load_burnout_scores(nuid):
         scores_df = scores_df.drop_duplicates(subset=['subject_code'])
         return scores_df
     except FileNotFoundError:
-        print(f"Warning: Burnout scores not found for NUID: {nuid}")
         return None
 
 def prerequisites_satisfied(course_code, student_data, prereqs_df):
@@ -65,11 +65,78 @@ def prerequisites_satisfied(course_code, student_data, prereqs_df):
     prereqs = set(prereqs_df[prereqs_df['subject_code'] == course_code]['prereq_subject_code'])
     return all(p in student_data['completed_courses'] for p in prereqs)
 
-def calculate_alignment(student_data, subject_code, outcomes_df):
-    desired = set(student_data['desired_outcomes'].split(','))
+def jaccard_similarity(set1, set2):
+    '''
+    Calculate Jaccard similarity between two sets 
+    '''
+    # Handle empty sets
+    if not set1 or not set2:
+        return 0
+        
+    # Calculate intersection and union
+    intersection = len(set1.intersection(set2))
+    union = len(set1.union(set2))
+    
+    # Prevent division by zero
+    if union == 0:
+        return 0
+        
+    return intersection / union
+
+def calculate_outcome_alignment_score(student_data, subject_code, outcomes_df):
+    '''
+    Calculate outcome alignment score (OAS) using Jaccard similarity
+    OAS = similarity(User Desired Outcomes, Course Outcomes)
+    '''
+    # If no desired outcomes, return 0
+    if not student_data.get('desired_outcomes') or not isinstance(student_data['desired_outcomes'], str):
+        return 0
+    
+    # Get student's desired outcomes as a set
+    student_outcomes = set([outcome.strip() for outcome in student_data['desired_outcomes'].split(',')])
+    
+    # Get subject outcomes as a set
     subject_outcomes = set(outcomes_df[outcomes_df['subject_code'] == subject_code]['outcome'])
-    overlap = len(desired & subject_outcomes) / len(desired) if desired else 0
-    return overlap
+    
+    # Calculate Jaccard similarity
+    return jaccard_similarity(student_outcomes, subject_outcomes)
+
+def calculate_utility(student_data, subject_code, subjects_df, requirements_df, prereqs_df, outcomes_df, utility_weights=None):
+    '''
+    Calculate the overall utility function with prerequisite penalty
+    U = α·OAS + β·(1-Pfinal) - δ·PrereqPenalty
+    '''
+    # Default utility weights
+    if utility_weights is None:
+        utility_weights = {
+            'alpha': 0.5,  # Weight for outcome alignment
+            'beta': 0.5,   # Weight for burnout avoidance
+            'delta': 0.5   # Weight for prerequisite penalty
+        }
+    
+    # Calculate burnout probability
+    burnout_prob = calculate_burnout(student_data, subject_code, subjects_df, requirements_df, prereqs_df, outcomes_df)
+    
+    # Calculate outcome alignment score
+    oas = calculate_outcome_alignment_score(student_data, subject_code, outcomes_df)
+    
+    # Check prerequisites
+    prereq_courses = list(prereqs_df[prereqs_df['subject_code'] == subject_code]['prereq_subject_code'])
+    prereq_penalty = 0
+    
+    if prereq_courses:
+        prereqs_satisfied = all(prereq in student_data.get('completed_courses', {}) for prereq in prereq_courses)
+        if not prereqs_satisfied:
+            prereq_penalty = 1  # Apply full penalty if prerequisites are not satisfied
+    
+    # Calculate overall utility
+    utility = (
+        utility_weights['alpha'] * oas + 
+        utility_weights['beta'] * (1 - burnout_prob) - 
+        utility_weights['delta'] * prereq_penalty
+    )
+    
+    return utility
 
 def calculate_enrollment_likelihood(semester, is_core, seats, enrollments):
     # Base likelihood from seats availability
@@ -87,19 +154,7 @@ def calculate_enrollment_likelihood(semester, is_core, seats, enrollments):
     
     final_likelihood = base_likelihood * semester_multiplier * core_multiplier
     return min(final_likelihood, 1.0)  # Cap at 100%
-
-def calculate_name_similarity(name1, name2):
-    """Calculate similarity ratio between two strings"""
-    return SequenceMatcher(None, name1.lower(), name2.lower()).ratio()
-
-def calculate_skills_match(student_skills, course_outcomes):
-    """Calculate how well student skills match course requirements"""
-    student_skills_set = set(skill.strip().lower() for skill in student_skills.split(','))
-    course_skills_set = set(outcome.strip().lower() for outcome in course_outcomes.split(','))
-    if not student_skills_set:
-        return 0
-    return len(student_skills_set & course_skills_set) / len(course_skills_set)
-
+    
 def find_matching_courses(student_data, subjects_df, outcomes_df, prereqs_df, coreqs_df, burnout_scores_df=None):
     """Find courses that match student interests and skills"""
     matching_courses = []
@@ -219,256 +274,6 @@ def find_matching_courses(student_data, subjects_df, outcomes_df, prereqs_df, co
     
     return matching_courses
 
-def get_additional_interests():
-    """Get additional interests from the user"""
-    print("\nWhat other areas are you interested in? (Select one or more numbers, separated by commas)")
-    interests = {
-        1: "artificial intelligence",
-        2: "web development",
-        3: "data science",
-        4: "cybersecurity",
-        5: "mobile development",
-        6: "systems programming",
-        7: "cloud computing",
-        8: "software engineering",
-        9: "database systems",
-        10: "computer vision",
-        11: "natural language processing",
-        12: "algorithms",
-        13: "networking",
-        14: "robotics"
-    }
-    
-    for num, interest in interests.items():
-        print(f"{num}. {interest}")
-    
-    try:
-        choices = input("\nEnter numbers (e.g., 1,3,5) or 'skip' to continue: ").strip()
-        if choices.lower() == 'skip':
-            return []
-        
-        selected = [interests[int(num.strip())] for num in choices.split(',')]
-        return selected
-    except:
-        print("Invalid input. Continuing with current recommendations.")
-        return []
-
-def recommend_schedule(nuid):
-    subjects_df, outcomes_df, prereqs_df, coreqs_df = load_subject_data()
-    burnout_scores_df = load_burnout_scores(nuid)
-    
-    try:
-        student_df = pd.read_csv(f'student_{nuid}.csv')
-    except FileNotFoundError:
-        print(f"Error: Student data not found for NUID: {nuid}")
-        return None
-    
-    semester = int(input("Which semester are you in? "))
-    
-    # Keep track of recommended courses to avoid repetition
-    recommended_history = set()
-    
-    def get_recommendations(additional_interests=None):
-        student_data = {
-            'NUid': student_df['NUid'].iloc[0],
-            'semester': semester,
-            'completed_courses': set(str(course).upper() for course in 
-                str(student_df['completed_courses'].iloc[0]).split(',') 
-                if pd.notna(student_df['completed_courses'].iloc[0]) and str(student_df['completed_courses'].iloc[0]).strip()),
-            'core_subjects': str(student_df['core_subjects'].iloc[0]).upper(),
-            'interests': (
-                str(student_df['desired_outcomes'].iloc[0]) if pd.notna(student_df['desired_outcomes'].iloc[0]) 
-                else 'computer science'
-            ),
-            'desired_outcomes': (
-                str(student_df['desired_outcomes'].iloc[0]) if pd.notna(student_df['desired_outcomes'].iloc[0]) 
-                else 'computer science'
-            )
-        }
-        
-        # Add additional interests if provided
-        if additional_interests:
-            student_data['interests'] += ',' + ','.join(additional_interests)
-        
-        # Find matching courses
-        matching_courses = find_matching_courses(student_data, subjects_df, outcomes_df, prereqs_df, coreqs_df, burnout_scores_df)
-        
-        # Filter out previously recommended courses
-        new_matches = [course for course in matching_courses 
-                      if course['subject_code'] not in recommended_history]
-        
-        # Separate into recommended and highly competitive
-        recommended_courses = []
-        highly_competitive_courses = []
-        
-        for course in new_matches:
-            if course['likelihood'] < 0.3:  # Very competitive
-                if len(highly_competitive_courses) < 5:
-                    highly_competitive_courses.append(course)
-                    recommended_history.add(course['subject_code'])
-            else:
-                if len(recommended_courses) < 5:
-                    recommended_courses.append(course)
-                    recommended_history.add(course['subject_code'])
-        
-        return recommended_courses, highly_competitive_courses
-
-    def get_enrollment_status(seats, enrollments):
-        """Get enrollment status message based on seats and enrollments"""
-        if seats <= 0 or enrollments <= 0:
-            return "⚠️ Enrollment data not available"
-        
-        seats_remaining = seats - enrollments
-        enrollment_ratio = enrollments / seats
-        
-        if enrollment_ratio >= 1:
-            return "🔴 This class is currently full. Very difficult to enroll - consider for future semesters"
-        elif enrollment_ratio >= 0.9:
-            return "🟠 Limited seats available (>90% full). Enroll immediately if interested"
-        elif enrollment_ratio >= 0.75:
-            return "🟡 Class is filling up quickly (>75% full). Enroll soon to secure your spot"
-        else:
-            return "🟢 Good availability. Enroll at your convenience but don't wait too long"
-
-    def get_burnout_status(burnout_score, utility_score):
-        """Get burnout status message based on burnout and utility scores"""
-        if burnout_score is None or utility_score is None:
-            return "⚠️ Burnout data not available"
-        
-        if burnout_score > 0.8:
-            return "🔴 High burnout risk. Consider careful time management if taking this course"
-        elif burnout_score > 0.6:
-            return "🟠 Moderate-high burnout risk. May require significant time commitment"
-        elif burnout_score > 0.4:
-            return "🟡 Moderate burnout risk. Typical workload for your program"
-        else:
-            return "🟢 Low burnout risk. Should be manageable with your current skills"
-
-    def display_recommendations(recommended_courses, highly_competitive_courses, round_num=1):
-        print(f"\n=== Round {round_num} Recommendations ===")
-        
-        # Display recommendations
-        print("\n🎯 Recommended Courses:")
-        if recommended_courses:
-            for i, course in enumerate(recommended_courses, 1):
-                seats = course['seats']
-                enrollments = course['enrollments']
-                
-                print(f"\n{i}. {course['subject_code']}: {course['name']}")
-                print(f"   Match Score: {course['match_score']:.1%}")
-                
-                # Burnout information if available
-                if course['burnout_score'] is not None and course['utility_score'] is not None:
-                    burnout_status = get_burnout_status(course['burnout_score'], course['utility_score'])
-                    print(f"   Burnout Risk: {course['burnout_score']:.2f}")
-                    print(f"   Academic Utility: {course['utility_score']:.2f}")
-                    print(f"   {burnout_status}")
-                
-                print(f"   Reasons for recommendation:")
-                for reason in course['reasons']:
-                    print(f"   • {reason}")
-                
-                # Enrollment status
-                print(f"   Current Status: {seats - enrollments} seats remaining ({enrollments}/{seats} filled)")
-                enrollment_status = get_enrollment_status(seats, enrollments)
-                print(f"   {enrollment_status}")
-                
-                # Show likelihood only if relevant
-                if seats > enrollments:
-                    likelihood_percent = course['likelihood'] * 100
-                    print(f"   Enrollment Likelihood: {likelihood_percent:.1f}%")
-        else:
-            print("No new courses found matching your immediate criteria.")
-        
-        # Display highly competitive courses
-        if highly_competitive_courses:
-            print("\n⚠️ Highly Competitive Courses:")
-            for i, course in enumerate(highly_competitive_courses, 1):
-                seats = course['seats']
-                enrollments = course['enrollments']
-                
-                print(f"\n{i}. {course['subject_code']}: {course['name']}")
-                print(f"   Match Score: {course['match_score']:.1%}")
-                
-                # Burnout information if available
-                if course['burnout_score'] is not None and course['utility_score'] is not None:
-                    burnout_status = get_burnout_status(course['burnout_score'], course['utility_score'])
-                    print(f"   Burnout Risk: {course['burnout_score']:.2f}")
-                    print(f"   Academic Utility: {course['utility_score']:.2f}")
-                    print(f"   {burnout_status}")
-                
-                print(f"   Reasons for recommendation:")
-                for reason in course['reasons']:
-                    print(f"   • {reason}")
-                
-                # Enrollment status
-                print(f"   Current Status: {seats - enrollments} seats remaining ({enrollments}/{seats} filled)")
-                enrollment_status = get_enrollment_status(seats, enrollments)
-                print(f"   {enrollment_status}")
-                
-                # Additional warning for highly competitive courses
-                print("   ⚠️ Note: This is a highly competitive course due to high demand")
-                if seats <= enrollments:
-                    print("   💡 Tip: Consider registering for this course in a future semester when you'll have higher priority")
-                else:
-                    print("   💡 Tip: If interested, prepare to register immediately when registration opens")
-
-    # Initial recommendations
-    round_num = 1
-    recommended_courses, highly_competitive_courses = get_recommendations()
-    display_recommendations(recommended_courses, highly_competitive_courses, round_num)
-    
-    # Continue recommending until user is satisfied or no more courses
-    while True:
-        if not (recommended_courses or highly_competitive_courses):
-            print("\nNo more courses available matching your criteria.")
-            break
-            
-        choice = input("\nWould you like to see more recommendations? (yes/no): ").lower().strip()
-        if choice != 'yes':
-            break
-            
-        # Get additional interests
-        print("\nLet's find more courses based on additional interests!")
-        additional_interests = get_additional_interests()
-        
-        # Get new recommendations
-        round_num += 1
-        recommended_courses, highly_competitive_courses = get_recommendations(additional_interests)
-        display_recommendations(recommended_courses, highly_competitive_courses, round_num)
-
-    # Format recommendations into final schedule format
-    top_recommendations = []
-    for course in recommended_history:
-        # Extract course details
-        name = subjects_df[subjects_df['subject_code'] == course]['name'].iloc[0] if course in subjects_df['subject_code'].values else "Unknown course"
-        utility = ""
-        if burnout_scores_df is not None:
-            utility_row = burnout_scores_df[burnout_scores_df['subject_code'] == course]
-            if not utility_row.empty:
-                utility = utility_row['utility'].iloc[0]
-        
-        top_recommendations.append({
-            'subject_code': course,
-            'name': name,
-            'utility': utility
-        })
-    
-    # Save final selections in schedule format
-    subject_list = {}
-    for i, course in enumerate(top_recommendations[:5], 1):
-        subject_list[f"Subject {i}"] = f"{course['subject_code']}: {course['name']} (Utility: {course['utility']})"
-    
-    schedule_df = pd.DataFrame([{
-        'NUid': nuid,
-        'schedule': json.dumps(subject_list)
-    }])
-    
-    schedule_df.to_csv(f'schedule_{nuid}.csv', index=False)
-    print(f"Final schedule saved to schedule_{nuid}.csv")
-    
-    return recommended_history
-
 def get_all_prereqs(subject, prereqs_df, subjects_df, collected=None):
     if collected is None:
         collected = set()
@@ -489,6 +294,113 @@ def get_all_coreqs(subject, coreqs_df, subjects_df, collected=None):
             get_all_coreqs(coreq, coreqs_df, subjects_df, collected)
     return collected
 
-if __name__ == "__main__":
-    nuid = input("Enter NUid to recommend schedule: ")
-    recommend_schedule(nuid)
+def recommend_schedule(nuid):
+    """Main function that generates and returns recommendations for UI to display"""
+    subjects_df, outcomes_df, prereqs_df, coreqs_df = load_subject_data()
+    burnout_scores_df = load_burnout_scores(nuid)
+    
+    try:
+        student_df = pd.read_csv(f'student_{nuid}.csv')
+    except FileNotFoundError:
+        print(f"Error: Student data not found for NUID: {nuid}")
+        return None, None, None
+    
+    semester = int(input("Which semester are you in? "))
+    
+    student_data = {
+        'NUid': student_df['NUid'].iloc[0],
+        'semester': semester,
+        'completed_courses': set(str(course).upper() for course in 
+            str(student_df['completed_courses'].iloc[0]).split(',') 
+            if pd.notna(student_df['completed_courses'].iloc[0]) and str(student_df['completed_courses'].iloc[0]).strip()),
+        'core_subjects': str(student_df['core_subjects'].iloc[0]).upper(),
+        'interests': (
+            str(student_df['desired_outcomes'].iloc[0]) if pd.notna(student_df['desired_outcomes'].iloc[0]) 
+            else 'computer science'
+        ),
+        'desired_outcomes': (
+            str(student_df['desired_outcomes'].iloc[0]) if pd.notna(student_df['desired_outcomes'].iloc[0]) 
+            else 'computer science'
+        )
+    }
+    
+    # Get additional interests if needed
+    additional_interests = []
+    choice = input("\nWould you like to add specific interests to improve recommendations? (yes/no): ").lower().strip()
+    if choice == 'yes':
+        print("\nWhat areas are you interested in? (Select one or more numbers, separated by commas)")
+        interests = {
+            1: "artificial intelligence",
+            2: "web development",
+            3: "data science",
+            4: "cybersecurity",
+            5: "mobile development",
+            6: "systems programming",
+            7: "cloud computing",
+            8: "software engineering",
+            9: "database systems",
+            10: "computer vision",
+            11: "natural language processing",
+            12: "algorithms",
+            13: "networking",
+            14: "robotics"
+        }
+        
+        for num, interest in interests.items():
+            print(f"{num}. {interest}")
+        
+        try:
+            choices = input("\nEnter numbers (e.g., 1,3,5) or 'skip' to continue: ").strip()
+            if choices.lower() != 'skip':
+                additional_interests = [interests[int(num.strip())] for num in choices.split(',')]
+                student_data['interests'] += ',' + ','.join(additional_interests)
+        except:
+            print("Invalid input. Continuing with default interests.")
+    
+    # Find matching courses
+    matching_courses = find_matching_courses(
+        student_data, subjects_df, outcomes_df, prereqs_df, coreqs_df, burnout_scores_df
+    )
+    
+    # Separate into recommended and highly competitive
+    recommended_courses = []
+    highly_competitive_courses = []
+    
+    for course in matching_courses:
+        if course['likelihood'] < 0.3:  # Very competitive
+            if len(highly_competitive_courses) < 5:
+                highly_competitive_courses.append(course)
+        else:
+            if len(recommended_courses) < 5:
+                recommended_courses.append(course)
+    
+    # Save the final schedule (top 5 recommendations)
+    top_recommendations = []
+    for course in recommended_courses + highly_competitive_courses:
+        if len(top_recommendations) >= 5:
+            break
+        
+        top_recommendations.append(course['subject_code'])
+    
+    # Format schedule for saving
+    subject_list = {}
+    for i, course_code in enumerate(top_recommendations, 1):
+        # Extract course details
+        name = subjects_df[subjects_df['subject_code'] == course_code]['name'].iloc[0] if course_code in subjects_df['subject_code'].values else "Unknown course"
+        utility = ""
+        if burnout_scores_df is not None:
+            utility_row = burnout_scores_df[burnout_scores_df['subject_code'] == course_code]
+            if not utility_row.empty:
+                utility = utility_row['utility'].iloc[0]
+        
+        subject_list[f"Subject {i}"] = f"{course_code}: {name} (Utility: {utility})"
+    
+    # Save schedule to CSV
+    schedule_df = pd.DataFrame([{
+        'NUid': nuid,
+        'schedule': json.dumps(subject_list)
+    }])
+    
+    schedule_df.to_csv(f'schedule_{nuid}.csv', index=False)
+    
+    return recommended_courses, highly_competitive_courses, subject_list

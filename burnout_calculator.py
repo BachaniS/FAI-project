@@ -152,45 +152,6 @@ def calculate_stress_factor(student_data, subject_code, subjects_df):
     
     return S_prime
 
-def jaccard_similarity(set1, set2):
-    '''
-    Calculate Jaccard similarity between two sets 
-    '''
-    # Handle empty sets
-    if not set1 or not set2:
-        return 0
-        
-    # Calculate intersection and union
-    intersection = len(set1.intersection(set2))
-    union = len(set1.union(set2))
-    
-    # Prevent division by zero
-    if union == 0:
-        return 0
-        
-    return intersection / union
-
-
-def calculate_outcome_alignment_score(student_data, subject_code, outcomes_df):
-    '''
-    Calculate outcome alignment score (OAS) using Jaccard similarity
-    OAS = similarity(User Desired Outcomes, Course Outcomes)
-    __
-    Use Jacquard Similarity: https://www.geeksforgeeks.org/how-to-calculate-jaccard-similarity-in-python/ 
-    '''
-    # If no desired outcomes, return 0
-    if not student_data.get('desired_outcomes') or not isinstance(student_data['desired_outcomes'], str):
-        return 0
-    
-    # Get student's desired outcomes as a set
-    student_outcomes = set([outcome.strip() for outcome in student_data['desired_outcomes'].split(',')])
-    
-    # Get subject outcomes as a set
-    subject_outcomes = set(outcomes_df[outcomes_df['subject_code'] == subject_code]['outcome'])
-    
-    # Calculate Jaccard similarity
-    return jaccard_similarity(student_outcomes, subject_outcomes)
-
 def calculate_burnout(student_data, subject_code, subjects_df, requirements_df, prereqs_df, outcomes_df, weights=None):
     '''
     Calculate the normalized burnout probability
@@ -220,49 +181,6 @@ def calculate_burnout(student_data, subject_code, subjects_df, requirements_df, 
     
     return P_final
 
-
-def calculate_utility(student_data, subject_code, subjects_df, requirements_df, prereqs_df, outcomes_df, utility_weights=None):
-    '''
-    Calculate the overall utility function with prerequisite penalty
-    U = α·I + β·(1-Pfinal) + γ·OAS - δ·PrereqPenalty
-    '''
-    # Default utility weights
-    if utility_weights is None:
-        utility_weights = {
-            'alpha': 0.4,  # Weight for interest/relevance
-            'beta': 0.3,   # Weight for burnout avoidance
-            'gamma': 0.3,  # Weight for outcome alignment
-            'delta': 0.5   # Weight for prerequisite penalty
-        }
-    
-    # Calculate burnout probability
-    burnout_prob = calculate_burnout(student_data, subject_code, subjects_df, requirements_df, prereqs_df, outcomes_df)
-    
-    # Calculate outcome alignment score
-    oas = calculate_outcome_alignment_score(student_data, subject_code, outcomes_df)
-    
-    # Use outcome alignment as proxy for interest score
-    interest_score = oas
-    
-    # Check prerequisites
-    prereq_courses = list(prereqs_df[prereqs_df['subject_code'] == subject_code]['prereq_subject_code'])
-    prereq_penalty = 0
-    
-    if prereq_courses:
-        prereqs_satisfied = all(prereq in student_data.get('completed_courses', {}) for prereq in prereq_courses)
-        if not prereqs_satisfied:
-            prereq_penalty = 1  # Apply full penalty if prerequisites are not satisfied
-    
-    # Calculate overall utility
-    utility = (
-        utility_weights['alpha'] * interest_score + 
-        utility_weights['beta'] * (1 - burnout_prob) + 
-        utility_weights['gamma'] * oas - 
-        utility_weights['delta'] * prereq_penalty
-    )
-    
-    return utility
-
 def calculate_scores(nuid):
     '''
     Calculate burnout scores and utility for all subjects for a given student
@@ -286,7 +204,6 @@ def calculate_scores(nuid):
         scores = []
         for subject_code in subjects_df['subject_code']:
             burnout = calculate_burnout(student_data, subject_code, subjects_df, requirements_df, prereqs_df, outcomes_df)
-            utility = calculate_utility(student_data, subject_code, subjects_df, requirements_df, prereqs_df, outcomes_df)
             
             # Get prerequisite info for this subject
             prereqs = list(prereqs_df[prereqs_df['subject_code'] == subject_code]['prereq_subject_code'])
@@ -298,7 +215,6 @@ def calculate_scores(nuid):
                 'subject_code': subject_code,
                 'subject_name': subjects_df[subjects_df['subject_code'] == subject_code]['name'].iloc[0],
                 'burnout_score': round(burnout, 3),
-                'utility': round(utility, 3),
                 'prerequisites': prereqs,
                 'prerequisites_satisfied': prereqs_satisfied
             })
