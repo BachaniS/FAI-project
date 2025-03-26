@@ -1,54 +1,7 @@
 import pandas as pd
-import random
-from deap import base, creator, tools, algorithms
 import json
-import numpy as np
 from burnout_calculator import calculate_burnout
-from difflib import SequenceMatcher
-
-def load_subject_data():
-    df = pd.read_csv('subjects_df.csv')
-    subjects_df = df[['Subject', 'Subject Names', 'Course Outcomes', 'Weekly Workload (hours)', 
-                      'Assignments #', 'Hours per Assignment', 'Assignment Weight', 
-                      'Avg Assignment Grade', 'Project Weight', 'Avg Project Grade', 
-                      'Exam #', 'Avg Exam Grade', 'Exam Weight', 'Avg Final Grade', 
-                      'Seats', 'Enrollments']].rename(columns={
-        'Subject': 'subject_code',
-        'Subject Names': 'name',
-        'Course Outcomes': 'course_outcomes',
-        'Weekly Workload (hours)': 'hours_per_week',
-        'Assignments #': 'num_assignments',
-        'Hours per Assignment': 'hours_per_assignment',
-        'Assignment Weight': 'assignment_weight',
-        'Avg Assignment Grade': 'avg_assignment_grade',
-        'Project Weight': 'project_weight',
-        'Avg Project Grade': 'avg_project_grade',
-        'Exam #': 'exam_count',
-        'Avg Exam Grade': 'avg_exam_grade',
-        'Exam Weight': 'exam_weight',
-        'Avg Final Grade': 'avg_final_grade',
-        'Seats': 'Seats',
-        'Enrollments': 'Enrollments'
-    })
-    for col in ['hours_per_week', 'num_assignments', 'hours_per_assignment', 'assignment_weight', 
-                'avg_assignment_grade', 'project_weight', 'avg_project_grade', 'exam_count', 
-                'avg_exam_grade', 'exam_weight', 'avg_final_grade', 'Seats', 'Enrollments']:
-        subjects_df[col] = pd.to_numeric(subjects_df[col], errors='coerce')
-    outcomes = []
-    for _, row in df.iterrows():
-        course_outcomes = row['Course Outcomes']
-        if pd.isna(course_outcomes) or not isinstance(course_outcomes, str):
-            continue
-        for outcome in course_outcomes.split(', '):
-            outcomes.append({'subject_code': row['Subject'], 'outcome': outcome.strip()})
-    outcomes_df = pd.DataFrame(outcomes)
-    prereqs = df[df['Prerequisite'] != 'None'][['Subject', 'Prerequisite']].rename(columns={
-        'Subject': 'subject_code', 'Prerequisite': 'prereq_subject_code'
-    }).dropna()
-    coreqs = df[df['Corequisite'] != 'None'][['Subject', 'Corequisite']].rename(columns={
-        'Subject': 'subject_code', 'Corequisite': 'coreq_subject_code'
-    }).dropna()
-    return subjects_df, outcomes_df, prereqs, coreqs
+from utils import load_subject_data, prerequisites_satisfied
 
 def load_burnout_scores(nuid):
     """Load burnout scores from CSV file"""
@@ -59,11 +12,6 @@ def load_burnout_scores(nuid):
         return scores_df
     except FileNotFoundError:
         return None
-
-def prerequisites_satisfied(course_code, student_data, prereqs_df):
-    """Check if prerequisites for a course are satisfied"""
-    prereqs = set(prereqs_df[prereqs_df['subject_code'] == course_code]['prereq_subject_code'])
-    return all(p in student_data['completed_courses'] for p in prereqs)
 
 def jaccard_similarity(set1, set2):
     '''
@@ -274,14 +222,20 @@ def find_matching_courses(student_data, subjects_df, outcomes_df, prereqs_df, co
     
     return matching_courses
 
-def get_all_prereqs(subject, prereqs_df, subjects_df, collected=None):
-    if collected is None:
-        collected = set()
-    prereqs = set(prereqs_df[prereqs_df['subject_code'] == subject]['prereq_subject_code'])
-    for prereq in prereqs:
-        if prereq not in collected and prereq in subjects_df['subject_code'].values:
-            collected.add(prereq)
-            get_all_prereqs(prereq, prereqs_df, subjects_df, collected)
+def get_all_prereqs_iterative(subject, prereqs_df, subjects_df):
+    """Get all prerequisites using iterative approach to avoid stack overflow"""
+    to_process = [subject]
+    collected = set()
+    
+    while to_process:
+        current = to_process.pop(0)
+        direct_prereqs = set(prereqs_df[prereqs_df['subject_code'] == current]['prereq_subject_code'])
+        
+        for prereq in direct_prereqs:
+            if prereq not in collected and prereq in subjects_df['subject_code'].values:
+                collected.add(prereq)
+                to_process.append(prereq)
+    
     return collected
 
 def get_all_coreqs(subject, coreqs_df, subjects_df, collected=None):
@@ -294,68 +248,42 @@ def get_all_coreqs(subject, coreqs_df, subjects_df, collected=None):
             get_all_coreqs(coreq, coreqs_df, subjects_df, collected)
     return collected
 
-def recommend_schedule(nuid):
-    """Main function that generates and returns recommendations for UI to display"""
-    subjects_df, outcomes_df, prereqs_df, coreqs_df = load_subject_data()
-    burnout_scores_df = load_burnout_scores(nuid)
-    
+def get_student_data(nuid, semester):
     try:
         student_df = pd.read_csv(f'student_{nuid}.csv')
-    except FileNotFoundError:
-        print(f"Error: Student data not found for NUID: {nuid}")
-        return None, None, None
-    
-    semester = int(input("Which semester are you in? "))
-    
-    student_data = {
-        'NUid': student_df['NUid'].iloc[0],
-        'semester': semester,
-        'completed_courses': set(str(course).upper() for course in 
-            str(student_df['completed_courses'].iloc[0]).split(',') 
-            if pd.notna(student_df['completed_courses'].iloc[0]) and str(student_df['completed_courses'].iloc[0]).strip()),
-        'core_subjects': str(student_df['core_subjects'].iloc[0]).upper(),
-        'interests': (
-            str(student_df['desired_outcomes'].iloc[0]) if pd.notna(student_df['desired_outcomes'].iloc[0]) 
-            else 'computer science'
-        ),
-        'desired_outcomes': (
-            str(student_df['desired_outcomes'].iloc[0]) if pd.notna(student_df['desired_outcomes'].iloc[0]) 
-            else 'computer science'
-        )
-    }
-    
-    # Get additional interests if needed
-    additional_interests = []
-    choice = input("\nWould you like to add specific interests to improve recommendations? (yes/no): ").lower().strip()
-    if choice == 'yes':
-        print("\nWhat areas are you interested in? (Select one or more numbers, separated by commas)")
-        interests = {
-            1: "artificial intelligence",
-            2: "web development",
-            3: "data science",
-            4: "cybersecurity",
-            5: "mobile development",
-            6: "systems programming",
-            7: "cloud computing",
-            8: "software engineering",
-            9: "database systems",
-            10: "computer vision",
-            11: "natural language processing",
-            12: "algorithms",
-            13: "networking",
-            14: "robotics"
+        
+        student_data = {
+            'NUid': student_df['NUid'].iloc[0],
+            'semester': semester,
+            'completed_courses': set(str(course).upper() for course in 
+                str(student_df['completed_courses'].iloc[0]).split(',') 
+                if pd.notna(student_df['completed_courses'].iloc[0]) and str(student_df['completed_courses'].iloc[0]).strip()),
+            'core_subjects': str(student_df['core_subjects'].iloc[0]).upper(),
+            'interests': (
+                str(student_df['desired_outcomes'].iloc[0]) if pd.notna(student_df['desired_outcomes'].iloc[0]) 
+                else 'computer science'
+            ),
+            'desired_outcomes': (
+                str(student_df['desired_outcomes'].iloc[0]) if pd.notna(student_df['desired_outcomes'].iloc[0]) 
+                else 'computer science'
+            )
         }
         
-        for num, interest in interests.items():
-            print(f"{num}. {interest}")
-        
-        try:
-            choices = input("\nEnter numbers (e.g., 1,3,5) or 'skip' to continue: ").strip()
-            if choices.lower() != 'skip':
-                additional_interests = [interests[int(num.strip())] for num in choices.split(',')]
-                student_data['interests'] += ',' + ','.join(additional_interests)
-        except:
-            print("Invalid input. Continuing with default interests.")
+        return student_data
+    except FileNotFoundError:
+        return None
+
+def generate_recommendations(nuid, semester, additional_interests=None):
+    subjects_df, outcomes_df, prereqs_df, coreqs_df, _ = load_subject_data()
+    burnout_scores_df = load_burnout_scores(nuid)
+    
+    student_data = get_student_data(nuid, semester)
+    if student_data is None:
+        return None, None
+    
+    # Add additional interests if provided
+    if additional_interests:
+        student_data['interests'] += ',' + ','.join(additional_interests)
     
     # Find matching courses
     matching_courses = find_matching_courses(
@@ -368,23 +296,18 @@ def recommend_schedule(nuid):
     
     for course in matching_courses:
         if course['likelihood'] < 0.3:  # Very competitive
-            if len(highly_competitive_courses) < 5:
-                highly_competitive_courses.append(course)
+            highly_competitive_courses.append(course)
         else:
-            if len(recommended_courses) < 5:
-                recommended_courses.append(course)
+            recommended_courses.append(course)
     
-    # Save the final schedule (top 5 recommendations)
+    return recommended_courses, highly_competitive_courses
+
+def save_schedule(nuid, recommended_courses, subjects_df, burnout_scores_df):
+    # Format recommendations into final schedule format
     top_recommendations = []
-    for course in recommended_courses + highly_competitive_courses:
-        if len(top_recommendations) >= 5:
-            break
+    for course in recommended_courses:
+        course_code = course if isinstance(course, str) else course['subject_code']
         
-        top_recommendations.append(course['subject_code'])
-    
-    # Format schedule for saving
-    subject_list = {}
-    for i, course_code in enumerate(top_recommendations, 1):
         # Extract course details
         name = subjects_df[subjects_df['subject_code'] == course_code]['name'].iloc[0] if course_code in subjects_df['subject_code'].values else "Unknown course"
         utility = ""
@@ -393,14 +316,21 @@ def recommend_schedule(nuid):
             if not utility_row.empty:
                 utility = utility_row['utility'].iloc[0]
         
-        subject_list[f"Subject {i}"] = f"{course_code}: {name} (Utility: {utility})"
+        top_recommendations.append({
+            'subject_code': course_code,
+            'name': name,
+            'utility': utility
+        })
     
-    # Save schedule to CSV
+    # Save final selections in schedule format
+    subject_list = {}
+    for i, course in enumerate(top_recommendations[:5], 1):
+        subject_list[f"Subject {i}"] = f"{course['subject_code']}: {course['name']} (Utility: {course['utility']})"
+    
     schedule_df = pd.DataFrame([{
         'NUid': nuid,
         'schedule': json.dumps(subject_list)
     }])
     
     schedule_df.to_csv(f'schedule_{nuid}.csv', index=False)
-    
-    return recommended_courses, highly_competitive_courses, subject_list
+    return subject_list

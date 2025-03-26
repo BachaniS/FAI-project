@@ -1,4 +1,6 @@
-from ga_recommender import recommend_schedule
+import pandas as pd
+from ga_recommender import generate_recommendations, save_schedule, load_burnout_scores
+from utils import load_subject_data
 
 def get_enrollment_status(seats, enrollments):
     """Get enrollment status message based on seats and enrollments"""
@@ -31,8 +33,43 @@ def get_burnout_status(burnout_score, utility_score):
     else:
         return "🟢 Low burnout risk. Should be manageable with your current skills"
 
-def display_recommendations(recommended_courses, highly_competitive_courses):
-    """Display the recommended courses to the user"""
+def get_additional_interests():
+    """Get additional interests from the user"""
+    print("\nWhat other areas are you interested in? (Select one or more numbers, separated by commas)")
+    interests = {
+        1: "artificial intelligence",
+        2: "web development",
+        3: "data science",
+        4: "cybersecurity",
+        5: "mobile development",
+        6: "systems programming",
+        7: "cloud computing",
+        8: "software engineering",
+        9: "database systems",
+        10: "computer vision",
+        11: "natural language processing",
+        12: "algorithms",
+        13: "networking",
+        14: "robotics"
+    }
+    
+    for num, interest in interests.items():
+        print(f"{num}. {interest}")
+    
+    try:
+        choices = input("\nEnter numbers (e.g., 1,3,5) or 'skip' to continue: ").strip()
+        if choices.lower() == 'skip':
+            return []
+        
+        selected = [interests[int(num.strip())] for num in choices.split(',')]
+        return selected
+    except:
+        print("Invalid input. Continuing with current recommendations.")
+        return []
+
+def display_recommendations(recommended_courses, highly_competitive_courses, round_num=1):
+    print(f"\n=== Round {round_num} Recommendations ===")
+    
     # Display recommendations
     print("\n🎯 Recommended Courses:")
     if recommended_courses:
@@ -64,7 +101,7 @@ def display_recommendations(recommended_courses, highly_competitive_courses):
                 likelihood_percent = course['likelihood'] * 100
                 print(f"   Enrollment Likelihood: {likelihood_percent:.1f}%")
     else:
-        print("No courses found matching your criteria.")
+        print("No new courses found matching your immediate criteria.")
     
     # Display highly competitive courses
     if highly_competitive_courses:
@@ -98,27 +135,86 @@ def display_recommendations(recommended_courses, highly_competitive_courses):
                 print("   💡 Tip: Consider registering for this course in a future semester when you'll have higher priority")
             else:
                 print("   💡 Tip: If interested, prepare to register immediately when registration opens")
+    return len(recommended_courses) + len(highly_competitive_courses) > 0
 
-def display_final_schedule(schedule):
-    """Display the final recommended schedule"""
+def recommend_schedule(nuid):
+    """Main function to recommend a schedule for a student"""
+    subjects_df, _, _, _, _ = load_subject_data()
+    burnout_scores_df = load_burnout_scores(nuid)
+    
+    try:
+        student_df = pd.read_csv(f'student_{nuid}.csv')
+    except FileNotFoundError:
+        print(f"Error: Student data not found for NUID: {nuid}")
+        return None
+    
+    semester = int(input("Which semester are you in? "))
+    
+    # Keep track of recommended courses to avoid repetition
+    recommended_history = set()
+    
+    # Initial recommendations
+    round_num = 1
+    recommended_courses, highly_competitive_courses = generate_recommendations(nuid, semester)
+    
+    if recommended_courses is None:
+        print(f"Error: Could not generate recommendations for NUID: {nuid}")
+        return None
+    
+    # Filter out previously recommended courses
+    new_recommended = [course for course in recommended_courses 
+                     if course['subject_code'] not in recommended_history][:5]
+    new_competitive = [course for course in highly_competitive_courses 
+                      if course['subject_code'] not in recommended_history][:5]
+    
+    # Add recommended courses to history
+    for course in new_recommended + new_competitive:
+        recommended_history.add(course['subject_code'])
+    
+    has_recommendations = display_recommendations(new_recommended, new_competitive, round_num)
+    
+    # Continue recommending until user is satisfied or no more courses
+    while has_recommendations:
+        choice = input("\nWould you like to see more recommendations? (yes/no): ").lower().strip()
+        if choice != 'yes':
+            break
+            
+        # Get additional interests
+        print("\nLet's find more courses based on additional interests!")
+        additional_interests = get_additional_interests()
+        
+        # Get new recommendations
+        round_num += 1
+        recommended_courses, highly_competitive_courses = generate_recommendations(
+            nuid, semester, additional_interests
+        )
+        
+        # Filter out previously recommended courses
+        new_recommended = [course for course in recommended_courses 
+                         if course['subject_code'] not in recommended_history][:5]
+        new_competitive = [course for course in highly_competitive_courses 
+                          if course['subject_code'] not in recommended_history][:5]
+        
+        # Add new recommendations to history
+        for course in new_recommended + new_competitive:
+            recommended_history.add(course['subject_code'])
+        
+        has_recommendations = display_recommendations(new_recommended, new_competitive, round_num)
+        
+        if not has_recommendations:
+            print("\nNo more courses available matching your criteria.")
+    
+    # Save the final schedule
+    schedule = save_schedule(nuid, recommended_history, subjects_df, burnout_scores_df)
+    print(f"\nFinal schedule saved to schedule_{nuid}.csv")
+    
+    # Display final schedule summary
     print("\n=== Final Recommended Schedule ===")
     for subject_key, subject_value in schedule.items():
         print(f"{subject_key}: {subject_value}")
+    
+    return recommended_history
 
 if __name__ == "__main__":
     nuid = input("Enter NUid to recommend schedule: ")
-    
-    # Get recommendations from the GA recommender
-    recommended_courses, competitive_courses, final_schedule = recommend_schedule(nuid)
-    
-    # Display the recommendations
-    if recommended_courses is not None:
-        display_recommendations(recommended_courses, competitive_courses)
-        
-        # Display the final schedule
-        if final_schedule:
-            display_final_schedule(final_schedule)
-        
-        print(f"\nFinal schedule saved to schedule_{nuid}.csv")
-    else:
-        print(f"Error: Could not generate recommendations for NUID: {nuid}")
+    recommend_schedule(nuid)
