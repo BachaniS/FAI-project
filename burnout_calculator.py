@@ -9,7 +9,8 @@ def get_subject(subjects_df, subject_code):
     '''
     Get subject data
     '''
-    return  subjects_df[subjects_df['subject_code'] == subject_code]
+    subject_rows = subjects_df[subjects_df['subject_code'] == subject_code]
+    return subject_rows.iloc[0] if not subject_rows.empty else None
 
 def workload_factor(subject_code, subjects_df, max_values):
     '''
@@ -249,7 +250,7 @@ def calculate_scores(nuid):
         # But we include a placeholder to maintain file structure compatibility
         scores.append({
             'subject_code': subject_code,
-            'subject_name': get_subject(subjects_df, subject_code),
+            'subject_name': get_subject(subjects_df, subject_code).iloc[0]['name'] if not get_subject(subjects_df, subject_code).empty else "Unknown course",
             'burnout_score': round(burnout, 3),
             'prerequisites': prereqs,
             'prerequisites_satisfied': prereqs_satisfied_val,

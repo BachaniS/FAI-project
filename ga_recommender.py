@@ -1,17 +1,7 @@
 import pandas as pd
 import json
 from burnout_calculator import calculate_burnout
-from utils import load_subject_data, prerequisites_satisfied, standardize_student_data
-
-def load_burnout_scores(nuid):
-    """Load burnout scores from CSV file"""
-    try:
-        scores_df = pd.read_csv(f'burnout_scores_{nuid}.csv')
-        # Remove any duplicates if present
-        scores_df = scores_df.drop_duplicates(subset=['subject_code'])
-        return scores_df
-    except FileNotFoundError:
-        return None
+from utils import load_subject_data, prerequisites_satisfied, standardize_student_data, load_burnout_scores
 
 def jaccard_similarity(set1, set2):
     '''
@@ -223,32 +213,6 @@ def find_matching_courses(student_data, subjects_df, outcomes_df, prereqs_df, co
     ), reverse=True)
     
     return matching_courses
-
-def get_all_prereqs_iterative(subject, prereqs_df, subjects_df):
-    """Get all prerequisites using iterative approach to avoid stack overflow"""
-    to_process = [subject]
-    collected = set()
-    
-    while to_process:
-        current = to_process.pop(0)
-        direct_prereqs = set(prereqs_df[prereqs_df['subject_code'] == current]['prereq_subject_code'])
-        
-        for prereq in direct_prereqs:
-            if prereq not in collected and prereq in subjects_df['subject_code'].values:
-                collected.add(prereq)
-                to_process.append(prereq)
-    
-    return collected
-
-def get_all_coreqs(subject, coreqs_df, subjects_df, collected=None):
-    if collected is None:
-        collected = set()
-    coreqs = set(coreqs_df[coreqs_df['subject_code'] == subject]['coreq_subject_code'])
-    for coreq in coreqs:
-        if coreq not in collected and coreq in subjects_df['subject_code'].values:
-            collected.add(coreq)
-            get_all_coreqs(coreq, coreqs_df, subjects_df, collected)
-    return collected
 
 def get_student_data(nuid, semester):
     try:
