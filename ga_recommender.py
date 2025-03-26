@@ -1,230 +1,251 @@
 import pandas as pd
-import random
-from deap import base, creator, tools, algorithms
-import json
 import numpy as np
+import random
+import json
+from load_subject_data import load_subject_data
+from burnout_calculator import calculate_burnout
 
-def load_subject_data():
-    df = pd.read_csv('subject_analysis.csv')
-    subjects_df = df[['Subject', 'Subject Names', 'Weekly Workload (hours)', 'Assignments #', 'Hours per Assignment', 
-                      'Assignment Weight', 'Avg Assignment Grade', 'Project Weight', 'Avg Project Grade', 'Exam #', 
-                      'Avg Exam Grade', 'Exam Weight', 'Avg Final Grade']].rename(columns={
-        'Subject': 'subject_code', 'Subject Names': 'name', 'Weekly Workload (hours)': 'hours_per_week', 
-        'Assignments #': 'num_assignments', 'Hours per Assignment': 'hours_per_assignment', 
-        'Assignment Weight': 'assignment_weight', 'Avg Assignment Grade': 'avg_assignment_grade', 
-        'Project Weight': 'project_weight', 'Avg Project Grade': 'avg_project_grade', 'Exam #': 'exam_count', 
-        'Avg Exam Grade': 'avg_exam_grade', 'Exam Weight': 'exam_weight', 'Avg Final Grade': 'avg_final_grade'
-    })
-    for col in ['hours_per_week', 'num_assignments', 'hours_per_assignment', 'assignment_weight', 
-                'avg_assignment_grade', 'project_weight', 'avg_project_grade', 'exam_count', 
-                'avg_exam_grade', 'exam_weight', 'avg_final_grade']:
-        subjects_df[col] = pd.to_numeric(subjects_df[col], errors='coerce')
-    outcomes = []
-    for _, row in df.iterrows():
-        course_outcomes = row['Course Outcomes']
-        if pd.isna(course_outcomes) or not isinstance(course_outcomes, str):
-            continue
-        for outcome in course_outcomes.split(', '):
-            outcomes.append({'subject_code': row['Subject'], 'outcome': outcome.strip()})
-    outcomes_df = pd.DataFrame(outcomes)
-    prereqs = df[df['Prerequisite'] != 'None'][['Subject', 'Prerequisite']].rename(columns={
-        'Subject': 'subject_code', 'Prerequisite': 'prereq_subject_code'
-    }).dropna()
-    coreqs = df[df['Corequisite'] != 'None'][['Subject', 'Corequisite']].rename(columns={
-        'Subject': 'subject_code', 'Corequisite': 'coreq_subject_code'
-    }).dropna()
-    return subjects_df, outcomes_df, prereqs, coreqs
+# Load course data
+subjects_df, outcomes_df, prereqs_df, coreqs_df = load_subject_data()
+all_subjects = subjects_df['subject_code'].tolist()
 
-def calculate_alignment(student_data, subject_code, outcomes_df):
-    desired = set(student_data['desired_outcomes'].split(','))
-    subject_outcomes = set(outcomes_df[outcomes_df['subject_code'] == subject_code]['outcome'])
-    overlap = len(desired & subject_outcomes) / len(desired) if desired else 0
-    return overlap
+# GA Parameters
+POPULATION_SIZE = 50
+GENERATIONS = 100
+SEMESTERS = 8
+COURSES_PER_SEMESTER = 2
+MUTATION_RATE = 0.1
+TOTAL_COURSES = SEMESTERS * COURSES_PER_SEMESTER  # 16 courses total
+blacklist = set()
 
-def evaluate_schedule(individual, subjects, nuid, subjects_df, scores_df, prereqs_df, coreqs_df, student_data, outcomes_df):
-    schedule_subjects = [subjects[i] for i in individual]
-    taken = set(student_data['completed_courses'])
+def load_student_data(nuid):
+    try:
+        student_df = pd.read_csv(f'student_{nuid}.csv')
+        student_data = {
+            'NUid': student_df['NUid'].iloc[0],
+            'programming_experience': student_df['programming_experience'].iloc[0],
+            'math_experience': student_df['math_experience'].iloc[0],
+            'completed_courses': json.loads(student_df['completed_courses_details'].iloc[0]),
+            'core_subjects': student_df['core_subjects'].iloc[0],
+            'desired_outcomes': student_df['desired_outcomes'].iloc[0]
+        }
+        print(f"Loaded student data: {student_data}")
+        return student_data
+    except FileNotFoundError:
+        print(f"Error: student_{nuid}.csv not found. Please run student_input.py first.")
+        exit(1)
 
-    violations = 0
+def load_burnout_scores(nuid):
+    try:
+        scores_df = pd.read_csv(f'burnout_scores_{nuid}.csv')
+        return {row['subject_code']: row['burnout_score'] for _, row in scores_df.iterrows()}
+    except FileNotFoundError:
+        return None
+
+def initialize_population(available_subjects, core_subjects):
+    population = []
+    non_core_options = [s for s in available_subjects if s not in core_subjects]
+    
+    for _ in range(POPULATION_SIZE):
+        plan = [[] for _ in range(SEMESTERS)]
+        # Pre-allocate core subjects
+        for i, core in enumerate(core_subjects):
+            plan[i].append(core)
+        # Fill remaining slots in core semesters
+        remaining = random.sample(non_core_options, TOTAL_COURSES - len(core_subjects))
+        for i in range(len(core_subjects)):
+            plan[i].append(remaining.pop())
+        # Fill remaining semesters
+        for i in range(len(core_subjects), SEMESTERS):
+            plan[i] = [remaining.pop() for _ in range(COURSES_PER_SEMESTER)]
+        population.append(plan)
+    return population
+
+def calculate_fitness(plan, taken, student_data, burnout_scores=None):
+    total_burnout = 0
+    prereq_penalty = 0
+    outcome_score = 0
+    core_penalty = 0
+    duplicate_penalty = 0
+    
+    desired = set(student_data["desired_outcomes"].split(","))
+    core_subjects = set(student_data['core_subjects'].split(','))
     scheduled = set()
-    for idx, subj in enumerate(schedule_subjects):
-        scheduled.add(subj)
-        prereqs = set(prereqs_df[prereqs_df['subject_code'] == subj]['prereq_subject_code'])
-        prior_scheduled = taken.union(set(schedule_subjects[:idx]))
-        if prereqs and not prereqs.issubset(prior_scheduled):
-            violations += len(prereqs - prior_scheduled)
-            print(f"Violation: {subj} needs prereqs {prereqs - prior_scheduled} before it")
-        coreqs = set(coreqs_df[coreqs_df['subject_code'] == subj]['coreq_subject_code'])
-        if coreqs and not coreqs.issubset(scheduled):
-            violations += len(coreqs - scheduled)
-            print(f"Coreq Violation: {subj} needs {coreqs - scheduled}")
+    all_courses = []
+    
+    for semester in plan:
+        for subject_code in semester:
+            all_courses.append(subject_code)
+            scheduled.add(subject_code)
+            if burnout_scores and subject_code in burnout_scores:
+                burnout = burnout_scores[subject_code]
+            else:
+                burnout = calculate_burnout(student_data, subject_code, subjects_df, prereqs_df, outcomes_df)
+            total_burnout += burnout
+            prereqs = set(prereqs_df[prereqs_df['subject_code'] == subject_code]['prereq_subject_code'])
+            unmet_prereqs = prereqs - taken - scheduled
+            prereq_penalty += len(unmet_prereqs) * 10
+            subject_outcomes = set(outcomes_df[outcomes_df['subject_code'] == subject_code]['outcome'])
+            overlap = len(desired & subject_outcomes)
+            outcome_score += overlap
+    
+    missing_cores = core_subjects - scheduled
+    core_penalty = len(missing_cores) * 1000
+    duplicates = len(all_courses) - len(set(all_courses))
+    duplicate_penalty = duplicates * 1000
+    
+    fitness = -total_burnout - prereq_penalty + outcome_score - core_penalty - duplicate_penalty
+    return fitness
 
-    if violations > 0:
-        return -10000 * violations,
+def selection(population, fitness_scores):
+    tournament_size = 3
+    tournament = random.sample(list(zip(population, fitness_scores)), tournament_size)
+    return max(tournament, key=lambda x: x[1])[0]
 
-    total_burnout = sum(scores_df[scores_df['subject_code'] == s]['burnout_score'].iloc[0] for s in schedule_subjects)
-    total_hours = sum(subjects_df[subjects_df['subject_code'] == s]['hours_per_week'].iloc[0] for s in schedule_subjects)
-    excess_hours = max(0, total_hours - (20 * ((len(schedule_subjects) + 1) // 2)))
-    desired = set(student_data['desired_outcomes'].split(','))
-    total_alignment = sum(len(desired & set(outcomes_df[outcomes_df['subject_code'] == s]['outcome'])) / len(desired) 
-                          for s in schedule_subjects)
+def crossover(parent1, parent2, core_subjects):
+    child1 = [sem[:] for sem in parent1]
+    child2 = [sem[:] for sem in parent2]
+    
+    # Preserve core subjects in their original semesters
+    for i, core in enumerate(core_subjects):
+        child1[i][0] = core
+        child2[i][0] = core
+    
+    # Crossover non-core slots
+    flat_parent1 = [sem[j] for i, sem in enumerate(parent1) for j in range(len(sem)) if (j > 0 or i >= len(core_subjects))]
+    flat_parent2 = [sem[j] for i, sem in enumerate(parent2) for j in range(len(sem)) if (j > 0 or i >= len(core_subjects))]
+    remaining_slots = TOTAL_COURSES - len(core_subjects)
+    
+    point = random.randint(1, remaining_slots - 1)
+    child1_flat = flat_parent1[:point] + [c for c in flat_parent2[point:] if c not in flat_parent1[:point]]
+    child2_flat = flat_parent2[:point] + [c for c in flat_parent1[point:] if c not in flat_parent2[:point]]
+    
+    available = [c for c in all_subjects if c not in blacklist and c not in core_subjects]
+    while len(child1_flat) < remaining_slots:
+        new_course = random.choice([c for c in available if c not in child1_flat])
+        child1_flat.append(new_course)
+    while len(child2_flat) < remaining_slots:
+        new_course = random.choice([c for c in available if c not in child2_flat])
+        child2_flat.append(new_course)
+    
+    child1_flat = child1_flat[:remaining_slots]
+    child2_flat = child2_flat[:remaining_slots]
+    
+    # Rebuild plans
+    flat_idx = 0
+    for i in range(SEMESTERS):
+        if i < len(core_subjects):
+            child1[i][1] = child1_flat[flat_idx]
+            child2[i][1] = child2_flat[flat_idx]
+            flat_idx += 1
+        else:
+            child1[i] = child1_flat[flat_idx:flat_idx + COURSES_PER_SEMESTER]
+            child2[i] = child2_flat[flat_idx:flat_idx + COURSES_PER_SEMESTER]
+            flat_idx += COURSES_PER_SEMESTER
+    
+    return child1, child2
 
-    return -total_burnout - 10 * excess_hours + 15 * total_alignment,
+def mutation(plan, core_subjects):
+    plan_copy = [sem[:] for sem in plan]
+    if random.random() < MUTATION_RATE:
+        mutable_slots = [(i, j) for i in range(SEMESTERS) for j in range(COURSES_PER_SEMESTER) 
+                         if (i >= len(core_subjects) or j > 0)]
+        if mutable_slots:
+            sem_idx, course_idx = random.choice(mutable_slots)
+            available = [c for c in all_subjects if c not in blacklist and c not in [c for sem in plan_copy for c in sem]]
+            if available:
+                plan_copy[sem_idx][course_idx] = random.choice(available)
+    return plan_copy
 
-def generate_schedule(nuid, subjects_df, scores_df, student_data, outcomes_df, prereqs_df, coreqs_df, all_subjects, num_subjects):
-    if len(all_subjects) < num_subjects:
-        raise ValueError(f"Cannot schedule {num_subjects} subjects; only {len(all_subjects)} available: {all_subjects}")
+def genetic_algorithm(available_subjects, taken, student_data, burnout_scores, core_subjects):
+    population = initialize_population(available_subjects, core_subjects)
+    for generation in range(GENERATIONS):
+        fitness_scores = [calculate_fitness(plan, taken, student_data, burnout_scores) for plan in population]
+        new_population = []
+        best_idx = np.argmax(fitness_scores)
+        new_population.append(population[best_idx])
+        while len(new_population) < POPULATION_SIZE:
+            parent1 = selection(population, fitness_scores)
+            parent2 = selection(population, fitness_scores)
+            child1, child2 = crossover(parent1, parent2, core_subjects)
+            child1 = mutation(child1, core_subjects)
+            child2 = mutation(child2, core_subjects)
+            new_population.extend([child1, child2])
+        population = new_population[:POPULATION_SIZE]
+        if generation % 10 == 0:
+            best_fitness = max(fitness_scores)
+            print(f"Generation {generation}: Best Fitness = {best_fitness}")
+    fitness_scores = [calculate_fitness(plan, taken, student_data, burnout_scores) for plan in population]
+    best_plan = population[np.argmax(fitness_scores)]
+    return best_plan, max(fitness_scores)
 
-    creator.create("FitnessMax", base.Fitness, weights=(1.0,))
-    creator.create("Individual", list, fitness=creator.FitnessMax)
+def display_plan(plan):
+    print("\nProposed 8-Semester Course Plan:")
+    for i, semester in enumerate(plan, 1):
+        print(f"Semester {i}:")
+        for subject_code in semester:
+            burnout = calculate_burnout(student_data, subject_code, subjects_df, prereqs_df, outcomes_df)
+            name = subjects_df[subjects_df['subject_code'] == subject_code]['name'].iloc[0]
+            print(f"  {subject_code} - {name}: Burnout Score = {burnout:.3f}")
 
-    toolbox = base.Toolbox()
-    toolbox.register("indices", random.sample, range(len(all_subjects)), num_subjects)
-    toolbox.register("individual", tools.initIterate, creator.Individual, toolbox.indices)
-    toolbox.register("population", tools.initRepeat, list, toolbox.individual)
-    toolbox.register("evaluate", evaluate_schedule, subjects=all_subjects, nuid=nuid, subjects_df=subjects_df, 
-                     scores_df=scores_df, prereqs_df=prereqs_df, coreqs_df=coreqs_df, 
-                     student_data=student_data, outcomes_df=outcomes_df)
-    toolbox.register("mate", tools.cxPartialyMatched)
-    toolbox.register("mutate", tools.mutShuffleIndexes, indpb=0.05)
-    toolbox.register("select", tools.selTournament, tournsize=3)
+def save_plan_to_csv(plan, nuid, fitness_score):
+    subject_list = {}
+    for i, semester in enumerate(plan, 1):
+        for j, subject_code in enumerate(semester, 1):
+            burnout = calculate_burnout(student_data, subject_code, subjects_df, prereqs_df, outcomes_df)
+            name = subjects_df[subjects_df['subject_code'] == subject_code]['name'].iloc[0]
+            subject_list[f"Semester {i} Subject {j}"] = f"{subject_code}: {name} (Burnout: {burnout:.3f})"
+    
+    schedule_df = pd.DataFrame([{
+        'NUid': nuid,
+        'schedule': json.dumps(subject_list),
+        'fitness_score': fitness_score
+    }])
+    schedule_df.to_csv(f'course_plan_{nuid}.csv', index=False)
+    print(f"\nPlan saved to course_plan_{nuid}.csv")
 
-    pop = toolbox.population(n=100)
-    algorithms.eaSimple(pop, toolbox, cxpb=0.7, mutpb=0.2, ngen=100, verbose=False)
-
-    best = tools.selBest(pop, 1)[0]
-    schedule = [all_subjects[i] for i in best]
-    return schedule, best.fitness.values[0]
-
-def get_all_prereqs(subject, prereqs_df, subjects_df, collected=None):
-    if collected is None:
-        collected = set()
-    prereqs = set(prereqs_df[prereqs_df['subject_code'] == subject]['prereq_subject_code'])
-    for prereq in prereqs:
-        if prereq not in collected and prereq in subjects_df['subject_code'].values:
-            collected.add(prereq)
-            get_all_prereqs(prereq, prereqs_df, subjects_df, collected)
-    return collected
-
-def get_all_coreqs(subject, coreqs_df, subjects_df, collected=None):
-    if collected is None:
-        collected = set()
-    coreqs = set(coreqs_df[coreqs_df['subject_code'] == subject]['coreq_subject_code'])
-    for coreq in coreqs:
-        if coreq not in collected and coreq in subjects_df['subject_code'].values:
-            collected.add(coreq)
-            get_all_coreqs(coreq, coreqs_df, subjects_df, collected)
-    return collected
-
-def recommend_schedule(nuid):
-    subjects_df, outcomes_df, prereqs_df, coreqs_df = load_subject_data()
-    scores_df = pd.read_csv(f'burnout_scores_{nuid}.csv')
-    student_df = pd.read_csv(f'student_{nuid}.csv')
-    student_data = {
-        'NUid': student_df['NUid'].iloc[0],
-        'completed_courses': set(str(student_df['completed_courses'].iloc[0]).split(',') if pd.notna(student_df['completed_courses'].iloc[0]) and str(student_df['completed_courses'].iloc[0]).strip() else []),
-        'core_subjects': student_df['core_subjects'].iloc[0],
-        'desired_outcomes': student_df['desired_outcomes'].iloc[0]
-    }
-
+def main():
+    global blacklist, student_data
+    
+    nuid = input("Enter your NUid to load existing student data: ")
+    student_data = load_student_data(nuid)
+    burnout_scores = load_burnout_scores(nuid)
+    
     core_subjects = student_data['core_subjects'].split(',')
-    completed = student_data['completed_courses']
-    print(f"Completed courses: {completed}")
-    available_subjects = [s for s in subjects_df['subject_code'].tolist() if s not in completed]
+    print(f"Core subjects to include: {core_subjects}")
+    taken = set(student_data["completed_courses"].keys())
+    print(f"Completed courses: {taken}")
     
-    remaining_core = [s for s in core_subjects if s not in completed]
-    total_subjects_needed = 8
-    num_completed = len([c for c in completed if c])
-    num_to_schedule = total_subjects_needed - num_completed
-    print(f"Num completed: {num_completed}, Num to schedule: {num_to_schedule}")
-
-    alignment_scores = {s: calculate_alignment(student_data, s, outcomes_df) for s in available_subjects}
-    print("Alignment Scores:", alignment_scores)
-    sorted_subjects = sorted(available_subjects, key=lambda x: alignment_scores[x], reverse=True)
-    
-    # Core subjects and all dependencies
-    required_subjects = set(remaining_core)
-    for subj in remaining_core:
-        required_subjects.update(get_all_prereqs(subj, prereqs_df, subjects_df))
-        required_subjects.update(get_all_coreqs(subj, coreqs_df, subjects_df))
-    required_subjects = [s for s in required_subjects if s in subjects_df['subject_code'].values]
-    print(f"Required subjects (core + prereqs + coreqs): {required_subjects}")
-
-    # Viable subjects: alignment > 0, all prereqs/coreqs in required_subjects or completed
-    viable_subjects = []
-    for s in sorted_subjects:
-        prereqs = get_all_prereqs(s, prereqs_df, subjects_df)
-        coreqs = get_all_coreqs(s, coreqs_df, subjects_df)
-        if (alignment_scores[s] > 0 and 
-            all(p in required_subjects or p in completed for p in prereqs) and 
-            all(c in required_subjects or c in completed for c in coreqs)):
-            viable_subjects.append(s)
-        elif s in required_subjects:  # Ensure core subjects with dependencies are viable if possible
-            viable_subjects.append(s)
-    print(f"Viable subjects (alignment > 0 or required, prereqs/coreqs satisfied): {viable_subjects}")
-    
-    # Build all_subjects: required + priority aligned subjects
-    all_subjects = required_subjects.copy()
-    remaining_slots = num_to_schedule - len(all_subjects)
-    priority_subjects = [s for s in viable_subjects if s not in all_subjects][:remaining_slots]
-    all_subjects.extend(priority_subjects)
-
-    # Fill remaining slots with feasible subjects
-    if len(all_subjects) < num_to_schedule:
-        extra_subjects = [s for s in sorted_subjects if s not in all_subjects and 
-                          all(p in all_subjects or p in completed for p in get_all_prereqs(s, prereqs_df, subjects_df)) and 
-                          all(c in all_subjects or c in completed for c in get_all_coreqs(s, coreqs_df, subjects_df))][:num_to_schedule - len(all_subjects)]
-        all_subjects.extend(extra_subjects)
-    
-    print(f"Final all_subjects: {all_subjects} (Length: {len(all_subjects)})")
-
     while True:
-        schedule, fitness_score = generate_schedule(nuid, subjects_df, scores_df, student_data, outcomes_df, prereqs_df, coreqs_df, all_subjects, num_to_schedule)
-        print(f"Generated schedule codes: {schedule}")
-
-        subject_list = {}
-        for i, subj in enumerate(schedule, 1):
-            subj_df = subjects_df[subjects_df['subject_code'] == subj]
-            name = subj_df['name'].iloc[0] if not subj_df.empty else "Unknown Course"
-            subject_list[f"Subject {i}"] = f"{subj}: {name}"
-
-        print("\nProposed Schedule:")
-        for key, value in subject_list.items():
-            print(f"{key}: {value}")
-        print(f"Completed Courses: {list(completed)}")
-        print(f"Fitness Score: {fitness_score}")
-
-        satisfied = input("Are you satisfied with this schedule? (yes/no): ").strip().lower()
-        if satisfied == 'yes':
-            schedule_df = pd.DataFrame([{
-                'NUid': nuid,
-                'schedule': json.dumps(subject_list),
-                'fitness_score': fitness_score
-            }])
-            schedule_df.to_csv(f'schedule_{nuid}.csv', index=False)
-            print(f"Final schedule saved to schedule_{nuid}.csv")
+        available_subjects = [s for s in all_subjects if s not in blacklist]
+        if len(available_subjects) < TOTAL_COURSES:
+            print(f"Not enough subjects available ({len(available_subjects)}). Need {TOTAL_COURSES}. Stopping.")
+            return
+        
+        for core in core_subjects:
+            if core not in available_subjects:
+                print(f"Core subject {core} not available. Adjust blacklist or subject data.")
+                return
+        
+        print("\nGenerating full 8-semester plan...")
+        plan, fitness_score = genetic_algorithm(available_subjects, taken, student_data, burnout_scores, core_subjects)
+        display_plan(plan)
+        
+        satisfied = input("\nAre you satisfied with this plan? (yes/no): ").lower()
+        if satisfied == "yes":
+            save_plan_to_csv(plan, nuid, fitness_score)
+            print("Plan finalized!")
             break
         else:
-            remove_subjects = input("Which subjects do you want to remove? (Enter subject codes separated by commas): ").strip()
-            remove_list = [s.strip() for s in remove_subjects.split(',') if s.strip()]
-            kept_subjects = [s for s in schedule if s not in remove_list]
-            print(f"Keeping subjects: {kept_subjects}, Need to fill: {num_to_schedule - len(kept_subjects)} slots")
-
-            prereq_set = set(kept_subjects)
-            for subj in kept_subjects:
-                prereq_set.update(get_all_prereqs(subj, prereqs_df, subjects_df))
-                prereq_set.update(get_all_coreqs(subj, coreqs_df, subjects_df))
-            all_subjects = list(set([s for s in prereq_set if s in subjects_df['subject_code'].values]))
-            remaining_slots = num_to_schedule - len(all_subjects)
-            additional_subjects = [s for s in sorted_subjects if s not in all_subjects and 
-                                   all(p in all_subjects or p in completed for p in get_all_prereqs(s, prereqs_df, subjects_df)) and 
-                                   all(c in all_subjects or c in completed for c in get_all_coreqs(s, coreqs_df, subjects_df))][:remaining_slots]
-            all_subjects.extend(additional_subjects)
-            print(f"Updated all_subjects: {all_subjects} (Length: {len(all_subjects)})")
-
-def recommend_schedule_with_feedback(nuid):
-    recommend_schedule(nuid)
+            remove_codes = input("Enter subject codes to remove (comma-separated, e.g., CS5001,CS5002): ").split(',')
+            remove_codes = [code.strip() for code in remove_codes if code.strip()]
+            for code in remove_codes:
+                if code in [c for sem in plan for c in sem]:
+                    blacklist.add(code)
+                    print(f"{code} added to blacklist.")
+                else:
+                    print(f"{code} not in plan.")
+            print("Re-generating plan with updated blacklist...")
 
 if __name__ == "__main__":
-    nuid = input("Enter NUid to recommend schedule: ")
-    recommend_schedule_with_feedback(nuid)
+    main()
