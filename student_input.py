@@ -22,7 +22,7 @@ MATH_AREAS = [
 ]
 
 def display_tags_simple(tags, category_name):
-    """Display tags in a simple numbered list format"""
+    """Display tags in a numbered list"""
     print(f"\nAvailable {category_name} ({len(tags)} total):")
     print("-" * 50)
     
@@ -32,6 +32,7 @@ def display_tags_simple(tags, category_name):
     print("-" * 50)
 
 def get_student_input():
+    """Fill out student profile and store under NUID"""
     nuid = input("Enter your NUID: ")
     
     display_tags_simple(PROGRAMMING_LANGUAGES, "Programming Languages")
@@ -49,50 +50,22 @@ def get_student_input():
         if area:
             proficiency = int(input(f"Rate your proficiency in {area} (1-5, where 5 is expert): "))
             math_exp[area] = proficiency
-    '''
-    completed_courses = {}
-    if input("Have you completed any courses? (yes/no): ").strip().lower() in ["yes", "y"]:
-        while True:
-            subject_code = input("Enter subject code (or 'done' to finish): ").strip()
-            if subject_code.lower() in ["done", "d"]:
-                break
-            details = {
-                "Subject Names": input(f"Enter name for {subject_code}: "),
-                "Course Outcomes": input(f"Enter course outcomes for {subject_code} (comma-separated): "),
-                "Programming Knowledge Needed": input(f"Enter programming knowledge needed for {subject_code}: "),
-                "Math Requirements": input(f"Enter math requirements for {subject_code}: "),
-                "Other Requirements": input(f"Enter other requirements for {subject_code}: "),
-                "Weekly Workload (hours)": float(input(f"Enter weekly workload (hours) for {subject_code}: ")),
-                "Assignments #": int(input(f"Enter number of assignments for {subject_code}: ")),
-                "Hours per Assignment": float(input(f"Enter hours per assignment for {subject_code}: ")),
-                "Assignment Weight": float(input(f"Enter assignment weight (0-1) for {subject_code}: ")),
-                "Avg Assignment Grade": float(input(f"Enter your average assignment grade for {subject_code}: ")),
-                "Project Weight": float(input(f"Enter project weight (0-1) for {subject_code}: ")),
-                "Avg Project Grade": float(input(f"Enter your average project grade for {subject_code}: ")),
-                "Exam #": int(input(f"Enter number of exams for {subject_code}: ")),
-                "Avg Exam Grade": float(input(f"Enter your average exam grade for {subject_code}: ")),
-                "Exam Weight": float(input(f"Enter exam weight (0-1) for {subject_code}: ")),
-                "Avg Final Grade": float(input(f"Enter your final grade for {subject_code}: ")),
-                "Prerequisite": input(f"Enter prerequisite for {subject_code}: "),
-                "Corequisite": input(f"Enter corequisite for {subject_code}: "),
-                "Rating": int(input(f"Rate {subject_code} from 1-5: "))
-            }
-            completed_courses[subject_code] = details
-    '''
+    
+    completed_courses = input("Enter any completed courses (comma-separated, e.g., CS5100, CS5200, CS6130): ").split(',')
     core_subjects = input("Enter core subjects for your program (comma-separated, e.g., CS5100, CS5200): ").split(',')
     desired_outcomes = input("What do you want to learn? (comma-separated, e.g., AI, ML, Deep Learning): ").split(',')
 
     student_data = {
-        "NUid": nuid,
+        "NUID": nuid,
         "programming_experience": prog_exp,
         "math_experience": math_exp,
-        #"completed_courses": completed_courses,
+        "completed_courses": [course.strip() for course in completed_courses if course.strip()],
         "core_subjects": [subject.strip() for subject in core_subjects if subject.strip()],
         "desired_outcomes": [outcome.strip() for outcome in desired_outcomes if outcome.strip()]
     }
 
-    # Insert into MongoDB
-    collection.update_one({"NUid": nuid}, {"$set": student_data}, upsert=True)
+    # Insert into MongoDB, overwrites if NUID already exists
+    collection.update_one({"NUID": nuid}, {"$set": student_data}, upsert=True)
 
     print(f"Student data saved under id: {nuid}")
     return student_data
