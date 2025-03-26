@@ -2,7 +2,7 @@ import pandas as pd
 
 def load_subject_data():
     # Load your dataset
-    df = pd.read_csv('subject_analysis.csv')
+    df = pd.read_csv('data/courses/subject_analysis.csv')
     
     # Process into required structures
     subjects_df = df[['Subject', 'Subject Names', 'Weekly Workload (hours)', 'Assignments #', 'Hours per Assignment', 
@@ -40,7 +40,7 @@ if __name__ == "__main__":
     subjects_df, outcomes_df, prereqs, coreqs = load_subject_data()
     print("Subject data loaded into Pandas DataFrames.")
     # Save for debugging (optional)
-    subjects_df.to_csv('subjects_df.csv', index=False)
-    outcomes_df.to_csv('outcomes_df.csv', index=False)
-    prereqs.to_csv('prereqs_df.csv', index=False)
-    coreqs.to_csv('coreqs_df.csv', index=False)
+    subjects_df.to_csv('data/courses/subjects_df.csv', index=False)
+    outcomes_df.to_csv('data/courses/outcomes_df.csv', index=False)
+    prereqs.to_csv('data/courses/prereqs_df.csv', index=False)
+    coreqs.to_csv('data/courses/coreqs_df.csv', index=False)

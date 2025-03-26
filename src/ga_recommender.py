@@ -1,82 +1,7 @@
 import pandas as pd
 import json
-from burnout_calculator import calculate_burnout
+from burnout_calculator import calculate_burnout, calculate_utility
 from utils import load_subject_data, prerequisites_satisfied, standardize_student_data, load_burnout_scores
-
-def jaccard_similarity(set1, set2):
-    '''
-    Calculate Jaccard similarity between two sets 
-    '''
-    # Handle empty sets
-    if not set1 or not set2:
-        return 0
-        
-    # Calculate intersection and union
-    intersection = len(set1.intersection(set2))
-    union = len(set1.union(set2))
-    
-    # Prevent division by zero
-    if union == 0:
-        return 0
-        
-    return intersection / union
-
-def calculate_outcome_alignment_score(student_data, subject_code, outcomes_df):
-    '''
-    Calculate outcome alignment score (OAS) using Jaccard similarity
-    OAS = similarity(User Desired Outcomes, Course Outcomes)
-    '''
-    # If no desired outcomes, return 0
-    if not student_data.get('desired_outcomes') or not isinstance(student_data['desired_outcomes'], str):
-        return 0
-    
-    # Get student's desired outcomes as a set
-    student_outcomes = set([outcome.strip() for outcome in student_data['desired_outcomes'].split(',')])
-    
-    # Get subject outcomes as a set
-    subject_outcomes = set(outcomes_df[outcomes_df['subject_code'] == subject_code]['outcome'])
-    
-    # Calculate Jaccard similarity
-    return jaccard_similarity(student_outcomes, subject_outcomes)
-
-def calculate_utility(student_data, subject_code, subjects_df, requirements_df, prereqs_df, outcomes_df, utility_weights=None):
-    '''
-    Calculate the overall utility function with prerequisite penalty
-    U = α·OAS + β·(1-Pfinal) - δ·PrereqPenalty
-    '''
-    # Default utility weights
-    if utility_weights is None:
-        utility_weights = {
-            'alpha': 0.5,  # Weight for outcome alignment
-            'beta': 0.5,   # Weight for burnout avoidance
-            'delta': 0.5   # Weight for prerequisite penalty
-        }
-    
-    burnout_student_data = standardize_student_data(student_data, for_burnout=True)
-
-    # Calculate burnout probability
-    burnout_prob = calculate_burnout(burnout_student_data, subject_code, subjects_df, requirements_df, prereqs_df, outcomes_df)
-    
-    # Calculate outcome alignment score
-    oas = calculate_outcome_alignment_score(student_data, subject_code, outcomes_df)
-    
-    # Check prerequisites
-    prereq_courses = list(prereqs_df[prereqs_df['subject_code'] == subject_code]['prereq_subject_code'])
-    prereq_penalty = 0
-    
-    if prereq_courses:
-        prereqs_satisfied = all(prereq in student_data.get('completed_courses', {}) for prereq in prereq_courses)
-        if not prereqs_satisfied:
-            prereq_penalty = 1  # Apply full penalty if prerequisites are not satisfied
-    
-    # Calculate overall utility
-    utility = (
-        utility_weights['alpha'] * oas + 
-        utility_weights['beta'] * (1 - burnout_prob) - 
-        utility_weights['delta'] * prereq_penalty
-    )
-    
-    return utility
 
 def calculate_enrollment_likelihood(semester, is_core, seats, enrollments):
     # Base likelihood from seats availability
@@ -216,7 +141,7 @@ def find_matching_courses(student_data, subjects_df, outcomes_df, prereqs_df, co
 
 def get_student_data(nuid, semester):
     try:
-        student_df = pd.read_csv(f'student_{nuid}.csv')
+        student_df = pd.read_csv(f'data/students/student_{nuid}.csv')
         
         # Create basic structure with raw data
         raw_student_data = {
@@ -299,5 +224,5 @@ def save_schedule(nuid, recommended_courses, subjects_df, burnout_scores_df):
         'schedule': json.dumps(subject_list)
     }])
     
-    schedule_df.to_csv(f'schedule_{nuid}.csv', index=False)
+    schedule_df.to_csv(f'outputs/schedules/schedule_{nuid}.csv', index=False)
     return subject_list

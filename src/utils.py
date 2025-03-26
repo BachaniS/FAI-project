@@ -12,7 +12,7 @@ logging.basicConfig(
 )
 logger = logging.getLogger(__name__)
 
-def load_subject_data(filename='subjects_df.csv'):
+def load_subject_data(filename='data/courses/subjects_df.csv'):
     '''
     Load and process subject data
     Params:
@@ -157,7 +157,7 @@ def standardize_student_data(student_data, for_burnout=True):
 def load_burnout_scores(nuid):
     """Load burnout scores from CSV file"""
     try:
-        scores_df = pd.read_csv(f'burnout_scores_{nuid}.csv')
+        scores_df = pd.read_csv(f'outputs/burnout_scores/burnout_scores_{nuid}.csv')
         # Remove any duplicates if present
         scores_df = scores_df.drop_duplicates(subset=['subject_code'])
         return scores_df

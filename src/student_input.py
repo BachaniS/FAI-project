@@ -100,11 +100,11 @@ def get_student_input():
         "desired_outcomes": desired_outcomes,
         "completed_courses_details": json.dumps(completed_courses) 
     }])
-    df.to_csv(f"student_{nuid}.csv", index=False)
+    df.to_csv(f"data/students/student_{nuid}.csv", index=False)
     
     return student_data
 
 if __name__ == "__main__":
     student_data = get_student_input()
-    print(f"Student data saved to student_{student_data['NUid']}.csv")
+    print(f"Student data saved to data/students/student_{student_data['NUid']}.csv")
     print("*** ", student_data)
