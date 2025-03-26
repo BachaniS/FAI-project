@@ -2,8 +2,7 @@ import pandas as pd
 import numpy as np
 import json
 from utils import (
-    load_subject_data, precalculate_max_values, 
-    prerequisites_satisfied, standardize_student_data
+    load_subject_data, prerequisites_satisfied, standardize_student_data
 )
 
 def get_subject(subjects_df, subject_code):
@@ -127,6 +126,21 @@ def calculate_stress_factor(student_data, subject_code, subjects_df):
     S_prime = (stress_assignments + stress_exams + stress_projects) / total_weight
     
     return S_prime
+
+def precalculate_max_values(subjects_df):
+    '''
+    Calculate maximum values for workload normalization
+    Params:
+        Subjects_df: Subject data information
+    Returns: Max values for 
+    '''
+    max_values = {
+        'Hmax': max(subjects_df['hours_per_week'].max(), 1),
+        'Amax': max((subjects_df['num_assignments'] * subjects_df['hours_per_assignment'] * subjects_df['assignment_weight']).max(), 1),
+        'Pmax': max(((100 - subjects_df['avg_project_grade']) * subjects_df['project_weight']).max(), 1),
+        'Emax': max((subjects_df['exam_count'] * (100 - subjects_df['avg_exam_grade']) * subjects_df['exam_weight']).max(), 1)
+    }
+    return max_values
 
 def calculate_burnout(student_data, subject_code, subjects_df, requirements_df, prereqs_df, outcomes_df, max_values=None, weights=None):
     '''

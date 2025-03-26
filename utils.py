@@ -1,7 +1,4 @@
-# utils.py
 import pandas as pd
-import numpy as np
-import json
 import logging
 
 # Set up logging
@@ -15,9 +12,12 @@ logging.basicConfig(
 )
 logger = logging.getLogger(__name__)
 
-# Common data loading function
 def load_subject_data(filename='subjects_df.csv'):
-    """Load and process subject data from CSV - used by both modules"""
+    '''
+    Load and process subject data
+    Params:
+        Filename: Subject data for a given course
+    '''
     try:
         df = pd.read_csv(filename)
         # Rename columns for consistency
@@ -101,17 +101,6 @@ def load_subject_data(filename='subjects_df.csv'):
         logger.error(f"Error loading subject data: {e}")
         # Re-raise to allow caller to handle
         raise
-
-# Shared calculation utility
-def precalculate_max_values(subjects_df):
-    """Calculate maximum values for workload normalization"""
-    max_values = {
-        'Hmax': max(subjects_df['hours_per_week'].max(), 1),
-        'Amax': max((subjects_df['num_assignments'] * subjects_df['hours_per_assignment'] * subjects_df['assignment_weight']).max(), 1),
-        'Pmax': max(((100 - subjects_df['avg_project_grade']) * subjects_df['project_weight']).max(), 1),
-        'Emax': max((subjects_df['exam_count'] * (100 - subjects_df['avg_exam_grade']) * subjects_df['exam_weight']).max(), 1)
-    }
-    return max_values
 
 def prerequisites_satisfied(course_code, student_data, prereqs_df):
     """Check if prerequisites for a course are satisfied"""

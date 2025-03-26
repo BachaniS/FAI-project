@@ -1,13 +1,18 @@
-import pandas as pd
 from ga_recommender import generate_recommendations, save_schedule, load_burnout_scores
 from utils import load_subject_data
 
 def get_enrollment_status(seats, enrollments):
-    """Get enrollment status message based on seats and enrollments"""
+    '''
+    Get enrollment messages based on the given seats and enrollments
+    Params:
+        Seats: Number of seats for a class
+        Enrollments: Number of enrollments
+    Returns:
+        Enrollment user friendly status
+    '''
     if seats <= 0 or enrollments <= 0:
         return "⚠️ Enrollment data not available"
     
-    seats_remaining = seats - enrollments
     enrollment_ratio = enrollments / seats
     
     if enrollment_ratio >= 1:
@@ -20,7 +25,14 @@ def get_enrollment_status(seats, enrollments):
         return "🟢 Good availability. Enroll at your convenience but don't wait too long"
 
 def get_burnout_status(burnout_score, utility_score):
-    """Get burnout status message based on burnout and utility scores"""
+    '''
+    Get the burnout status based on utility and burnout
+    Params:
+        Burnout_Score: Computed burnout score
+        utility_Score: Computed utility score
+    Returns:
+        User-friendly brunout status
+    '''
     if burnout_score is None or utility_score is None:
         return "⚠️ Burnout data not available"
     
@@ -34,7 +46,11 @@ def get_burnout_status(burnout_score, utility_score):
         return "🟢 Low burnout risk. Should be manageable with your current skills"
 
 def get_additional_interests():
-    """Get additional interests from the user"""
+    '''
+    User input for users additional interests
+    Returns:
+        List of interests inputted by user
+    '''
     print("\nWhat other areas are you interested in? (Select one or more numbers, separated by commas)")
     interests = {
         1: "artificial intelligence",
@@ -68,6 +84,15 @@ def get_additional_interests():
         return []
 
 def display_recommendations(recommended_courses, highly_competitive_courses, round_num=1):
+    '''
+    Formatting the recommendations for the user
+    Params:
+        Recommended_courses: Filtered out courses for a given user.
+        Highly_Competetive_Courses: Courses that are highly competitive
+        Round_Num: Integer
+    Returns:
+        User friendly recommended courses
+    '''
     print(f"\n=== Round {round_num} Recommendations ===")
     
     # Display recommendations
@@ -138,15 +163,15 @@ def display_recommendations(recommended_courses, highly_competitive_courses, rou
     return len(recommended_courses) + len(highly_competitive_courses) > 0
 
 def recommend_schedule(nuid):
-    """Main function to recommend a schedule for a student"""
+    '''
+    Main function for recommending a schedule for a user
+    Params:
+        Nuid: Student id
+    Returns:
+        Reccomendation
+    '''
     subjects_df, _, _, _, _ = load_subject_data()
     burnout_scores_df = load_burnout_scores(nuid)
-    
-    try:
-        student_df = pd.read_csv(f'student_{nuid}.csv')
-    except FileNotFoundError:
-        print(f"Error: Student data not found for NUID: {nuid}")
-        return None
     
     semester = int(input("Which semester are you in? "))
     

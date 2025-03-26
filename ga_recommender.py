@@ -1,7 +1,7 @@
 import pandas as pd
 import json
 from burnout_calculator import calculate_burnout
-from utils import load_subject_data, prerequisites_satisfied
+from utils import load_subject_data, prerequisites_satisfied, standardize_student_data
 
 def load_burnout_scores(nuid):
     """Load burnout scores from CSV file"""
@@ -62,8 +62,10 @@ def calculate_utility(student_data, subject_code, subjects_df, requirements_df, 
             'delta': 0.5   # Weight for prerequisite penalty
         }
     
+    burnout_student_data = standardize_student_data(student_data, for_burnout=True)
+
     # Calculate burnout probability
-    burnout_prob = calculate_burnout(student_data, subject_code, subjects_df, requirements_df, prereqs_df, outcomes_df)
+    burnout_prob = calculate_burnout(burnout_student_data, subject_code, subjects_df, requirements_df, prereqs_df, outcomes_df)
     
     # Calculate outcome alignment score
     oas = calculate_outcome_alignment_score(student_data, subject_code, outcomes_df)
@@ -252,7 +254,8 @@ def get_student_data(nuid, semester):
     try:
         student_df = pd.read_csv(f'student_{nuid}.csv')
         
-        student_data = {
+        # Create basic structure with raw data
+        raw_student_data = {
             'NUid': student_df['NUid'].iloc[0],
             'semester': semester,
             'completed_courses': set(str(course).upper() for course in 
@@ -269,7 +272,7 @@ def get_student_data(nuid, semester):
             )
         }
         
-        return student_data
+        return standardize_student_data(raw_student_data, for_burnout=False)
     except FileNotFoundError:
         return None
 
