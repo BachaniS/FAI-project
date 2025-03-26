@@ -1,9 +1,7 @@
 import pandas as pd
 import numpy as np
 import json
-from utils import (
-    load_subject_data, prerequisites_satisfied, standardize_student_data
-)
+from utils import load_subject_data, prerequisites_satisfied, standardize_student_data
 
 def get_subject(subjects_df, subject_code):
     '''
