@@ -1,5 +1,6 @@
-from ga_recommender import generate_recommendations, save_schedule, load_burnout_scores
-from utils import load_subject_data
+from ga_recommender import generate_recommendations, save_schedule
+from burnout_calculator import calculate_scores
+from utils import load_course_data
 
 def get_enrollment_status(seats, enrollments):
     '''
@@ -170,8 +171,8 @@ def recommend_schedule(nuid):
     Returns:
         Reccomendation
     '''
-    subjects_df, _, _, _, _ = load_subject_data()
-    burnout_scores_df = load_burnout_scores(nuid)
+    subjects_df = load_course_data()
+    burnout_scores_df = calculate_scores(nuid)
     
     semester = int(input("Which semester are you in? "))
     
