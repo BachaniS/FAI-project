@@ -1,13 +1,12 @@
 import pandas as pd
 import numpy as np
-import json
-from utils import load_subject_data, prerequisites_satisfied, standardize_student_data
+from utils import load_course_data, load_student_data, prerequisites_satisfied, standardize_student_data
 
 def get_subject(subjects_df, subject_code):
     '''
     Get subject data
     '''
-    subject_rows = subjects_df[subjects_df['subject_code'] == subject_code]
+    subject_rows = subjects_df[subjects_df['subject_id'] == subject_code]
     return subject_rows.iloc[0] if not subject_rows.empty else None
 
 def workload_factor(subject_code, subjects_df, max_values):
@@ -20,14 +19,14 @@ def workload_factor(subject_code, subjects_df, max_values):
     subject = subject_rows.iloc[0]
     
     # Handle missing values with defaults
-    H = subject['hours_per_week'] if pd.notna(subject['hours_per_week']) else 0
-    num_assignments = subject['num_assignments'] if pd.notna(subject['num_assignments']) else 0
-    hours_per_assignment = subject['hours_per_assignment'] if pd.notna(subject['hours_per_assignment']) else 0
+    H = subject['weekly_course_time'] if pd.notna(subject['weekly_course_time']) else 0
+    num_assignments = subject['assignment_count'] if pd.notna(subject['assignment_count']) else 0
+    hours_per_assignment = subject['assignment_time'] if pd.notna(subject['assignment_time']) else 0
     assignment_weight = subject['assignment_weight'] if pd.notna(subject['assignment_weight']) else 0
-    avg_project_grade = subject['avg_project_grade'] if pd.notna(subject['avg_project_grade']) else 0
+    avg_project_grade = subject['project_grade'] if pd.notna(subject['project_grade']) else 0
     project_weight = subject['project_weight'] if pd.notna(subject['project_weight']) else 0
     exam_count = subject['exam_count'] if pd.notna(subject['exam_count']) else 0
-    avg_exam_grade = subject['avg_exam_grade'] if pd.notna(subject['avg_exam_grade']) else 0
+    avg_exam_grade = subject['exam_grade'] if pd.notna(subject['exam_grade']) else 0
     exam_weight = subject['exam_weight'] if pd.notna(subject['exam_weight']) else 0
     
     # Calculate components
@@ -40,14 +39,11 @@ def workload_factor(subject_code, subjects_df, max_values):
     
     return W_prime
         
-def calculate_prerequisite_mismatch_factor(student_data, subject_code, requirements_df, prereqs_df):
+def calculate_prerequisite_mismatch_factor(student_data, subject_reqs):
     '''
     Calculate modified prerequisite mismatch factor M':
     M' = (1/T) * Σ(1 - proficiency(i))
-    '''
-    # Get subject requirements
-    subject_reqs = requirements_df[requirements_df['subject_code'] == subject_code]
-    
+    '''    
     T = len(subject_reqs)
 
     # If no prereqs / requirements, then no mismatch
@@ -134,14 +130,14 @@ def precalculate_max_values(subjects_df):
     Returns: Max values for 
     '''
     max_values = {
-        'Hmax': max(subjects_df['hours_per_week'].max(), 1),
-        'Amax': max((subjects_df['num_assignments'] * subjects_df['hours_per_assignment'] * subjects_df['assignment_weight']).max(), 1),
-        'Pmax': max(((100 - subjects_df['avg_project_grade']) * subjects_df['project_weight']).max(), 1),
-        'Emax': max((subjects_df['exam_count'] * (100 - subjects_df['avg_exam_grade']) * subjects_df['exam_weight']).max(), 1)
+        'Hmax': max(subjects_df['weekly_course_time'].max(), 1),
+        'Amax': max((subjects_df['assignment_count'] * subjects_df['assignment_time'] * subjects_df['assignment_weight']).max(), 1),
+        'Pmax': max(((100 - subjects_df['project_grade']) * subjects_df['project_weight']).max(), 1),
+        'Emax': max((subjects_df['exam_count'] * (100 - subjects_df['exam_grade']) * subjects_df['exam_weight']).max(), 1)
     }
     return max_values
 
-def calculate_burnout(student_data, subject_code, subjects_df, requirements_df, prereqs_df, outcomes_df, max_values=None, weights=None):
+def calculate_burnout(subject_code, subjects_df, student_df, max_values=None, weights=None):
     '''
     Calculate the normalized burnout probability
     P' = w1*W' + w2*M' + w3*S'
@@ -158,15 +154,22 @@ def calculate_burnout(student_data, subject_code, subjects_df, requirements_df, 
         }
     
     # Ensure student data is in correct format
-    student_data = standardize_student_data(student_data, for_burnout=True)
-    
+    student_data = standardize_student_data(student_df, for_burnout=True)
+
+    # Extract the subject row
+    subject = subjects_df.loc[subjects_df['subject_id'] == subject_code]
+
+    # Extract required fields safely
+    requirements = (subject['required_programming'].iloc[0] if not subject['required_programming'].isna().all() else [])
+    requirements += (subject['required_math'].iloc[0] if not subject['required_math'].isna().all() else [])
+        
     # Calculate or use provided max values
     if max_values is None:
         max_values = precalculate_max_values(subjects_df)
     
     # Calculate individual factors
     W_prime = workload_factor(subject_code, subjects_df, max_values)
-    M_prime = calculate_prerequisite_mismatch_factor(student_data, subject_code, requirements_df, prereqs_df)
+    M_prime = calculate_prerequisite_mismatch_factor(student_data, subject_code, requirements)
     S_prime = calculate_stress_factor(student_data, subject_code, subjects_df)
         
     # Calculate combined burnout score
@@ -182,73 +185,42 @@ def calculate_scores(nuid):
     Calculate burnout scores for all subjects for a given student
     '''
     # Load all necessary data
-    subjects_df, outcomes_df, prereqs_df, _, requirements_df = load_subject_data()
+    subjects_df = load_course_data()
     
     # Precalculate max values once for efficiency
     max_values = precalculate_max_values(subjects_df)
     
     # Load student data
-    student_df = pd.read_csv(f'student_{nuid}.csv')
-    
-    # Parse student data with proper error handling
-    student_data = {
-        'NUid': student_df['NUid'].iloc[0],
-        'programming_experience': {},
-        'math_experience': {},
-        'completed_courses': {},
-        'core_subjects': '',
-        'desired_outcomes': ''
-    }
-    
-    if 'programming_experience' in student_df.columns:
-        prog_exp = student_df['programming_experience'].iloc[0]
-        if pd.notna(prog_exp):
-            student_data['programming_experience'] = json.loads(prog_exp)
-    if 'math_experience' in student_df.columns:
-        math_exp = student_df['math_experience'].iloc[0]
-        if pd.notna(math_exp):
-            student_data['math_experience'] = json.loads(math_exp)
+    student_df = load_student_data(nuid)
 
-    if 'completed_courses_details' in student_df.columns:
-        completed = student_df['completed_courses_details'].iloc[0]
-        if pd.notna(completed):
-            student_data['completed_courses'] = json.loads(completed)
-    if 'completed_courses' in student_df.columns:
-        completed = student_df['completed_courses'].iloc[0]
-        if pd.notna(completed):
-            courses = [c.strip().upper() for c in str(completed).split(',') if c.strip()]
-            student_data['completed_courses'] = {code: {} for code in courses}
-
-    if 'core_subjects' in student_df.columns:
-        student_data['core_subjects'] = student_df['core_subjects'].iloc[0]
-        
-    if 'desired_outcomes' in student_df.columns:
-        student_data['desired_outcomes'] = student_df['desired_outcomes'].iloc[0]
     
     # Calculate scores for each subject
     scores = []
-    for subject_code in subjects_df['subject_code']:
+    for subject_code in subjects_df['subject_id']:
         # Skip subjects the student has already completed
-        if subject_code in student_data['completed_courses']:
+        if subject_code in student_df['completed_courses']:
             continue
             
-        # Calculate burnout probability
-        burnout = calculate_burnout(
-            student_data, subject_code, subjects_df, 
-            requirements_df, prereqs_df, outcomes_df, max_values
-        )
+        # Extract prerequisites from subjects_df
+        prereqs = subjects_df.loc[subjects_df['subject_id'] == subject_code, 'prerequisites']
+        prereqs = prereqs.iloc[0] if not prereqs.empty and pd.notna(prereqs.iloc[0]) else []
+        if isinstance(prereqs, str):
+            prereqs = prereqs.split(',')  # Assuming prerequisites are stored as comma-separated strings
         
-        # Get prerequisite info for this subject
-        prereqs = list(prereqs_df[prereqs_df['subject_code'] == subject_code]['prereq_subject_code'])
+        # Calculate burnout probability
+        burnout = calculate_burnout(subject_code, subjects_df, student_df, max_values)
         
         # Check if prerequisites are satisfied
-        prereqs_satisfied_val = prerequisites_satisfied(subject_code, student_data, prereqs_df)
+        prereqs_satisfied_val = prerequisites_satisfied(subject_code, student_df, subjects_df)
         
-        # For burnout scores, we don't yet calculate utility (that's done in ga_recommender)
-        # But we include a placeholder to maintain file structure compatibility
+        # Get subject name safely
+        subject_row = subjects_df[subjects_df['subject_id'] == subject_code]
+        subject_name = subject_row['subject_name'].iloc[0] if not subject_row.empty else "Unknown course"
+        
+        # Append score
         scores.append({
-            'subject_code': subject_code,
-            'subject_name': get_subject(subjects_df, subject_code).iloc[0]['name'] if not get_subject(subjects_df, subject_code).empty else "Unknown course",
+            'subject_id': subject_code,
+            'subject_name': subject_name,
             'burnout_score': round(burnout, 3),
             'prerequisites': prereqs,
             'prerequisites_satisfied': prereqs_satisfied_val,
@@ -258,14 +230,11 @@ def calculate_scores(nuid):
     # Create DataFrame and sort by burnout (ascending - lower burnout is better)
     scores_df = pd.DataFrame(scores)
     scores_df = scores_df.sort_values(by='burnout_score', ascending=True)
-    
-    # Save to CSV
-    scores_df.to_csv(f'burnout_scores_{nuid}.csv', index=False)
-    
+        
     return scores_df
     
 if __name__ == "__main__":
-    nuid = input("Enter NUid to calculate burnout scores: ")
+    nuid = input("Enter NUID to calculate burnout scores: ")
     result = calculate_scores(nuid)
     
     if result is not None:

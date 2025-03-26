@@ -1,7 +1,7 @@
 import pandas as pd
 import json
-from burnout_calculator import calculate_burnout
-from utils import load_subject_data, prerequisites_satisfied, standardize_student_data, load_burnout_scores
+from burnout_calculator import calculate_scores, calculate_burnout
+from utils import load_course_data, load_student_data, prerequisites_satisfied, standardize_student_data
 
 def jaccard_similarity(set1, set2):
     '''
@@ -216,7 +216,7 @@ def find_matching_courses(student_data, subjects_df, outcomes_df, prereqs_df, co
 
 def get_student_data(nuid, semester):
     try:
-        student_df = pd.read_csv(f'student_{nuid}.csv')
+        student_df = load_student_data(nuid)
         
         # Create basic structure with raw data
         raw_student_data = {
@@ -299,5 +299,4 @@ def save_schedule(nuid, recommended_courses, subjects_df, burnout_scores_df):
         'schedule': json.dumps(subject_list)
     }])
     
-    schedule_df.to_csv(f'schedule_{nuid}.csv', index=False)
     return subject_list
