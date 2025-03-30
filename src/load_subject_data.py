@@ -2,8 +2,8 @@ import pandas as pd
 
 def load_subject_data():
     # Load your dataset
-    df = pd.read_csv("subjects.csv")
-
+    df = pd.read_csv('data/courses/subject_analysis.csv')
+    
     # Process into required structures
     subjects_df = df[['Subject', 'Subject Names', 'Weekly Workload (hours)', 'Assignments #', 'Hours per Assignment', 
                       'Assignment Weight', 'Avg Assignment Grade', 'Project Weight', 'Avg Project Grade', 'Exam #', 
@@ -12,7 +12,7 @@ def load_subject_data():
         'Assignments #': 'num_assignments', 'Hours per Assignment': 'hours_per_assignment', 
         'Assignment Weight': 'assignment_weight', 'Avg Assignment Grade': 'avg_assignment_grade', 
         'Project Weight': 'project_weight', 'Avg Project Grade': 'avg_project_grade', 'Exam #': 'exam_count', 
-        'Avg Exam Grade': 'avg_exam_grade', 'Exam Weight': 'exam_weight', 'Avg Final Grade': 'avg_final_grade',
+        'Avg Exam Grade': 'avg_exam_grade', 'Exam Weight': 'exam_weight', 'Avg Final Grade': 'avg_final_grade', 
         'Seats': 'Seats', 'Enrollments': 'Enrollments'
     })
     
@@ -40,7 +40,7 @@ if __name__ == "__main__":
     subjects_df, outcomes_df, prereqs, coreqs = load_subject_data()
     print("Subject data loaded into Pandas DataFrames.")
     # Save for debugging (optional)
-    subjects_df.to_csv('subjects_df.csv', index=False)
-    outcomes_df.to_csv('outcomes_df.csv', index=False)
-    prereqs.to_csv('prereqs_df.csv', index=False)
-    coreqs.to_csv('coreqs_df.csv', index=False)
+    subjects_df.to_csv('data/courses/subjects_df.csv', index=False)
+    outcomes_df.to_csv('data/courses/outcomes_df.csv', index=False)
+    prereqs.to_csv('data/courses/prereqs_df.csv', index=False)
+    coreqs.to_csv('data/courses/coreqs_df.csv', index=False)
