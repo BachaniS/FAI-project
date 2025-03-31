@@ -1,6 +1,5 @@
 import pandas as pd
 import numpy as np
-import json
 from utils import load_course_data, load_student_data, save_scores
 
 def get_subject(subjects_df, subject_code):

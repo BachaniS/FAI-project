@@ -18,7 +18,6 @@ def load_student_data(student_id):
     db = client["user_details"]
     collection = db["users"]
     
-    # Print diagnostic information
     # Find the document
     student_data = collection.find_one({"NUID": student_id})
     
@@ -43,7 +42,6 @@ def save_scores(nuid, burnout_scores):
         db = client["user_details"]
         burnout_collection = db["user_scores"]
         
-        # Prepare
         burnout_doc = {
             "NUID": nuid,
             "courses": burnout_scores,
@@ -71,7 +69,6 @@ def save_schedules(nuid, schedule):
 
         top_recommendations = schedule[:5]
 
-        # Prepare
         schedule_doc = {
             "NUID": nuid,
             "updated": pd.Timestamp.now(),

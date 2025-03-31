@@ -49,7 +49,7 @@ def get_student_input():
         if area:
             proficiency = int(input(f"Rate your proficiency in {area} (1-5, where 5 is expert): "))
             math_exp[area] = proficiency
-    '''
+
     completed_courses = {}
     if input("Have you completed any courses? (yes/no): ").strip().lower() in ["yes", "y"]:
         while True:
@@ -78,21 +78,24 @@ def get_student_input():
                 "Rating": int(input(f"Rate {subject_code} from 1-5: "))
             }
             completed_courses[subject_code] = details
-    '''
+    
+    # Initialize completed_courses as an empty array to match the DB structure
+    completed_courses = []
+    
     core_subjects = input("Enter core subjects for your program (comma-separated, e.g., CS5100, CS5200): ").split(',')
     desired_outcomes = input("What do you want to learn? (comma-separated, e.g., AI, ML, Deep Learning): ").split(',')
 
     student_data = {
-        "NUid": nuid,
+        "NUID": nuid,
         "programming_experience": prog_exp,
         "math_experience": math_exp,
-        #"completed_courses": completed_courses,
+        "completed_courses": completed_courses, 
         "core_subjects": [subject.strip() for subject in core_subjects if subject.strip()],
         "desired_outcomes": [outcome.strip() for outcome in desired_outcomes if outcome.strip()]
     }
 
     # Insert into MongoDB
-    collection.update_one({"NUid": nuid}, {"$set": student_data}, upsert=True)
+    collection.update_one({"NUID": nuid}, {"$set": student_data}, upsert=True)
 
     print(f"Student data saved under id: {nuid}")
     return student_data
