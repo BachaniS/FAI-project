@@ -43,14 +43,14 @@ def save_scores(nuid, burnout_scores):
         db = client["user_details"]
         burnout_collection = db["user_scores"]
         
-        # Prepare document
+        # Prepare
         burnout_doc = {
             "NUID": nuid,
             "courses": burnout_scores,
             "updated": pd.Timestamp.now(),
         }
         
-        # Upsert document (replace if exists)
+        # replace if exists
         burnout_collection.replace_one(
             {"NUID": nuid},
             burnout_doc,
@@ -60,3 +60,33 @@ def save_scores(nuid, burnout_scores):
         print(f"Burnout scores saved for student {nuid}")
     except Exception as e:
         print(f"Error saving burnout scores: {e}")
+
+def save_schedules(nuid, schedule):
+    """
+    Save scores
+    """
+    try:
+        db = client["user_details"]
+        schedule_collection = db["user_schedules"]
+
+        top_recommendations = schedule[:5]
+
+        # Prepare
+        schedule_doc = {
+            "NUID": nuid,
+            "updated": pd.Timestamp.now(),
+            "courses": top_recommendations
+        }
+
+        # Replace if exists, otherwise insert
+        schedule_collection.replace_one(
+            {"NUID": nuid},
+            schedule_doc,
+            upsert=True
+        )
+
+        print(f"Schedule saved for student {nuid}")
+
+    except Exception as e:
+            print(f"Error saving schedule: {e}")
+            return None
