@@ -1,28 +1,12 @@
 from ga_recommender import generate_recommendations, save_schedule, load_burnout_scores
-from utils import load_subject_data
-
-def get_enrollment_status(seats, enrollments):
-    '''
-    Get enrollment messages based on the given seats and enrollments
-    Params:
-        Seats: Number of seats for a class
-        Enrollments: Number of enrollments
-    Returns:
-        Enrollment user friendly status
-    '''
-    if seats <= 0 or enrollments <= 0:
-        return "⚠️ Enrollment data not available"
-    
-    enrollment_ratio = enrollments / seats
-    
-    if enrollment_ratio >= 1:
-        return "🔴 This class is currently full. Very difficult to enroll - consider for future semesters"
-    elif enrollment_ratio >= 0.9:
-        return "🟠 Limited seats available (>90% full). Enroll immediately if interested"
-    elif enrollment_ratio >= 0.75:
-        return "🟡 Class is filling up quickly (>75% full). Enroll soon to secure your spot"
-    else:
-        return "🟢 Good availability. Enroll at your convenience but don't wait too long"
+from utils import (
+    load_subject_data, 
+    prerequisites_satisfied, 
+    standardize_student_data, 
+    load_burnout_scores,
+    get_enrollment_status
+)
+from utils import calculate_enrollment_priority
 
 def get_burnout_status(burnout_score, utility_score):
     '''
@@ -84,83 +68,37 @@ def get_additional_interests():
         return []
 
 def display_recommendations(recommended_courses, highly_competitive_courses, round_num=1):
-    '''
-    Formatting the recommendations for the user
-    Params:
-        Recommended_courses: Filtered out courses for a given user.
-        Highly_Competetive_Courses: Courses that are highly competitive
-        Round_Num: Integer
-    Returns:
-        User friendly recommended courses
-    '''
     print(f"\n=== Round {round_num} Recommendations ===")
     
-    # Display recommendations
-    print("\n🎯 Recommended Courses:")
-    if recommended_courses:
-        for i, course in enumerate(recommended_courses, 1):
-            seats = course['seats']
-            enrollments = course['enrollments']
+    def display_course(course, is_competitive=False):
+        print(f"\n{course['subject_code']}: {course['name']}")
+        print(f"Match Score: {course['match_score']:.1%}")
+        print(f"Enrollment Status: {course['enrollment_status']}")
+        print(f"Current Availability: {course['seats'] - course['enrollments']} seats remaining")
+        print(f"({course['enrollments']}/{course['seats']} enrolled)")
+        
+        if course['burnout_score'] is not None:
+            print(f"Burnout Risk: {course['burnout_score']:.2f}")
+        if course['utility_score'] is not None:
+            print(f"Academic Utility: {course['utility_score']:.2f}")
+        
+        print("\nReasons for recommendation:")
+        for reason in course['reasons']:
+            print(f"• {reason}")
             
-            print(f"\n{i}. {course['subject_code']}: {course['name']}")
-            print(f"   Match Score: {course['match_score']:.1%}")
-            
-            # Burnout information if available
-            if course['burnout_score'] is not None and course['utility_score'] is not None:
-                burnout_status = get_burnout_status(course['burnout_score'], course['utility_score'])
-                print(f"   Burnout Risk: {course['burnout_score']:.2f}")
-                print(f"   Academic Utility: {course['utility_score']:.2f}")
-                print(f"   {burnout_status}")
-            
-            print(f"   Reasons for recommendation:")
-            for reason in course['reasons']:
-                print(f"   • {reason}")
-            
-            # Enrollment status
-            print(f"   Current Status: {seats - enrollments} seats remaining ({enrollments}/{seats} filled)")
-            enrollment_status = get_enrollment_status(seats, enrollments)
-            print(f"   {enrollment_status}")
-            
-            # Show likelihood only if relevant
-            if seats > enrollments:
-                likelihood_percent = course['likelihood'] * 100
-                print(f"   Enrollment Likelihood: {likelihood_percent:.1f}%")
-    else:
-        print("No new courses found matching your immediate criteria.")
+        if is_competitive:
+            print("\n⚠️ Note: This is a highly competitive course.")
     
-    # Display highly competitive courses
+    print("\n🎯 Recommended Courses:")
+    for i, course in enumerate(recommended_courses, 1):
+        print(f"\n{i}.", end=" ")
+        display_course(course)
+    
     if highly_competitive_courses:
         print("\n⚠️ Highly Competitive Courses:")
         for i, course in enumerate(highly_competitive_courses, 1):
-            seats = course['seats']
-            enrollments = course['enrollments']
-            
-            print(f"\n{i}. {course['subject_code']}: {course['name']}")
-            print(f"   Match Score: {course['match_score']:.1%}")
-            
-            # Burnout information if available
-            if course['burnout_score'] is not None and course['utility_score'] is not None:
-                burnout_status = get_burnout_status(course['burnout_score'], course['utility_score'])
-                print(f"   Burnout Risk: {course['burnout_score']:.2f}")
-                print(f"   Academic Utility: {course['utility_score']:.2f}")
-                print(f"   {burnout_status}")
-            
-            print(f"   Reasons for recommendation:")
-            for reason in course['reasons']:
-                print(f"   • {reason}")
-            
-            # Enrollment status
-            print(f"   Current Status: {seats - enrollments} seats remaining ({enrollments}/{seats} filled)")
-            enrollment_status = get_enrollment_status(seats, enrollments)
-            print(f"   {enrollment_status}")
-            
-            # Additional warning for highly competitive courses
-            print("   ⚠️ Note: This is a highly competitive course due to high demand")
-            if seats <= enrollments:
-                print("   💡 Tip: Consider registering for this course in a future semester when you'll have higher priority")
-            else:
-                print("   💡 Tip: If interested, prepare to register immediately when registration opens")
-    return len(recommended_courses) + len(highly_competitive_courses) > 0
+            print(f"\n{i}.", end=" ")
+            display_course(course, is_competitive=True)
 
 def recommend_schedule(nuid):
     '''

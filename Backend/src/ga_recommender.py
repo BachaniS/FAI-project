@@ -1,7 +1,13 @@
 import pandas as pd
 import json
 from burnout_calculator import calculate_burnout, calculate_utility
-from utils import load_subject_data, prerequisites_satisfied, standardize_student_data, load_burnout_scores
+from utils import (
+    load_subject_data, 
+    prerequisites_satisfied, 
+    standardize_student_data, 
+    load_burnout_scores,
+    get_enrollment_status
+)
 
 def calculate_enrollment_likelihood(semester, is_core, seats, enrollments):
     # Base likelihood from seats availability
@@ -24,6 +30,7 @@ def find_matching_courses(student_data, subjects_df, outcomes_df, prereqs_df, co
     """Find courses that match student interests and skills"""
     matching_courses = []
     student_interests = [interest.lower().strip() for interest in student_data['interests'].split(',')]
+    semester = student_data.get('semester', 1)  # Default to 1 if not specified
     
     # Add default interests if none provided
     if not student_interests or (len(student_interests) == 1 and not student_interests[0]):
@@ -74,7 +81,7 @@ def find_matching_courses(student_data, subjects_df, outcomes_df, prereqs_df, co
         # 3. Calculate enrollment likelihood
         try:
             likelihood = calculate_enrollment_likelihood(
-                student_data['semester'],
+                semester,
                 course['subject_code'] in student_data['core_subjects'].split(','),
                 course['Seats'] if pd.notna(course['Seats']) else 0,
                 course['Enrollments'] if pd.notna(course['Enrollments']) else 0
@@ -109,32 +116,40 @@ def find_matching_courses(student_data, subjects_df, outcomes_df, prereqs_df, co
                     score *= (1 + utility_score)  # Multiplicative penalty
                     reasons.append(f"⚠️ High burnout risk (utility: {utility_score:.2f})")
         
-        # If course has a reasonable match score or is a core subject
-        is_core = course['subject_code'] in student_data['core_subjects'].split(',')
-        if score > 0.3 or is_core:  # Include core subjects regardless of match score
-            if is_core:
-                score += 0.5  # Boost score for core subjects
-                reasons.append("📚 This is a core subject requirement")
-            
+        # Calculate enrollment priority
+        enrollment_status = get_enrollment_status(
+            course['Seats'] if pd.notna(course['Seats']) else 0,
+            course['Enrollments'] if pd.notna(course['Enrollments']) else 0
+        )
+        
+        # Adjust match score based on enrollment priority
+        if enrollment_status < 0.3:  # Very competitive
+            score *= 0.5  # Reduce score for highly competitive courses
+            reasons.append("⚠️ Limited enrollment availability")
+            if semester <= 1:
+                reasons.append("💡 Consider taking this course in a later semester")
+        
+        # Add to matching courses if meets threshold
+        if score > 0.3 or course['subject_code'] in student_data['core_subjects'].split(','):
             matching_courses.append({
                 'subject_code': course['subject_code'],
                 'name': course['name'],
                 'match_score': score,
-                'likelihood': likelihood,
+                'enrollment_status': enrollment_status,
                 'seats': course['Seats'] if pd.notna(course['Seats']) else 0,
                 'enrollments': course['Enrollments'] if pd.notna(course['Enrollments']) else 0,
                 'burnout_score': burnout_score,
                 'utility_score': utility_score,
                 'reasons': reasons,
-                'is_core': is_core
+                'is_core': course['subject_code'] in student_data['core_subjects'].split(',')
             })
     
-    # Sort by combination of match score, utility score, and enrollment likelihood
+    # Sort by combined score that includes priority
     matching_courses.sort(key=lambda x: (
         x['is_core'],  # Core subjects first
-        x['match_score'] * 0.5 +  # 50% weight to interest match
-        (x['utility_score'] if x['utility_score'] is not None else 0) * 0.3 +  # 30% weight to burnout utility
-        x['likelihood'] * 0.2  # 20% weight to enrollment likelihood
+        x['match_score'] * 0.4 +  # 40% weight to interest match
+        x['enrollment_status'] * 0.3 +  # 30% weight to enrollment priority
+        (x['utility_score'] if x['utility_score'] is not None else 0) * 0.3  # 30% weight to burnout utility
     ), reverse=True)
     
     return matching_courses
@@ -187,7 +202,7 @@ def generate_recommendations(nuid, semester, additional_interests=None):
     highly_competitive_courses = []
     
     for course in matching_courses:
-        if course['likelihood'] < 0.3:  # Very competitive
+        if course['enrollment_status'] < 0.3:  # Very competitive
             highly_competitive_courses.append(course)
         else:
             recommended_courses.append(course)
@@ -226,3 +241,30 @@ def save_schedule(nuid, recommended_courses, subjects_df, burnout_scores_df):
     
     schedule_df.to_csv(f'outputs/schedules/schedule_{nuid}.csv', index=False)
     return subject_list
+
+def calculate_enrollment_priority(semester, seats, enrollments, is_core=False):
+    """Calculate both priority score and enrollment status"""
+    # Base calculation
+    seats_ratio = (seats - enrollments) / seats if seats > 0 else 0
+    if seats_ratio <= 0:
+        base_priority = 0.1
+        status = "🔴 This class is currently full"
+    else:
+        base_priority = seats_ratio
+        if seats_ratio >= 0.5:
+            status = "🟢 Good availability"
+        elif seats_ratio >= 0.25:
+            status = "🟡 Filling up quickly"
+        else:
+            status = "🟠 Limited seats available"
+
+    # Adjust priority based on semester and core status
+    semester_multiplier = min(semester / 4, 1.0)
+    core_multiplier = 1.5 if is_core else 1.0
+    final_priority = min(base_priority * semester_multiplier * core_multiplier, 1.0)
+
+    # Add semester-specific advice to status
+    if semester <= 1 and seats_ratio < 0.2:
+        status += "\n💡 Consider taking this course in a later semester"
+
+    return final_priority, status

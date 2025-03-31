@@ -188,3 +188,58 @@ def load_burnout_scores(nuid):
     except Exception as e:
         logger.error(f"Error loading burnout scores: {e}")
         return None
+
+def calculate_enrollment_priority(semester, seats, enrollments, is_core=False):
+    """
+    Calculate enrollment priority score based on:
+    - Seat availability
+    - Student's semester (higher semester = higher priority)
+    - Whether it's a core course
+    """
+    # Base priority from seats availability
+    seats_ratio = (seats - enrollments) / seats if seats > 0 else 0
+    if seats_ratio <= 0:
+        base_priority = 0.1  # Very low chance but not impossible due to potential drops
+    else:
+        base_priority = seats_ratio
+
+    # Semester priority multiplier (higher semester = higher priority)
+    semester_multiplier = min(semester / 4, 1.0)  # Caps at 1.0 after 4th semester
+    
+    # Core requirement multiplier
+    core_multiplier = 1.5 if is_core else 1.0
+    
+    final_priority = base_priority * semester_multiplier * core_multiplier
+    return min(final_priority, 1.0)  # Cap at 100%
+
+def get_enrollment_status(seats, enrollments):
+    '''
+    Get enrollment messages based on the given seats and enrollments
+    Params:
+        Seats: Number of seats for a class
+        Enrollments: Number of enrollments
+    Returns:
+        Enrollment user friendly status
+    '''
+    if seats <= 0 or enrollments <= 0:
+        return "⚠️ Enrollment data not available"
+    
+    enrollment_ratio = enrollments / seats
+    
+    if enrollment_ratio >= 1:
+        return 1
+    elif enrollment_ratio >= 0.9:
+        return 0.9
+    elif enrollment_ratio >= 0.75:
+        return 0.75
+    else:
+        return 0.5
+    
+    if enrollment_ratio >= 1:
+        return "🔴 This class is currently full. Very difficult to enroll - consider for future semesters"
+    elif enrollment_ratio >= 0.9:
+        return "🟠 Limited seats available (>90% full). Enroll immediately if interested"
+    elif enrollment_ratio >= 0.75:
+        return "🟡 Class is filling up quickly (>75% full). Enroll soon to secure your spot"
+    else:
+        return "🟢 Good availability. Enroll at your convenience but don't wait too long"
