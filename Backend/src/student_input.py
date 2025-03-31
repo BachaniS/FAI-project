@@ -1,5 +1,6 @@
 import pandas as pd
 import json
+import os
 
 PROGRAMMING_LANGUAGES = [
     "Python", "Java", "C++", "JavaScript", "C#", "R", "MATLAB", 
@@ -89,6 +90,9 @@ def get_student_input():
         "core_subjects": core_subjects,
         "desired_outcomes": desired_outcomes
     }
+    
+    # Create necessary directories before saving
+    os.makedirs("data/students", exist_ok=True)
     
     # Save to CSV
     df = pd.DataFrame([{

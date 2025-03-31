@@ -1,0 +1,61 @@
+subject_code,subject_name,burnout_score,utility,prerequisites,prerequisites_satisfied
+CS5150,Game Artificial Intelligence,0.626,0.345,[],True
+CS5964,Projects for Professionals,0.487,0.154,[],True
+CS5933,Advanced Computer Science Topics for Teachers,0.528,0.142,[],True
+CS7400,Intensive Principles of Programming Languages,0.542,0.137,[],True
+CS5047,Exploring AI Trends and Tools,0.592,0.122,[],True
+CS5097,Mixed Reality,0.599,0.12,[],True
+CS7300,Empirical Research Methods for Human Computer Interaction,0.625,0.113,[],True
+CS7600,Intensive Computer Systems,0.629,0.111,[],True
+CS5335,Robotic Science and Systems,0.635,0.11,[],True
+CS5180,Reinforcement Learning and Sequential Decision Making,0.635,0.11,[],True
+CS5100,Foundations of Artificial Intelligence,0.936,0.107,[],True
+CS7250,Information Visualization: Theory and Applications,0.657,0.103,[],True
+CS5010,Programming Design Paradigm,0.666,0.1,[],True
+CS6130,Affective Computing,0.745,0.077,[],True
+CS6130,Affective Computing,0.745,0.077,[],True
+CS5350,Applied Geometric Representation and Computation,0.762,0.071,[],True
+CS6200,Information Retrieval,0.768,0.07,[],True
+CS6200,Information Retrieval,0.768,0.07,[],True
+CS5360,Noninteractive Computer Graphics,0.767,0.07,[],True
+CS5850,Building Game Engines,0.769,0.069,[],True
+CS5002,Discrete Structures,0.774,0.068,[],True
+CS6120,Natural Language Processing,0.777,0.067,[],True
+CS6120,Natural Language Processing,0.777,0.067,[],True
+DS5110,Introduction to Data Management and Processing,0.777,0.067,[],True
+DS5010,Introduction to Programming for Data Science,0.781,0.066,[],True
+CS5934,Introduction to Inclusive Computer Science Teaching,0.783,0.065,[],True
+CS6350,Empirical Research Methods,0.783,0.065,[],True
+CS5965,Engaging with Industry Partners for Rising Professionals,0.787,0.064,[],True
+CS5700,Fundamentals of Computer Networking,0.794,0.062,[],True
+DS5220,Supervised Machine Learning and Learning Theory,0.794,0.062,[],True
+CS5610,Web Development,0.798,0.061,[],True
+CS5600,Computer Systems,0.808,0.058,[],True
+DS5230,Unsupervised Machine Learning and Data Mining,0.81,0.057,[],True
+CS6620,Fundamentals of Cloud Computing,0.817,0.055,[],True
+CS5200,Database Management Systems,0.816,0.055,[],True
+DS5020,Introduction to Linear Algebra and Probability for Data Science,0.823,0.053,[],True
+CS6650,Building Scalable Distributed Systems,0.832,0.05,[],True
+CS7200,Statistical Methods for Computer Science,0.833,0.05,[],True
+CS5310,Computer Graphics,0.833,0.05,[],True
+CS5800,Algorithms,0.843,0.047,[],True
+CS5001,Intensive Foundations of Computer Science,0.846,0.046,[],True
+CS5520,Mobile Application Development,0.854,0.044,[],True
+CS5340,Computer/Human Interaction,0.86,0.042,[],True
+CS5330,Pattern Recognition and Computer Vision,0.876,0.037,[],True
+CS5170,Artificial Intelligence for Human-Computer Interaction,0.862,-0.225,['CS5100'],False
+CS5400,Principles of Programming Language,0.462,-0.339,['CS5010'],False
+CS5004,Object-Oriented Design,0.607,-0.382,['CS5001'],False
+CS6220,Data Mining Techniques,0.759,-0.428,['CS5800'],False
+CS6140,Machine Learning,0.768,-0.43,"['CS5800', 'CS5800']",False
+CS6140,Machine Learning,0.768,-0.43,"['CS5800', 'CS5800']",False
+CS6640,Operating Systems Implementation,0.785,-0.435,['CS5600'],False
+CS5008,"Data Structures, Algorithms, and Their Applications within Computer Systems",0.79,-0.437,['CS5001'],False
+CS5500,Foundations of Software Engineering,0.813,-0.444,['CS5010'],False
+CS5540,Game Programming,0.818,-0.445,['CS5004'],False
+CS7150,Deep Learning,0.825,-0.447,['CS6140'],False
+CS6240,Large-Scale Parallel Data Processing,0.832,-0.45,['CS5800'],False
+CS6410,Compilers,0.833,-0.45,['CS5400'],False
+DS5500,Data Science Capstone,0.858,-0.458,['CS5800'],False
+CS7800,Advanced Algorithms,0.861,-0.458,['CS5800'],False
+CS6510,Advanced Software Development,0.872,-0.462,['CS5004'],False

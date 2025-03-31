@@ -20,11 +20,15 @@ export default function RootLayout({
     <html lang="en">
       <body className={inter.className}>
         <ClerkProvider>
-          <div className="flex h-screen">
-            <AppSidebar />
-            <main className="flex-1 overflow-y-auto bg-gray-50 p-8">
-              {children}
-            </main>
+          <div className="min-h-screen bg-gradient-to-br from-indigo-50 via-purple-50 to-pink-50">
+            <div className="flex min-h-screen">
+              <AppSidebar />
+              <main className="flex-1 p-8">
+                <div className="max-w-7xl mx-auto">
+                  {children}
+                </div>
+              </main>
+            </div>
           </div>
         </ClerkProvider>
       </body>

@@ -1,5 +1,6 @@
 import pandas as pd
 import logging
+import os
 
 # Set up logging
 logging.basicConfig(
@@ -12,7 +13,13 @@ logging.basicConfig(
 )
 logger = logging.getLogger(__name__)
 
-def load_subject_data(filename='data/courses/subjects_df.csv'):
+# Add this at the start of your program
+os.makedirs("data/courses", exist_ok=True)
+os.makedirs("data/students", exist_ok=True)
+os.makedirs("outputs/burnout_scores", exist_ok=True)
+os.makedirs("outputs/schedules", exist_ok=True)
+
+def load_subject_data(filename='data/courses/subjects.csv'):
     '''
     Load and process subject data
     Params:
@@ -20,12 +27,26 @@ def load_subject_data(filename='data/courses/subjects_df.csv'):
     '''
     try:
         df = pd.read_csv(filename)
+        
+        # First, check if the required columns exist
+        required_columns = [
+            'Subject', 'Subject Names', 'Course Outcomes', 'Weekly Workload (hours)', 
+            'Assignments #', 'Hours per Assignment', 'Assignment Weight', 
+            'Avg Assignment Grade', 'Project Weight', 'Avg Project Grade', 
+            'Exam #', 'Avg Exam Grade', 'Exam Weight', 'Avg Final Grade', 
+            'Seats', 'Enrollments'
+        ]
+        
+        # Print available columns for debugging
+        logger.info(f"Available columns in CSV: {df.columns.tolist()}")
+        
+        # Check if all required columns exist
+        missing_columns = [col for col in required_columns if col not in df.columns]
+        if missing_columns:
+            raise ValueError(f"Missing required columns in CSV: {missing_columns}")
+            
         # Rename columns for consistency
-        subjects_df = df[['Subject', 'Subject Names', 'Course Outcomes', 'Weekly Workload (hours)', 
-                      'Assignments #', 'Hours per Assignment', 'Assignment Weight', 
-                      'Avg Assignment Grade', 'Project Weight', 'Avg Project Grade', 
-                      'Exam #', 'Avg Exam Grade', 'Exam Weight', 'Avg Final Grade', 
-                      'Seats', 'Enrollments']].rename(columns={
+        subjects_df = df[required_columns].rename(columns={
             'Subject': 'subject_code',
             'Subject Names': 'name',
             'Course Outcomes': 'course_outcomes',

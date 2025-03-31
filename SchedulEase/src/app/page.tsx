@@ -1,6 +1,15 @@
 import { BookOpen, Calendar, GraduationCap, LineChart } from "lucide-react";
 import { LucideIcon } from "lucide-react";
 
+// Add this CSS class to your card components
+const cardStyle = "bg-white/80 backdrop-blur-sm rounded-xl border border-purple-100 shadow-lg hover:shadow-xl transition-all duration-300";
+
+// Add this to your section headers
+const headerStyle = "text-2xl font-bold bg-gradient-to-r from-purple-600 to-pink-600 text-transparent bg-clip-text";
+
+// Add this to your buttons
+const buttonStyle = "px-4 py-2 bg-gradient-to-r from-purple-600 to-pink-600 text-white rounded-lg hover:from-purple-700 hover:to-pink-700 transition-all shadow-md hover:shadow-lg";
+
 export default function DashboardPage() {
   return (
     <div className="space-y-8">
@@ -98,13 +107,45 @@ function DashboardCard({
   return (
     <a
       href={href}
-      className="rounded-lg border bg-white p-6 hover:border-gray-300 transition-colors"
+      className={`${cardStyle} p-6`}
     >
-      <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-gray-50">
-        <Icon className="h-6 w-6 text-gray-600" />
+      <div className="flex items-center justify-between">
+        <div>
+          <h3 className="text-lg font-semibold text-gray-900">{title}</h3>
+          <p className="mt-1 text-sm text-gray-600">{description}</p>
+        </div>
+        <div className="h-12 w-12 rounded-full bg-purple-100 flex items-center justify-center">
+          <Icon className="h-6 w-6 text-purple-600" />
+        </div>
       </div>
-      <h2 className="mt-4 font-semibold text-gray-900">{title}</h2>
-      <p className="mt-1 text-sm text-gray-600">{description}</p>
     </a>
+  );
+}
+
+// Progress bar component
+function ProgressBar({ value, max, color = "purple" }) {
+  const percentage = (value / max) * 100;
+  return (
+    <div className="h-2 bg-gray-100 rounded-full overflow-hidden">
+      <div
+        className={`h-full bg-gradient-to-r from-${color}-500 to-${color}-600 transition-all duration-300`}
+        style={{ width: `${percentage}%` }}
+      />
+    </div>
+  );
+}
+
+// Status badge component
+function StatusBadge({ status }) {
+  const colors = {
+    success: "bg-green-100 text-green-800 border-green-200",
+    warning: "bg-yellow-100 text-yellow-800 border-yellow-200",
+    error: "bg-red-100 text-red-800 border-red-200",
+  };
+
+  return (
+    <span className={`px-3 py-1 rounded-full text-sm font-medium border ${colors[status]}`}>
+      {status}
+    </span>
   );
 }

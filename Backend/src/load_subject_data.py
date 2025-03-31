@@ -2,7 +2,7 @@ import pandas as pd
 
 def load_subject_data():
     # Load your dataset
-    df = pd.read_csv('data/courses/subject_analysis.csv')
+    df = pd.read_csv('data/courses/subjects.csv')
     
     # Process into required structures
     subjects_df = df[['Subject', 'Subject Names', 'Weekly Workload (hours)', 'Assignments #', 'Hours per Assignment', 

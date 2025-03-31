@@ -1,7 +1,6 @@
 'use client';
 
 import Link from "next/link";
-import { usePathname } from "next/navigation";
 import {
   BookOpen,
   Calendar,
@@ -23,50 +22,25 @@ const navigation = [
 ];
 
 export function AppSidebar() {
-  const pathname = usePathname();
-
+  
+  // Use simple, non-dynamic classes first to test
   return (
-    <div className="flex h-full w-64 flex-col bg-white border-r">
+    <div className="w-64 bg-white border-r">
       <div className="flex h-16 items-center px-6 border-b">
-        <h1 className="text-xl font-bold text-gray-900">SchedulEase</h1>
+        <h1 className="text-xl font-bold">SchedulEase</h1>
       </div>
-      <nav className="flex-1 space-y-1 px-2 py-4">
-        {navigation.map((item) => {
-          const isActive = pathname === item.href;
-          const Icon = item.icon;
-          return (
-            <Link
-              key={item.name}
-              href={item.href}
-              className={`
-                group flex items-center px-4 py-2 text-sm font-medium rounded-md
-                ${
-                  isActive
-                    ? "bg-gray-100 text-gray-900"
-                    : "text-gray-600 hover:bg-gray-50 hover:text-gray-900"
-                }
-              `}
-            >
-              <Icon
-                className={`mr-3 h-5 w-5 flex-shrink-0 ${
-                  isActive ? "text-gray-900" : "text-gray-400 group-hover:text-gray-500"
-                }`}
-                aria-hidden="true"
-              />
-              {item.name}
-            </Link>
-          );
-        })}
+      <nav className="p-4">
+        {navigation.map((item) => (
+          <Link
+            key={item.name}
+            href={item.href}
+            className="flex items-center px-4 py-2 my-1 rounded-lg"
+          >
+            <item.icon className="mr-3 h-5 w-5" />
+            <span>{item.name}</span>
+          </Link>
+        ))}
       </nav>
-      <div className="border-t p-4">
-        <div className="flex items-center">
-          <div className="h-8 w-8 rounded-full bg-gray-200" />
-          <div className="ml-3">
-            <p className="text-sm font-medium text-gray-700">Student Name</p>
-            <p className="text-xs text-gray-500">NUID: 12345</p>
-          </div>
-        </div>
-      </div>
     </div>
   );
 }
