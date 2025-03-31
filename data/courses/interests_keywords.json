@@ -104,17 +104,57 @@
       "virtualization"
     ],
     "programming": [
-      "python", 
-      "java", 
-      "c++", 
-      "c#", 
-      "haskell", 
       "programming paradigms", 
-      "object-oriented programming",
       "functional programming", 
       "software engineering", 
       "algorithms", 
       "coding"
+    ],
+    "python": [
+      "python", 
+      "pandas", 
+      "jupyter", 
+      "scikit-learn"
+    ],
+    "java": [
+      "java", 
+      "jvm", 
+      "spring", 
+      "android"
+    ],
+    "c++": [
+      "c++", 
+      "stl", 
+      "memory management"
+    ],
+    "c#": [
+      "c#", 
+      ".net", 
+      "xamarin"
+    ],
+    "javascript": [
+      "javascript", 
+      "js", 
+      "node.js", 
+      "react", 
+      "angular", 
+      "vue"
+    ],
+    "haskell": [
+      "haskell", 
+      "functional programming", 
+      "type theory"
+    ],
+    "rust": [
+      "rust", 
+      "memory safety", 
+      "systems programming"
+    ],
+    "c": [
+      "c", 
+      "pointers", 
+      "memory management", 
+      "systems programming"
     ],
     "graphics": [
       "computer graphics", 
