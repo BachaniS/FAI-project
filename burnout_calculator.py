@@ -41,14 +41,28 @@ def calculate_outcome_mismatch(student_data, subject_code, outcomes_df):
     overlap = len(desired & subject_outcomes) / len(desired) if desired else 0
     return 1 - overlap  # [0,1], lower mismatch = better alignment
 
-def calculate_workload_factor(subject_code, subjects_df):
-    subject = subjects_df[subjects_df['subject_code'] == subject_code].iloc[0]
-    H = subject['hours_per_week']
-    A = subject['num_assignments'] * subject['hours_per_assignment'] * subject['assignment_weight']
-    P = (100 - subject['avg_project_grade']) * subject['project_weight'] if subject['project_weight'] > 0 else 0
-    E = subject['exam_count'] * (100 - subject['avg_exam_grade']) * subject['exam_weight'] if subject['exam_weight'] > 0 else 0
-    W_prime = np.log(1 + H / 10) + A / 100 + P / 100 + E / 100
-    return W_prime / 10  # [0,1]
+def calculate_workload_factor(subject_code: str, subjects_df: pd.DataFrame) -> float:
+    """Calculate workload factor for a subject."""
+    # First verify the subject exists
+    subject_data = subjects_df[subjects_df['subject_code'] == subject_code]
+    if subject_data.empty:
+        print(f"Warning: Subject {subject_code} not found in database")
+        return 1.0  # Return default value
+    
+    subject = subject_data.iloc[0]
+    
+    # Calculate workload factor
+    weekly_workload = subject['hours_per_week']
+    num_assignments = subject['num_assignments']
+    hours_per_assignment = subject['hours_per_assignment']
+    
+    total_workload = weekly_workload + (num_assignments * hours_per_assignment)
+    
+    # Normalize workload (you might want to adjust these values)
+    MAX_WORKLOAD = 20  # Maximum expected weekly workload
+    workload_factor = total_workload / MAX_WORKLOAD
+    
+    return min(max(workload_factor, 0.1), 2.0)  # Keep between 0.1 and 2.0
 
 def calculate_stress_factor(student_data, subject_code, subjects_df):
     subject = subjects_df[subjects_df['subject_code'] == subject_code].iloc[0]
