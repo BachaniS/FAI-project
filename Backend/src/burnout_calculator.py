@@ -1,7 +1,7 @@
 import pandas as pd
 import numpy as np
 import json
-from utils import load_subject_data, prerequisites_satisfied, standardize_student_data
+from utils import load_course_data, prerequisites_satisfied, standardize_student_data
 
 def workload_factor(subject_code, subjects_df):
     '''
@@ -211,7 +211,7 @@ def calculate_scores(nuid):
     '''
     Calculate burnout scores and utility for all subjects for a given student
     '''
-    subjects_df, outcomes_df, prereqs_df, _, requirements_df = load_subject_data()
+    subjects_df, outcomes_df, prereqs_df, _, requirements_df = load_course_data()
     
     try:
         student_df = pd.read_csv(f'data/students/student_{nuid}.csv')
