@@ -1,75 +1,124 @@
+"use client";
+
 import { CheckCircle, Clock, GraduationCap, Star } from "lucide-react";
+import { motion } from "framer-motion";
 
 export default function AcademicProgressPage() {
   return (
-    <div className="space-y-6">
-      <div>
+    <motion.div 
+      className="space-y-6"
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      transition={{ duration: 0.5 }}
+    >
+      <motion.div
+        initial={{ y: -20, opacity: 0 }}
+        animate={{ y: 0, opacity: 1 }}
+        transition={{ duration: 0.6 }}
+      >
         <h1 className="text-2xl font-bold text-gray-900">Academic Progress</h1>
         <p className="mt-2 text-gray-600">
           Track your degree completion and academic achievements
         </p>
-      </div>
+      </motion.div>
 
       <div className="grid gap-6 md:grid-cols-4">
-        <ProgressCard
-          title="Credits Completed"
-          value="24/32"
-          description="Required credits"
-          icon={Clock}
-        />
-        <ProgressCard
-          title="Core Courses"
-          value="4/6"
-          description="Required courses"
-          icon={Star}
-        />
-        <ProgressCard
-          title="Current GPA"
-          value="3.8"
-          description="Cumulative GPA"
-          icon={GraduationCap}
-        />
-        <ProgressCard
-          title="Requirements Met"
-          value="75%"
-          description="Degree progress"
-          icon={CheckCircle}
-        />
+        {[
+          {
+            title: "Credits Completed",
+            value: "24/32",
+            description: "Required credits",
+            icon: Clock
+          },
+          {
+            title: "Core Courses",
+            value: "4/6",
+            description: "Required courses",
+            icon: Star
+          },
+          {
+            title: "Current GPA",
+            value: "3.8",
+            description: "Cumulative GPA",
+            icon: GraduationCap
+          },
+          {
+            title: "Requirements Met",
+            value: "75%",
+            description: "Degree progress",
+            icon: CheckCircle
+          }
+        ].map((card, index) => (
+          <motion.div
+            key={card.title}
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: index * 0.1, duration: 0.5 }}
+          >
+            <ProgressCard {...card} />
+          </motion.div>
+        ))}
       </div>
 
       <div className="grid gap-6 lg:grid-cols-2">
-        <div className="bg-white rounded-lg border p-6">
+        <motion.div 
+          className="bg-white rounded-lg border p-6"
+          initial={{ opacity: 0, x: -20 }}
+          animate={{ opacity: 1, x: 0 }}
+          transition={{ delay: 0.4, duration: 0.5 }}
+        >
           <h2 className="text-lg font-semibold text-gray-900">Degree Requirements</h2>
           <div className="mt-4 space-y-4">
-            {degreeRequirements.map((req) => (
-              <RequirementItem key={req.name} {...req} />
+            {degreeRequirements.map((req, index) => (
+              <motion.div
+                key={req.name}
+                initial={{ opacity: 0, x: -20 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ delay: 0.5 + index * 0.1, duration: 0.5 }}
+              >
+                <RequirementItem {...req} />
+              </motion.div>
             ))}
           </div>
-        </div>
+        </motion.div>
 
-        <div className="bg-white rounded-lg border p-6">
+        <motion.div 
+          className="bg-white rounded-lg border p-6"
+          initial={{ opacity: 0, x: 20 }}
+          animate={{ opacity: 1, x: 0 }}
+          transition={{ delay: 0.4, duration: 0.5 }}
+        >
           <h2 className="text-lg font-semibold text-gray-900">Course History</h2>
           <div className="mt-4 space-y-4">
-            {courseHistory.map((semester) => (
-              <div key={semester.term}>
+            {courseHistory.map((semester, semesterIndex) => (
+              <motion.div 
+                key={semester.term}
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.5 + semesterIndex * 0.2, duration: 0.5 }}
+              >
                 <h3 className="font-medium text-gray-900 mb-2">{semester.term}</h3>
                 <div className="space-y-2">
-                  {semester.courses.map((course) => (
-                    <div
+                  {semester.courses.map((course, courseIndex) => (
+                    <motion.div
                       key={course.code}
                       className="flex justify-between items-center text-sm"
+                      initial={{ opacity: 0, x: 20 }}
+                      animate={{ opacity: 1, x: 0 }}
+                      transition={{ delay: 0.6 + semesterIndex * 0.2 + courseIndex * 0.1, duration: 0.5 }}
+                      whileHover={{ scale: 1.02 }}
                     >
                       <span className="text-gray-900">{course.code} - {course.name}</span>
                       <span className={getGradeColor(course.grade)}>{course.grade}</span>
-                    </div>
+                    </motion.div>
                   ))}
                 </div>
-              </div>
+              </motion.div>
             ))}
           </div>
-        </div>
+        </motion.div>
       </div>
-    </div>
+    </motion.div>
   );
 }
 
@@ -85,16 +134,28 @@ function ProgressCard({
   icon: React.ElementType;
 }) {
   return (
-    <div className="bg-white rounded-lg border p-6">
-      <div className="flex items-center">
+    <motion.div 
+      className="bg-white rounded-lg border p-6"
+      whileHover={{ scale: 1.02 }}
+      transition={{ duration: 0.2 }}
+    >
+      <motion.div 
+        className="flex items-center"
+        whileHover={{ x: 5 }}
+      >
         <Icon className="h-5 w-5 text-gray-400" />
         <h2 className="ml-2 text-sm font-medium text-gray-600">{title}</h2>
-      </div>
-      <div className="mt-2">
+      </motion.div>
+      <motion.div 
+        className="mt-2"
+        initial={{ scale: 0.8, opacity: 0 }}
+        animate={{ scale: 1, opacity: 1 }}
+        transition={{ duration: 0.3 }}
+      >
         <span className="text-2xl font-bold text-gray-900">{value}</span>
-      </div>
+      </motion.div>
       <p className="mt-2 text-sm text-gray-600">{description}</p>
-    </div>
+    </motion.div>
   );
 }
 
@@ -110,20 +171,26 @@ function RequirementItem({
   description: string;
 }) {
   const percentage = (completed / total) * 100;
+  
   return (
-    <div className="space-y-2">
+    <motion.div 
+      className="space-y-2"
+      whileHover={{ scale: 1.01 }}
+    >
       <div className="flex justify-between">
         <span className="text-sm font-medium text-gray-900">{name}</span>
         <span className="text-sm text-gray-600">{completed}/{total}</span>
       </div>
       <div className="h-2 bg-gray-100 rounded-full overflow-hidden">
-        <div
+        <motion.div
           className="h-full bg-blue-600"
-          style={{ width: `${percentage}%` }}
+          initial={{ width: 0 }}
+          animate={{ width: `${percentage}%` }}
+          transition={{ duration: 0.8, ease: "easeOut" }}
         />
       </div>
       <p className="text-xs text-gray-600">{description}</p>
-    </div>
+    </motion.div>
   );
 }
 
