@@ -5,7 +5,7 @@ import json
 from typing import List, Dict, Set, Tuple
 from load_subject_data import load_subject_data
 from StudentDataCollector import StudentDataCollector
-from burnout_calculator import calculate_burnout
+import burnout_calculator
 
 class CourseRecommender:
     def __init__(self):
@@ -50,88 +50,182 @@ class CourseRecommender:
         }
 
     def initialize_population(self, available_subjects: List[str], core_subjects: List[str]) -> List[List[List[str]]]:
-        """Initialize population of course plans."""
-        # Validate subjects exist in database
-        valid_subjects = set(self.subjects_df['subject_code'].unique())
-        available_subjects = [s for s in available_subjects if s in valid_subjects]
-        core_subjects = [s for s in core_subjects if s in valid_subjects]
-        
-        if not available_subjects:
-            raise ValueError("No valid subjects available")
-        
-        if not core_subjects:
-            print("Warning: No valid core subjects found")
-        
+        """Initialize population of course plans with proper constraints."""
         population = []
+        core_subjects = [s for s in core_subjects if s and s in self.all_subjects]
+        
         for _ in range(self.POPULATION_SIZE):
             plan = [[] for _ in range(self.SEMESTERS)]
-            remaining_subjects = set(available_subjects) - set(core_subjects)
+            used_courses = set()  # Track used courses to prevent duplicates
             
-            # Place core subjects first
-            for i, core in enumerate(core_subjects):
-                if i < self.SEMESTERS:
-                    plan[i].append(core)
+            # First, place core subjects
+            for core in core_subjects:
+                # Find earliest semester where prerequisites are met
+                for sem_idx in range(self.SEMESTERS):
+                    if self.can_take_course(core, used_courses, sem_idx, plan):
+                        plan[sem_idx].append(core)
+                        used_courses.add(core)
+                        break
             
             # Fill remaining slots
-            for semester in range(self.SEMESTERS):
-                while len(plan[semester]) < self.COURSES_PER_SEMESTER:
-                    available = list(remaining_subjects - set([course for sem in plan for course in sem]))
-                    if available:
-                        course = random.choice(available)
-                        plan[semester].append(course)
-                    else:
-                        break  # No more available courses
+            for sem_idx in range(self.SEMESTERS):
+                while len(plan[sem_idx]) < self.COURSES_PER_SEMESTER:
+                    # Get valid courses for this semester
+                    valid_courses = [
+                        c for c in available_subjects 
+                        if c not in used_courses 
+                        and c not in self.blacklist
+                        and self.can_take_course(c, used_courses, sem_idx, plan)
+                    ]
+                    
+                    if not valid_courses:
+                        break
+                        
+                    course = random.choice(valid_courses)
+                    plan[sem_idx].append(course)
+                    used_courses.add(course)
             
-            if all(len(sem) == self.COURSES_PER_SEMESTER for sem in plan):
+            if self.is_valid_plan(plan, core_subjects):
                 population.append(plan)
-        
-        if not population:
-            raise ValueError("Could not generate valid course plans. Not enough valid courses available.")
         
         return population
 
+    def can_take_course(self, course: str, taken_courses: Set[str], semester: int, plan: List[List[str]]) -> bool:
+        """Check if prerequisites are met and course can be taken."""
+        # Get prerequisites for the course
+        prereqs = set(self.prereqs_df[self.prereqs_df['subject_code'] == course]['prereq_subject_code'])
+        
+        # Calculate all courses taken before this semester
+        previous_courses = taken_courses.copy()
+        for i in range(semester):
+            previous_courses.update(plan[i])
+            
+        # Check if all prerequisites are met
+        return all(p in previous_courses for p in prereqs)
+
+    def is_valid_plan(self, plan: List[List[str]], core_subjects: List[str]) -> bool:
+        """Validate a course plan."""
+        # Check if all core subjects are included
+        planned_courses = set([c for sem in plan for c in sem])
+        if not all(core in planned_courses for core in core_subjects):
+            return False
+            
+        # Check for duplicates
+        if len(planned_courses) != sum(len(sem) for sem in plan):
+            return False
+            
+        # Check prerequisites for each semester
+        taken = set()
+        for sem_idx, semester in enumerate(plan):
+            for course in semester:
+                if not self.can_take_course(course, taken, sem_idx, plan):
+                    return False
+            taken.update(semester)
+            
+        return True
+
     def calculate_fitness(self, plan: List[List[str]], taken: Set[str]) -> float:
         """Calculate fitness score for a course plan."""
-        total_fitness = 0
+        if not self.is_valid_plan(plan, self.student_data['core_subjects'].split(',')):
+            return float('-inf')
+        
+        total_fitness = 100  # Start with a base score of 100
         current_taken = taken.copy()
+        desired_outcomes = set(self.student_data['desired_outcomes'].lower().split(','))
         
         for semester in plan:
             semester_burnout = 0
-            prereq_penalty = 0
             outcome_bonus = 0
+            workload_balance = 0
+            enrollment_penalty = 0
             
+            # Calculate semester metrics
             for course in semester:
-                # Calculate burnout
-                burnout = calculate_burnout(self.student_data, course, 
+                # Burnout score (scaled down to have less negative impact)
+                burnout = burnout_calculator.calculate_burnout(self.student_data, course, 
                                          self.subjects_df, self.prereqs_df, self.outcomes_df)
-                semester_burnout += burnout
+                semester_burnout += burnout * 0.5  # Scale down burnout impact
                 
-                # Check prerequisites
-                prereqs = set(self.prereqs_df[self.prereqs_df['subject_code'] == course]['prereq_subject_code'])
-                unmet_prereqs = prereqs - current_taken
-                prereq_penalty += len(unmet_prereqs) * 10
+                # Outcome matching (increased positive impact)
+                course_outcomes = set(self.outcomes_df[
+                    self.outcomes_df['subject_code'] == course]['outcome'].str.lower())
+                outcome_bonus += len(desired_outcomes & course_outcomes) * 10  # Increased bonus
                 
-                # Calculate outcome matching
-                desired_outcomes = set(self.student_data['desired_outcomes'].split(','))
-                course_outcomes = set(self.outcomes_df[self.outcomes_df['subject_code'] == course]['outcome'])
-                outcome_bonus += len(desired_outcomes & course_outcomes)
+                # Seat availability penalty (scaled down)
+                subject_data = self.subjects_df[self.subjects_df['subject_code'] == course].iloc[0]
+                seats = subject_data['seats']
+                enrollments = subject_data['enrollments']
+                if seats > 0:
+                    enrollment_percentage = (enrollments / seats) * 100
+                    if enrollment_percentage >= 90:
+                        enrollment_penalty += (enrollment_percentage - 90) * 0.2  # Reduced penalty
+                
+                # Track taken courses
+                current_taken.add(course)
             
-            current_taken.update(semester)
-            total_fitness += (-semester_burnout - prereq_penalty + outcome_bonus)
+            # Balance penalty for high burnout (scaled down)
+            if semester_burnout > 10:
+                workload_balance -= (semester_burnout - 10) * 0.5
+            
+            # Add bonuses and subtract penalties
+            semester_score = outcome_bonus - semester_burnout - enrollment_penalty + workload_balance
+            total_fitness += semester_score
         
-        return total_fitness
+        return max(0, total_fitness)  # Ensure score doesn't go below 0
 
     def crossover(self, parent1: List[List[str]], parent2: List[List[str]]) -> Tuple[List[List[str]], List[List[str]]]:
-        """Perform crossover between two parent plans."""
-        child1 = [semester[:] for semester in parent1]
-        child2 = [semester[:] for semester in parent2]
-        
-        if random.random() < 0.5:  # 50% chance of crossover
+        """Perform crossover while maintaining valid course sequences."""
+        if random.random() < 0.7:  # 70% chance of crossover
             crossover_point = random.randint(1, self.SEMESTERS - 1)
-            child1[crossover_point:] = [semester[:] for semester in parent2[crossover_point:]]
-            child2[crossover_point:] = [semester[:] for semester in parent1[crossover_point:]]
+            child1 = parent1[:crossover_point] + parent2[crossover_point:]
+            child2 = parent2[:crossover_point] + parent1[crossover_point:]
+            
+            # Repair children if they're invalid
+            child1 = self.repair_plan(child1)
+            child2 = self.repair_plan(child2)
+            
+            return child1, child2
+        return parent1, parent2
+
+    def repair_plan(self, plan: List[List[str]]) -> List[List[str]]:
+        """Repair an invalid course plan."""
+        used_courses = set()
+        new_plan = [[] for _ in range(self.SEMESTERS)]
         
-        return child1, child2
+        # First, try to keep courses in their original semesters if valid
+        for sem_idx, semester in enumerate(plan):
+            for course in semester:
+                if (course not in used_courses and 
+                    self.can_take_course(course, used_courses, sem_idx, new_plan)):
+                    new_plan[sem_idx].append(course)
+                    used_courses.add(course)
+        
+        # Add any missing core subjects
+        core_subjects = self.student_data['core_subjects'].split(',')
+        for core in core_subjects:
+            if core not in used_courses:
+                for sem_idx in range(self.SEMESTERS):
+                    if self.can_take_course(core, used_courses, sem_idx, new_plan):
+                        new_plan[sem_idx].append(core)
+                        used_courses.add(core)
+                        break
+        
+        # Fill remaining slots
+        available_subjects = [s for s in self.all_subjects if s not in self.blacklist]
+        for sem_idx in range(self.SEMESTERS):
+            while len(new_plan[sem_idx]) < self.COURSES_PER_SEMESTER:
+                valid_courses = [
+                    c for c in available_subjects 
+                    if c not in used_courses 
+                    and self.can_take_course(c, used_courses, sem_idx, new_plan)
+                ]
+                if not valid_courses:
+                    break
+                course = random.choice(valid_courses)
+                new_plan[sem_idx].append(course)
+                used_courses.add(course)
+        
+        return new_plan
 
     def mutation(self, plan: List[List[str]], available_subjects: List[str]) -> List[List[str]]:
         """Perform mutation on a course plan."""
@@ -192,7 +286,7 @@ class CourseRecommender:
             print(f"\nSemester {i}:")
             for course in semester:
                 name = self.subjects_df[self.subjects_df['subject_code'] == course]['name'].iloc[0]
-                burnout = calculate_burnout(self.student_data, course, 
+                burnout = burnout_calculator.calculate_burnout(self.student_data, course, 
                                          self.subjects_df, self.prereqs_df, self.outcomes_df)
                 print(f"  {course} - {name}")
                 print(f"  Estimated Burnout: {burnout:.2f}")
