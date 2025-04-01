@@ -3,14 +3,27 @@ import numpy as np
 import random
 import json
 from typing import List, Dict, Set, Tuple
+from pymongo import MongoClient
 from load_subject_data import load_subject_data
 from StudentDataCollector import StudentDataCollector
 import burnout_calculator
 
+# MongoDB Connection
+MONGO_URI = "mongodb+srv://cliftaus:US1vE3LSIWq379L9@burnout.lpo5x.mongodb.net/"
+client = MongoClient(MONGO_URI)
+
 class CourseRecommender:
     def __init__(self):
-        # Load course data
-        self.subjects_df, self.outcomes_df, self.prereqs_df, self.coreqs_df = load_subject_data()
+        # Load course data from MongoDB
+        db = client["subject_details"]
+        courses_collection = db["courses"]
+        self.subjects_df = pd.DataFrame(list(courses_collection.find({}, {'_id': 0})))
+        
+        # Load other necessary data (you'll need to adjust these based on your MongoDB structure)
+        self.outcomes_df = pd.DataFrame(list(db["outcomes"].find({}, {'_id': 0})))
+        self.prereqs_df = pd.DataFrame(list(db["prerequisites"].find({}, {'_id': 0})))
+        self.coreqs_df = pd.DataFrame(list(db["corequisites"].find({}, {'_id': 0})))
+        
         self.all_subjects = self.subjects_df['subject_code'].tolist()
         
         # GA Parameters
@@ -24,30 +37,49 @@ class CourseRecommender:
         self.student_data = None
 
     def get_student_data(self) -> Dict:
-        """Get or create student data."""
+        """Get or create student data from MongoDB."""
         nuid = input("Enter your NUid: ").strip()
         try:
             self.student_data = self.load_existing_student_data(nuid)
             return self.student_data
-        except FileNotFoundError:
+        except Exception:
             print("No existing data found. Let's create your profile.")
             collector = StudentDataCollector()
             self.student_data = collector.collect_student_data()
+            # Save the new student data to MongoDB
+            self.save_student_data(self.student_data)
             return self.student_data
 
     def load_existing_student_data(self, nuid: str) -> Dict:
-        """Load existing student data from CSV."""
-        student_df = pd.read_csv(f'student_{nuid}.csv')
+        """Load existing student data from MongoDB."""
+        db = client["user_details"]
+        users_collection = db["users"]
+        
+        student_data = users_collection.find_one({"NUID": nuid})
+        if not student_data:
+            raise Exception("Student not found")
+            
         return {
-            'NUid': student_df['NUid'].iloc[0],
-            'programming_experience': student_df['programming_experience'].iloc[0],
-            'math_experience': student_df['math_experience'].iloc[0],
-            'completed_courses': json.loads(student_df['completed_courses_details'].iloc[0]),
-            'core_subjects': student_df['core_subjects'].iloc[0],
-            'desired_outcomes': student_df['desired_outcomes'].iloc[0],
-            'detailed_programming_exp': json.loads(student_df['detailed_programming_exp'].iloc[0]),
-            'detailed_math_exp': json.loads(student_df['detailed_math_exp'].iloc[0])
+            'NUid': student_data['NUID'],
+            'programming_experience': student_data['programming_experience'],
+            'math_experience': student_data['math_experience'],
+            'completed_courses': student_data['completed_courses'],
+            'core_subjects': student_data['core_subjects'],
+            'desired_outcomes': student_data['desired_outcomes'],
+            'detailed_programming_exp': student_data['detailed_programming_exp'],
+            'detailed_math_exp': student_data['detailed_math_exp']
         }
+
+    def save_student_data(self, student_data: Dict) -> None:
+        """Save student data to MongoDB."""
+        db = client["user_details"]
+        users_collection = db["users"]
+        
+        users_collection.replace_one(
+            {"NUID": student_data['NUid']},
+            student_data,
+            upsert=True
+        )
 
     def initialize_population(self, available_subjects: List[str], core_subjects: List[str]) -> List[List[List[str]]]:
         """Initialize population of course plans with proper constraints."""
@@ -293,18 +325,24 @@ class CourseRecommender:
             print("-" * 30)
 
     def save_plan(self, plan: List[List[str]], fitness: float) -> None:
-        """Save the course plan to CSV."""
+        """Save the course plan to MongoDB."""
         nuid = self.student_data['NUid']
         plan_data = {
-            'NUid': nuid,
-            'plan': json.dumps(plan),
+            'NUID': nuid,
+            'plan': plan,
             'fitness_score': fitness,
             'timestamp': pd.Timestamp.now()
         }
         
-        df = pd.DataFrame([plan_data])
-        df.to_csv(f'course_plan_{nuid}.csv', index=False)
-        print(f"\nPlan saved to course_plan_{nuid}.csv")
+        db = client["user_details"]
+        schedules_collection = db["user_schedules"]
+        
+        schedules_collection.replace_one(
+            {"NUID": nuid},
+            plan_data,
+            upsert=True
+        )
+        print(f"\nPlan saved to database for student {nuid}")
 
     def debug_data(self):
         """Print debug information about loaded data."""
