@@ -1,2 +1,2 @@
-NUid,programming_experience,math_experience,completed_courses,core_subjects,desired_outcomes,completed_courses_details
-1234,Python,Calculus,,"CS5010,CS5800","ML,AI",{}
+NUid,programming_experience,math_experience,completed_courses_details,core_subjects,desired_outcomes
+1234,Python,Calculus,{},"CS5010,CS5800","Java, AI, ML, Web Development"
