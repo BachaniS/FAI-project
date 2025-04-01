@@ -1,16 +1,33 @@
+"use client";
+
 import { Search } from "lucide-react";
+import { motion } from "framer-motion";
 
 export default function CourseCatalogPage() {
   return (
-    <div className="space-y-6">
-      <div>
+    <motion.div 
+      className="space-y-6"
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      transition={{ duration: 0.5 }}
+    >
+      <motion.div
+        initial={{ y: -20 }}
+        animate={{ y: 0 }}
+        transition={{ duration: 0.6 }}
+      >
         <h1 className="text-2xl font-bold text-gray-900">Course Catalog</h1>
         <p className="mt-2 text-gray-600">
           Browse and search through available courses for your degree program
         </p>
-      </div>
+      </motion.div>
 
-      <div className="flex space-x-4">
+      <motion.div 
+        className="flex space-x-4"
+        initial={{ opacity: 0, y: -10 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.2, duration: 0.5 }}
+      >
         <div className="flex-1 relative">
           <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
             <Search className="h-5 w-5 text-gray-400" />
@@ -29,22 +46,38 @@ export default function CourseCatalogPage() {
           <option>Systems</option>
           <option>Theory</option>
         </select>
-      </div>
+      </motion.div>
 
       <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-        {courses.map((course) => (
-          <div key={course.id} className="bg-white rounded-lg border p-6">
+        {courses.map((course, index) => (
+          <motion.div 
+            key={course.id} 
+            className="bg-white rounded-lg border p-6"
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.3 + index * 0.1, duration: 0.5 }}
+            whileHover={{ scale: 1.02 }}
+            whileTap={{ scale: 0.98 }}
+          >
             <div className="flex justify-between items-start">
               <div>
                 <h3 className="text-lg font-semibold text-gray-900">{course.code}</h3>
                 <p className="mt-1 text-gray-900">{course.name}</p>
               </div>
-              <span className={`px-2 py-1 text-xs font-medium rounded ${getCategoryColor(course.category)}`}>
+              <motion.span 
+                className={`px-2 py-1 text-xs font-medium rounded ${getCategoryColor(course.category)}`}
+                whileHover={{ scale: 1.05 }}
+              >
                 {course.category}
-              </span>
+              </motion.span>
             </div>
             <p className="mt-3 text-sm text-gray-600">{course.description}</p>
-            <div className="mt-4 border-t pt-4">
+            <motion.div 
+              className="mt-4 border-t pt-4"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ delay: 0.5 + index * 0.1, duration: 0.5 }}
+            >
               <div className="grid grid-cols-2 gap-4 text-sm">
                 <div>
                   <p className="text-gray-500">Credits</p>
@@ -60,14 +93,21 @@ export default function CourseCatalogPage() {
                 </div>
                 <div>
                   <p className="text-gray-500">Alignment Score</p>
-                  <p className="font-medium text-blue-600">{course.alignmentScore}%</p>
+                  <motion.p 
+                    className="font-medium text-blue-600"
+                    initial={{ opacity: 0, x: -10 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    transition={{ delay: 0.7 + index * 0.1, duration: 0.5 }}
+                  >
+                    {course.alignmentScore}%
+                  </motion.p>
                 </div>
               </div>
-            </div>
-          </div>
+            </motion.div>
+          </motion.div>
         ))}
       </div>
-    </div>
+    </motion.div>
   );
 }
 

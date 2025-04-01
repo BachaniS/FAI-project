@@ -1,26 +1,55 @@
+"use client";
+
 import { Calendar, AlertTriangle, CheckCircle } from "lucide-react";
+import { motion } from "framer-motion";
 
 export default function SchedulePage() {
   return (
-    <div className="space-y-6">
-      <div>
+    <motion.div 
+      className="space-y-6"
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      transition={{ duration: 0.5 }}
+    >
+      <motion.div
+        initial={{ y: -20, opacity: 0 }}
+        animate={{ y: 0, opacity: 1 }}
+        transition={{ duration: 0.6 }}
+      >
         <h1 className="text-2xl font-bold text-gray-900">My Schedule</h1>
         <p className="mt-2 text-gray-600">
           View and manage your course schedule across semesters
         </p>
-      </div>
+      </motion.div>
 
       <div className="grid gap-6 lg:grid-cols-2">
-        <div className="bg-white rounded-lg border p-6">
+        <motion.div 
+          className="bg-white rounded-lg border p-6"
+          initial={{ opacity: 0, x: -20 }}
+          animate={{ opacity: 1, x: 0 }}
+          transition={{ delay: 0.3, duration: 0.5 }}
+        >
           <div className="flex items-center justify-between">
             <h2 className="text-lg font-semibold text-gray-900">Current Semester</h2>
             <span className="text-sm text-gray-600">Spring 2024</span>
           </div>
           <div className="mt-4 space-y-4">
-            {currentSemester.courses.map((course) => (
-              <CourseCard key={course.code} course={course} />
+            {currentSemester.courses.map((course, index) => (
+              <motion.div
+                key={course.code}
+                initial={{ opacity: 0, x: -20 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ delay: 0.4 + index * 0.1, duration: 0.5 }}
+              >
+                <CourseCard course={course} />
+              </motion.div>
             ))}
-            <div className="mt-4 pt-4 border-t">
+            <motion.div 
+              className="mt-4 pt-4 border-t"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ delay: 0.7, duration: 0.5 }}
+            >
               <div className="flex items-center justify-between text-sm">
                 <span className="text-gray-600">Total Credits:</span>
                 <span className="font-medium">{currentSemester.totalCredits}</span>
@@ -29,66 +58,111 @@ export default function SchedulePage() {
                 <span className="text-gray-600">Workload Status:</span>
                 <span className="font-medium text-yellow-600">Moderate</span>
               </div>
-            </div>
+            </motion.div>
           </div>
-        </div>
+        </motion.div>
 
-        <div className="bg-white rounded-lg border p-6">
+        <motion.div 
+          className="bg-white rounded-lg border p-6"
+          initial={{ opacity: 0, x: 20 }}
+          animate={{ opacity: 1, x: 0 }}
+          transition={{ delay: 0.3, duration: 0.5 }}
+        >
           <div className="flex items-center justify-between">
             <h2 className="text-lg font-semibold text-gray-900">Upcoming Semesters</h2>
-            <button className="text-sm text-blue-600 hover:text-blue-700">
+            <motion.button 
+              className="text-sm text-blue-600 hover:text-blue-700"
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
+            >
               Edit Plan
-            </button>
+            </motion.button>
           </div>
           <div className="mt-4 space-y-6">
-            {upcomingSemesters.map((semester) => (
-              <div key={semester.term} className="space-y-4">
+            {upcomingSemesters.map((semester, semesterIndex) => (
+              <motion.div 
+                key={semester.term} 
+                className="space-y-4"
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.4 + semesterIndex * 0.2, duration: 0.5 }}
+              >
                 <div className="flex items-center justify-between">
                   <h3 className="font-medium text-gray-900">{semester.term}</h3>
                   <span className="text-sm text-gray-600">{semester.totalCredits} Credits</span>
                 </div>
-                {semester.courses.map((course) => (
-                  <CourseCard key={course.code} course={course} isPlanned />
+                {semester.courses.map((course, courseIndex) => (
+                  <motion.div
+                    key={course.code}
+                    initial={{ opacity: 0, x: 20 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    transition={{ delay: 0.5 + semesterIndex * 0.2 + courseIndex * 0.1, duration: 0.5 }}
+                  >
+                    <CourseCard course={course} isPlanned />
+                  </motion.div>
                 ))}
-              </div>
+              </motion.div>
             ))}
           </div>
-        </div>
+        </motion.div>
       </div>
 
-      <div className="bg-white rounded-lg border p-6">
+      <motion.div 
+        className="bg-white rounded-lg border p-6"
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.6, duration: 0.5 }}
+      >
         <h2 className="text-lg font-semibold text-gray-900">Schedule Analysis</h2>
         <div className="mt-4 grid gap-4 md:grid-cols-3">
-          <AnalysisCard
-            title="Burnout Risk"
-            value="Medium"
-            status="warning"
-            description="Consider redistributing workload"
-          />
-          <AnalysisCard
-            title="Prerequisites"
-            value="All Met"
-            status="success"
-            description="Current plan is valid"
-          />
-          <AnalysisCard
-            title="Graduation Track"
-            value="On Track"
-            status="success"
-            description="Expected: Spring 2025"
-          />
+          {[
+            {
+              title: "Burnout Risk",
+              value: "Medium",
+              status: "warning" as const,
+              description: "Consider redistributing workload"
+            },
+            {
+              title: "Prerequisites",
+              value: "All Met",
+              status: "success" as const,
+              description: "Current plan is valid"
+            },
+            {
+              title: "Graduation Track",
+              value: "On Track",
+              status: "success" as const,
+              description: "Expected: Spring 2025"
+            }
+          ].map((analysis, index) => (
+            <motion.div
+              key={analysis.title}
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.7 + index * 0.1, duration: 0.5 }}
+            >
+              <AnalysisCard {...analysis} />
+            </motion.div>
+          ))}
         </div>
-      </div>
-    </div>
+      </motion.div>
+    </motion.div>
   );
 }
 
 function CourseCard({ course, isPlanned = false }: { course: Course; isPlanned?: boolean }) {
   return (
-    <div className="flex items-start space-x-4 p-4 rounded-lg border bg-gray-50">
-      <div className="flex-shrink-0">
+    <motion.div 
+      className="flex items-start space-x-4 p-4 rounded-lg border bg-gray-50"
+      whileHover={{ scale: 1.02 }}
+      transition={{ duration: 0.2 }}
+    >
+      <motion.div 
+        className="flex-shrink-0"
+        whileHover={{ rotate: 10 }}
+      >
         <Calendar className="h-5 w-5 text-gray-400" />
-      </div>
+      </motion.div>
       <div className="flex-1 min-w-0">
         <div className="flex items-center justify-between">
           <p className="text-sm font-medium text-gray-900">{course.code}</p>
@@ -101,7 +175,7 @@ function CourseCard({ course, isPlanned = false }: { course: Course; isPlanned?:
           </p>
         )}
       </div>
-    </div>
+    </motion.div>
   );
 }
 
@@ -125,14 +199,23 @@ function AnalysisCard({
   const StatusIcon = status === "success" ? CheckCircle : AlertTriangle;
 
   return (
-    <div className="rounded-lg border p-4">
+    <motion.div 
+      className="rounded-lg border p-4"
+      whileHover={{ scale: 1.02 }}
+      transition={{ duration: 0.2 }}
+    >
       <h3 className="text-sm font-medium text-gray-900">{title}</h3>
-      <div className="mt-2 flex items-center">
+      <motion.div 
+        className="mt-2 flex items-center"
+        initial={{ opacity: 0, x: -10 }}
+        animate={{ opacity: 1, x: 0 }}
+        transition={{ delay: 0.2, duration: 0.5 }}
+      >
         <StatusIcon className={`h-5 w-5 ${statusColors[status]} mr-2`} />
         <span className={`text-lg font-semibold ${statusColors[status]}`}>{value}</span>
-      </div>
+      </motion.div>
       <p className="mt-2 text-sm text-gray-600">{description}</p>
-    </div>
+    </motion.div>
   );
 }
 

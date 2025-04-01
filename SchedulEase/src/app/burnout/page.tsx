@@ -1,96 +1,149 @@
+"use client";
+
 import { Activity, Brain, Clock, BookOpen } from "lucide-react";
 import { LucideIcon } from "lucide-react";
+import { motion } from "framer-motion";
 
 export default function BurnoutAnalysisPage() {
   return (
-    <div className="space-y-6">
-      <div>
+    <motion.div 
+      className="space-y-6"
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      transition={{ duration: 0.5 }}
+    >
+      <motion.div
+        initial={{ y: -20 }}
+        animate={{ y: 0 }}
+        transition={{ duration: 0.6 }}
+      >
         <h1 className="text-2xl font-bold text-gray-900">Burnout Analysis</h1>
         <p className="mt-2 text-gray-600">
           Monitor your academic stress levels and workload distribution
         </p>
-      </div>
+      </motion.div>
 
       <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
-        <MetricCard
-          title="Overall Burnout Risk"
-          value="Medium"
-          trend="stable"
-          icon={Activity}
-          description="Based on current schedule"
-        />
-        <MetricCard
-          title="Weekly Study Hours"
-          value="28"
-          trend="increasing"
-          icon={Clock}
-          description="Average across courses"
-        />
-        <MetricCard
-          title="Course Difficulty"
-          value="Moderate"
-          trend="stable"
-          icon={Brain}
-          description="Relative to your background"
-        />
-        <MetricCard
-          title="Assignment Load"
-          value="High"
-          trend="decreasing"
-          icon={BookOpen}
-          description="Next 2 weeks forecast"
-        />
+        {/* Stagger the metric cards animation */}
+        {[
+          {
+            title: "Overall Burnout Risk",
+            value: "Medium",
+            trend: "stable" as const,
+            icon: Activity,
+            description: "Based on current schedule"
+          },
+          {
+            title: "Weekly Study Hours",
+            value: "28",
+            trend: "increasing" as const,
+            icon: Clock,
+            description: "Average across courses"
+          },
+          {
+            title: "Course Difficulty",
+            value: "Moderate",
+            trend: "stable" as const,
+            icon: Brain,
+            description: "Relative to your background"
+          },
+          {
+            title: "Assignment Load",
+            value: "High",
+            trend: "decreasing" as const,
+            icon: BookOpen,
+            description: "Next 2 weeks forecast"
+          }
+        ].map((metric, index) => (
+          <motion.div
+            key={metric.title}
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: index * 0.1, duration: 0.5 }}
+          >
+            <MetricCard {...metric} />
+          </motion.div>
+        ))}
       </div>
 
       <div className="grid gap-6 lg:grid-cols-2">
-        <div className="bg-white rounded-lg border p-6">
+        <motion.div
+          className="bg-white rounded-lg border p-6"
+          initial={{ opacity: 0, x: -20 }}
+          animate={{ opacity: 1, x: 0 }}
+          transition={{ delay: 0.4, duration: 0.5 }}
+        >
           <h2 className="text-lg font-semibold text-gray-900">Workload Distribution</h2>
           <div className="mt-4 space-y-4">
-            {courses.map((course) => (
-              <WorkloadBar
+            {courses.map((course, index) => (
+              <motion.div
                 key={course.code}
-                course={course}
-                maxHours={40}
-              />
+                initial={{ opacity: 0, x: -20 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ delay: 0.5 + index * 0.1, duration: 0.5 }}
+              >
+                <WorkloadBar course={course} maxHours={40} />
+              </motion.div>
             ))}
           </div>
-        </div>
+        </motion.div>
 
-        <div className="bg-white rounded-lg border p-6">
+        <motion.div
+          className="bg-white rounded-lg border p-6"
+          initial={{ opacity: 0, x: 20 }}
+          animate={{ opacity: 1, x: 0 }}
+          transition={{ delay: 0.4, duration: 0.5 }}
+        >
           <h2 className="text-lg font-semibold text-gray-900">Stress Factors</h2>
           <div className="mt-4 space-y-4">
-            {stressFactors.map((factor) => (
-              <StressIndicator
+            {stressFactors.map((factor, index) => (
+              <motion.div
                 key={factor.name}
-                name={factor.name}
-                value={factor.value}
-                impact={factor.impact}
-              />
+                initial={{ opacity: 0, x: 20 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ delay: 0.5 + index * 0.1, duration: 0.5 }}
+              >
+                <StressIndicator {...factor} />
+              </motion.div>
             ))}
           </div>
-        </div>
+        </motion.div>
       </div>
 
-      <div className="bg-white rounded-lg border p-6">
+      <motion.div
+        className="bg-white rounded-lg border p-6"
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.6, duration: 0.5 }}
+      >
         <h2 className="text-lg font-semibold text-gray-900">Recommendations</h2>
         <div className="mt-4 grid gap-4 md:grid-cols-2">
           {recommendations.map((rec, index) => (
-            <div
+            <motion.div
               key={index}
               className="rounded-lg border p-4 bg-gray-50"
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.7 + index * 0.1, duration: 0.5 }}
+              whileHover={{ scale: 1.02 }}
+              whileTap={{ scale: 0.98 }}
             >
               <h3 className="font-medium text-gray-900">{rec.title}</h3>
               <p className="mt-1 text-sm text-gray-600">{rec.description}</p>
               {rec.action && (
-                <button className="mt-3 text-sm text-blue-600 hover:text-blue-700">
+                <motion.button 
+                  className="mt-3 text-sm text-blue-600 hover:text-blue-700"
+                  whileHover={{ scale: 1.05 }}
+                  whileTap={{ scale: 0.95 }}
+                >
                   {rec.action}
-                </button>
+                </motion.button>
               )}
-            </div>
+            </motion.div>
           ))}
         </div>
-      </div>
-    </div>
+      </motion.div>
+    </motion.div>
   );
 }
 
@@ -156,9 +209,11 @@ function WorkloadBar({
         <span className="text-gray-600">{course.weeklyHours}h/week</span>
       </div>
       <div className="h-4 bg-gray-100 rounded-full overflow-hidden">
-        <div
+        <motion.div
           className={`h-full ${difficultyColors[course.difficulty]}`}
-          style={{ width: `${percentage}%` }}
+          initial={{ width: 0 }}
+          animate={{ width: `${percentage}%` }}
+          transition={{ duration: 0.8, ease: "easeOut" }}
         />
       </div>
     </div>
@@ -185,9 +240,11 @@ function StressIndicator({
       <span className="text-sm font-medium text-gray-900">{name}</span>
       <div className="flex items-center space-x-4">
         <div className="w-32 h-2 bg-gray-100 rounded-full overflow-hidden">
-          <div
+          <motion.div
             className="h-full bg-blue-600"
-            style={{ width: `${value}%` }}
+            initial={{ width: 0 }}
+            animate={{ width: `${value}%` }}
+            transition={{ duration: 0.8, ease: "easeOut" }}
           />
         </div>
         <span className={`text-sm font-medium ${impactColors[impact]}`}>
