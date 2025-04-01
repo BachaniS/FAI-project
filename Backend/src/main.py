@@ -1,10 +1,8 @@
-import pandas as pd
 import numpy as np
 import random
 import json
 from typing import List, Dict, Set, Tuple
 from pymongo import MongoClient
-from load_subject_data import load_subject_data
 from StudentDataCollector import StudentDataCollector
 import burnout_calculator
 
@@ -14,344 +12,226 @@ client = MongoClient(MONGO_URI)
 
 class CourseRecommender:
     def __init__(self):
-        # Load course data from MongoDB
-        db = client["subject_details"]
-        courses_collection = db["courses"]
-        self.subjects_df = pd.DataFrame(list(courses_collection.find({}, {'_id': 0})))
-        
-        # Load other necessary data (you'll need to adjust these based on your MongoDB structure)
-        self.outcomes_df = pd.DataFrame(list(db["outcomes"].find({}, {'_id': 0})))
-        self.prereqs_df = pd.DataFrame(list(db["prerequisites"].find({}, {'_id': 0})))
-        self.coreqs_df = pd.DataFrame(list(db["corequisites"].find({}, {'_id': 0})))
-        
-        self.all_subjects = self.subjects_df['subject_code'].tolist()
-        
-        # GA Parameters
-        self.POPULATION_SIZE = 50
-        self.GENERATIONS = 100
-        self.SEMESTERS = 4
-        self.COURSES_PER_SEMESTER = 2
-        self.MUTATION_RATE = 0.1
-        self.blacklist = set()
-        self.final_list = []
-        self.student_data = None
+        try:
+            # MongoDB connections
+            self.db = client["subject_details"]
+            self.courses_collection = self.db["courses"]
+            self.outcomes_collection = self.db["outcomes"]
+            self.prereqs_collection = self.db["prerequisites"]
+            
+            print("Loading course data into memory...")
+            
+            # Get all subjects and their data
+            self.subjects_data = {}
+            for doc in self.courses_collection.find():
+                self.subjects_data[doc['subject_id']] = {
+                    'name': doc.get('name', 'Unknown Course'),
+                    'difficulty': doc.get('difficulty', 5),
+                    'workload': doc.get('workload', 5),
+                    'outcomes': [],
+                    'prereqs': set()
+                }
+            
+            # Load prerequisites
+            for doc in self.prereqs_collection.find():
+                subject_id = doc['subject_id']
+                if subject_id in self.subjects_data:
+                    self.subjects_data[subject_id]['prereqs'].add(doc['prereq_subject_id'])
+            
+            # Load outcomes
+            for doc in self.outcomes_collection.find():
+                subject_id = doc['subject_id']
+                if subject_id in self.subjects_data:
+                    self.subjects_data[subject_id]['outcomes'].append(doc['outcome'].lower())
+            
+            self.all_subjects = list(self.subjects_data.keys())
+            if not self.all_subjects:
+                raise ValueError("No subjects found in database")
+            
+            print(f"Loaded {len(self.all_subjects)} subjects")
+            print(f"Sample subjects: {', '.join(sorted(self.all_subjects)[:10])}")
+            
+            # Planning parameters
+            self.SEMESTERS = 4
+            self.COURSES_PER_SEMESTER = 2
+            self.blacklist = set()
+            
+        except Exception as e:
+            print(f"Error initializing CourseRecommender: {str(e)}")
+            raise
 
     def get_student_data(self) -> Dict:
         """Get or create student data from MongoDB."""
         nuid = input("Enter your NUid: ").strip()
         try:
+            print("\nAttempting to load existing student data...")
             self.student_data = self.load_existing_student_data(nuid)
+            
+            # Clean up core subjects
+            if 'core_subjects' in self.student_data:
+                core_subjects = [s.strip() for s in self.student_data['core_subjects'].split(',') if s.strip()]
+                self.student_data['core_subjects'] = ','.join(core_subjects)
+            
+            print("Successfully loaded existing student data")
+            print(f"Core subjects: {self.student_data.get('core_subjects', 'None')}")
+            print(f"Completed courses: {list(self.student_data.get('completed_courses', {}).keys())}")
             return self.student_data
-        except Exception:
-            print("No existing data found. Let's create your profile.")
+        except Exception as e:
+            print(f"\nNo existing data found: {str(e)}")
+            print("Creating new student profile...")
             collector = StudentDataCollector()
             self.student_data = collector.collect_student_data()
-            # Save the new student data to MongoDB
-            self.save_student_data(self.student_data)
             return self.student_data
 
     def load_existing_student_data(self, nuid: str) -> Dict:
         """Load existing student data from MongoDB."""
-        db = client["user_details"]
-        users_collection = db["users"]
-        
+        users_collection = client["user_details"]["users"]
         student_data = users_collection.find_one({"NUID": nuid})
         if not student_data:
             raise Exception("Student not found")
             
-        return {
-            'NUid': student_data['NUID'],
-            'programming_experience': student_data['programming_experience'],
-            'math_experience': student_data['math_experience'],
-            'completed_courses': student_data['completed_courses'],
-            'core_subjects': student_data['core_subjects'],
-            'desired_outcomes': student_data['desired_outcomes'],
-            'detailed_programming_exp': student_data['detailed_programming_exp'],
-            'detailed_math_exp': student_data['detailed_math_exp']
-        }
+        # Validate required fields
+        required_fields = ['NUID', 'core_subjects', 'completed_courses', 'desired_outcomes']
+        missing_fields = [field for field in required_fields if field not in student_data]
+        if missing_fields:
+            print(f"Warning: Missing fields in student data: {missing_fields}")
+            # Initialize missing fields with defaults
+            if 'completed_courses' not in student_data:
+                student_data['completed_courses'] = {}
+            if 'core_subjects' not in student_data:
+                student_data['core_subjects'] = ''
+            if 'desired_outcomes' not in student_data:
+                student_data['desired_outcomes'] = ''
+                
+        return student_data
 
-    def save_student_data(self, student_data: Dict) -> None:
-        """Save student data to MongoDB."""
-        db = client["user_details"]
-        users_collection = db["users"]
+    def calculate_burnout(self, course: str) -> float:
+        """Calculate burnout score for a course."""
+        course_data = self.subjects_data[course]
+        difficulty = course_data['difficulty']
+        workload = course_data['workload']
         
-        users_collection.replace_one(
-            {"NUID": student_data['NUid']},
-            student_data,
-            upsert=True
-        )
+        prog_exp = self.student_data['programming_experience']
+        math_exp = self.student_data['math_experience']
+        
+        burnout = (difficulty * (10 - prog_exp) + workload * (10 - math_exp)) / 20
+        return max(1, min(10, burnout))
 
-    def initialize_population(self, available_subjects: List[str], core_subjects: List[str]) -> List[List[List[str]]]:
-        """Initialize population of course plans with proper constraints."""
-        population = []
-        core_subjects = [s for s in core_subjects if s and s in self.all_subjects]
-        
-        for _ in range(self.POPULATION_SIZE):
-            plan = [[] for _ in range(self.SEMESTERS)]
-            used_courses = set()  # Track used courses to prevent duplicates
-            
-            # First, place core subjects
-            for core in core_subjects:
-                # Find earliest semester where prerequisites are met
-                for sem_idx in range(self.SEMESTERS):
-                    if self.can_take_course(core, used_courses, sem_idx, plan):
-                        plan[sem_idx].append(core)
-                        used_courses.add(core)
-                        break
-            
-            # Fill remaining slots
-            for sem_idx in range(self.SEMESTERS):
-                while len(plan[sem_idx]) < self.COURSES_PER_SEMESTER:
-                    # Get valid courses for this semester
-                    valid_courses = [
-                        c for c in available_subjects 
-                        if c not in used_courses 
-                        and c not in self.blacklist
-                        and self.can_take_course(c, used_courses, sem_idx, plan)
-                    ]
-                    
-                    if not valid_courses:
-                        break
-                        
-                    course = random.choice(valid_courses)
-                    plan[sem_idx].append(course)
-                    used_courses.add(course)
-            
-            if self.is_valid_plan(plan, core_subjects):
-                population.append(plan)
-        
-        return population
+    def get_available_courses(self, taken_courses: Set[str]) -> List[str]:
+        """Get list of available courses that meet prerequisites."""
+        available = []
+        for course in self.all_subjects:
+            if (course not in taken_courses and 
+                course not in self.blacklist and 
+                all(p in taken_courses for p in self.subjects_data[course]['prereqs'])):
+                available.append(course)
+        return available
 
-    def can_take_course(self, course: str, taken_courses: Set[str], semester: int, plan: List[List[str]]) -> bool:
-        """Check if prerequisites are met and course can be taken."""
-        # Get prerequisites for the course
-        prereqs = set(self.prereqs_df[self.prereqs_df['subject_code'] == course]['prereq_subject_code'])
-        
-        # Calculate all courses taken before this semester
-        previous_courses = taken_courses.copy()
-        for i in range(semester):
-            previous_courses.update(plan[i])
-            
-        # Check if all prerequisites are met
-        return all(p in previous_courses for p in prereqs)
+    def score_course(self, course: str, desired_outcomes: Set[str], taken_courses: Set[str]) -> float:
+        """Score a course based on burnout and outcomes."""
+        burnout = self.calculate_burnout(course)
+        course_outcomes = set(self.subjects_data[course]['outcomes'])
+        outcome_match = len(desired_outcomes & course_outcomes)
+        return outcome_match * 5 - burnout
 
-    def is_valid_plan(self, plan: List[List[str]], core_subjects: List[str]) -> bool:
-        """Validate a course plan."""
-        # Check if all core subjects are included
-        planned_courses = set([c for sem in plan for c in sem])
-        if not all(core in planned_courses for core in core_subjects):
-            return False
-            
-        # Check for duplicates
-        if len(planned_courses) != sum(len(sem) for sem in plan):
-            return False
-            
-        # Check prerequisites for each semester
-        taken = set()
-        for sem_idx, semester in enumerate(plan):
-            for course in semester:
-                if not self.can_take_course(course, taken, sem_idx, plan):
-                    return False
-            taken.update(semester)
-            
-        return True
-
-    def calculate_fitness(self, plan: List[List[str]], taken: Set[str]) -> float:
-        """Calculate fitness score for a course plan."""
-        if not self.is_valid_plan(plan, self.student_data['core_subjects'].split(',')):
-            return float('-inf')
+    def plan_semester(self, taken_courses: Set[str], semester_num: int) -> List[str]:
+        """Plan a single semester by selecting best available courses."""
+        available_courses = self.get_available_courses(taken_courses)
+        if len(available_courses) < self.COURSES_PER_SEMESTER:
+            raise ValueError(f"Not enough available courses for semester {semester_num}")
         
-        total_fitness = 100  # Start with a base score of 100
-        current_taken = taken.copy()
         desired_outcomes = set(self.student_data['desired_outcomes'].lower().split(','))
         
-        for semester in plan:
-            semester_burnout = 0
-            outcome_bonus = 0
-            workload_balance = 0
-            enrollment_penalty = 0
-            
-            # Calculate semester metrics
-            for course in semester:
-                # Burnout score (scaled down to have less negative impact)
-                burnout = burnout_calculator.calculate_burnout(self.student_data, course, 
-                                         self.subjects_df, self.prereqs_df, self.outcomes_df)
-                semester_burnout += burnout * 0.5  # Scale down burnout impact
-                
-                # Outcome matching (increased positive impact)
-                course_outcomes = set(self.outcomes_df[
-                    self.outcomes_df['subject_code'] == course]['outcome'].str.lower())
-                outcome_bonus += len(desired_outcomes & course_outcomes) * 10  # Increased bonus
-                
-                # Seat availability penalty (scaled down)
-                subject_data = self.subjects_df[self.subjects_df['subject_code'] == course].iloc[0]
-                seats = subject_data['seats']
-                enrollments = subject_data['enrollments']
-                if seats > 0:
-                    enrollment_percentage = (enrollments / seats) * 100
-                    if enrollment_percentage >= 90:
-                        enrollment_penalty += (enrollment_percentage - 90) * 0.2  # Reduced penalty
-                
-                # Track taken courses
-                current_taken.add(course)
-            
-            # Balance penalty for high burnout (scaled down)
-            if semester_burnout > 10:
-                workload_balance -= (semester_burnout - 10) * 0.5
-            
-            # Add bonuses and subtract penalties
-            semester_score = outcome_bonus - semester_burnout - enrollment_penalty + workload_balance
-            total_fitness += semester_score
+        # Score all available courses
+        course_scores = [(course, self.score_course(course, desired_outcomes, taken_courses)) 
+                        for course in available_courses]
         
-        return max(0, total_fitness)  # Ensure score doesn't go below 0
+        # Sort by score and take the best courses
+        course_scores.sort(key=lambda x: x[1], reverse=True)
+        selected_courses = [course for course, _ in course_scores[:self.COURSES_PER_SEMESTER]]
+        
+        return selected_courses
 
-    def crossover(self, parent1: List[List[str]], parent2: List[List[str]]) -> Tuple[List[List[str]], List[List[str]]]:
-        """Perform crossover while maintaining valid course sequences."""
-        if random.random() < 0.7:  # 70% chance of crossover
-            crossover_point = random.randint(1, self.SEMESTERS - 1)
-            child1 = parent1[:crossover_point] + parent2[crossover_point:]
-            child2 = parent2[:crossover_point] + parent1[crossover_point:]
-            
-            # Repair children if they're invalid
-            child1 = self.repair_plan(child1)
-            child2 = self.repair_plan(child2)
-            
-            return child1, child2
-        return parent1, parent2
-
-    def repair_plan(self, plan: List[List[str]]) -> List[List[str]]:
-        """Repair an invalid course plan."""
-        used_courses = set()
-        new_plan = [[] for _ in range(self.SEMESTERS)]
+    def generate_course_plan(self) -> None:
+        """Generate course plan semester by semester."""
+        taken_courses = set(self.student_data['completed_courses'].keys())
+        plan = [[] for _ in range(self.SEMESTERS)]
         
-        # First, try to keep courses in their original semesters if valid
-        for sem_idx, semester in enumerate(plan):
-            for course in semester:
-                if (course not in used_courses and 
-                    self.can_take_course(course, used_courses, sem_idx, new_plan)):
-                    new_plan[sem_idx].append(course)
-                    used_courses.add(course)
-        
-        # Add any missing core subjects
-        core_subjects = self.student_data['core_subjects'].split(',')
-        for core in core_subjects:
-            if core not in used_courses:
-                for sem_idx in range(self.SEMESTERS):
-                    if self.can_take_course(core, used_courses, sem_idx, new_plan):
-                        new_plan[sem_idx].append(core)
-                        used_courses.add(core)
+        for semester in range(self.SEMESTERS):
+            while True:
+                try:
+                    print(f"\nPlanning Semester {semester + 1}...")
+                    semester_courses = self.plan_semester(taken_courses, semester + 1)
+                    self.display_semester(semester + 1, semester_courses)
+                    
+                    response = input("\nAre you satisfied with this semester? (yes/no): ").lower()
+                    if response == 'yes':
+                        plan[semester] = semester_courses
+                        taken_courses.update(semester_courses)
                         break
+                    else:
+                        remove_code = input("Enter course code to blacklist (or 'skip' to try again): ").strip()
+                        if remove_code != 'skip':
+                            self.blacklist.add(remove_code)
+                            print(f"Added {remove_code} to blacklist")
+                except Exception as e:
+                    print(f"Error planning semester: {str(e)}")
+                    if input("Try again? (yes/no): ").lower() != 'yes':
+                        return
         
-        # Fill remaining slots
-        available_subjects = [s for s in self.all_subjects if s not in self.blacklist]
-        for sem_idx in range(self.SEMESTERS):
-            while len(new_plan[sem_idx]) < self.COURSES_PER_SEMESTER:
-                valid_courses = [
-                    c for c in available_subjects 
-                    if c not in used_courses 
-                    and self.can_take_course(c, used_courses, sem_idx, new_plan)
-                ]
-                if not valid_courses:
-                    break
-                course = random.choice(valid_courses)
-                new_plan[sem_idx].append(course)
-                used_courses.add(course)
-        
-        return new_plan
+        print("\nFinal Course Plan:")
+        self.display_plan(plan)
 
-    def mutation(self, plan: List[List[str]], available_subjects: List[str]) -> List[List[str]]:
-        """Perform mutation on a course plan."""
-        if random.random() < self.MUTATION_RATE:
-            sem1, sem2 = random.sample(range(self.SEMESTERS), 2)
-            course1, course2 = random.sample(range(self.COURSES_PER_SEMESTER), 2)
+    def display_semester(self, semester_num: int, courses: List[str]) -> None:
+        """Display courses for a single semester."""
+        print(f"\nSemester {semester_num}:")
+        for course in courses:
+            course_data = self.subjects_data[course]
+            name = course_data['name']
+            burnout = self.calculate_burnout(course)
+            print(f"  {course} - {name}")
+            print(f"  Estimated Burnout: {burnout:.2f}")
             
-            # Swap courses between semesters
-            if len(plan[sem1]) > course1 and len(plan[sem2]) > course2:
-                plan[sem1][course1], plan[sem2][course2] = plan[sem2][course2], plan[sem1][course1]
-        
-        return plan
-
-    def generate_course_plan(self) -> Tuple[List[List[str]], float]:
-        """Generate optimal course plan using genetic algorithm."""
-        available_subjects = [s for s in self.all_subjects if s not in self.blacklist]
-        core_subjects = self.student_data['core_subjects'].split(',')
-        taken = set(self.student_data['completed_courses'].keys())
-        
-        # Initialize population
-        population = self.initialize_population(available_subjects, core_subjects)
-        
-        # Evolution process
-        for generation in range(self.GENERATIONS):
-            # Calculate fitness for all plans
-            fitness_scores = [self.calculate_fitness(plan, taken) for plan in population]
-            
-            # Select best plans
-            sorted_population = [x for _, x in sorted(zip(fitness_scores, population), reverse=True)]
-            new_population = sorted_population[:2]  # Keep top 2
-            
-            # Generate new population
-            while len(new_population) < self.POPULATION_SIZE:
-                parent1, parent2 = random.sample(sorted_population[:10], 2)  # Select from top 10
-                child1, child2 = self.crossover(parent1, parent2)
-                child1 = self.mutation(child1, available_subjects)
-                child2 = self.mutation(child2, available_subjects)
-                new_population.extend([child1, child2])
-            
-            population = new_population[:self.POPULATION_SIZE]
-            
-            if generation % 10 == 0:
-                best_fitness = max(fitness_scores)
-                print(f"Generation {generation}: Best Fitness = {best_fitness}")
-        
-        # Return best plan
-        final_fitness_scores = [self.calculate_fitness(plan, taken) for plan in population]
-        best_plan = population[np.argmax(final_fitness_scores)]
-        best_fitness = max(final_fitness_scores)
-        
-        return best_plan, best_fitness
+            prereqs = course_data['prereqs']
+            if prereqs:
+                print(f"  Prerequisites: {', '.join(sorted(prereqs))}")
 
     def display_plan(self, plan: List[List[str]]) -> None:
-        """Display the course plan with details."""
-        print("\nProposed Course Plan:")
+        """Display the complete course plan."""
+        print("\nComplete Course Plan:")
         print("-" * 50)
         for i, semester in enumerate(plan, 1):
-            print(f"\nSemester {i}:")
-            for course in semester:
-                name = self.subjects_df[self.subjects_df['subject_code'] == course]['name'].iloc[0]
-                burnout = burnout_calculator.calculate_burnout(self.student_data, course, 
-                                         self.subjects_df, self.prereqs_df, self.outcomes_df)
-                print(f"  {course} - {name}")
-                print(f"  Estimated Burnout: {burnout:.2f}")
+            self.display_semester(i, semester)
             print("-" * 30)
 
-    def save_plan(self, plan: List[List[str]], fitness: float) -> None:
-        """Save the course plan to MongoDB."""
-        nuid = self.student_data['NUid']
-        plan_data = {
-            'NUID': nuid,
-            'plan': plan,
-            'fitness_score': fitness,
-            'timestamp': pd.Timestamp.now()
-        }
-        
-        db = client["user_details"]
-        schedules_collection = db["user_schedules"]
-        
-        schedules_collection.replace_one(
-            {"NUID": nuid},
-            plan_data,
-            upsert=True
-        )
-        print(f"\nPlan saved to database for student {nuid}")
+    def save_plan(self, plan: List[List[str]], fitness_score: float) -> None:
+        """Save the course plan."""
+        try:
+            subject_list = {}
+            for i, semester in enumerate(plan, 1):
+                for j, subject_code in enumerate(semester, 1):
+                    name = self.subjects_data[subject_code]['name']
+                    burnout = self.calculate_burnout(subject_code)
+                    subject_list[f"Semester {i} Subject {j}"] = f"{subject_code}: {name} (Burnout: {burnout:.2f})"
+            
+            plan_doc = {
+                'NUid': self.student_data['NUid'],
+                'schedule': json.dumps(subject_list),
+                'fitness_score': fitness_score
+            }
+            
+            self.db['course_plans'].insert_one(plan_doc)
+            print(f"\nPlan saved to database for student {self.student_data['NUid']}")
+            
+        except Exception as e:
+            print(f"Error saving plan: {str(e)}")
 
     def debug_data(self):
         """Print debug information about loaded data."""
         print("\nDebug Information:")
-        print(f"Total subjects in database: {len(self.subjects_df)}")
+        print(f"Total subjects in database: {len(self.all_subjects)}")
         print("Sample subjects:")
-        print(self.subjects_df['subject_code'].head())
-        print("\nTotal outcomes: {len(self.outcomes_df)}")
-        print("\nTotal prerequisites: {len(self.prereqs_df)}")
+        print(self.all_subjects[:5])
         
         if self.student_data:
             print("\nStudent Data:")
@@ -372,19 +252,15 @@ def main():
         while True:
             try:
                 print("\nGenerating optimal course plan...")
-                plan, fitness = recommender.generate_course_plan()
-                
-                # Display the plan
-                recommender.display_plan(plan)
+                recommender.generate_course_plan()
                 
                 # Ask for user satisfaction
                 response = input("\nAre you satisfied with this plan? (yes/no): ").lower()
                 if response == 'yes':
-                    recommender.save_plan(plan, fitness)
+                    recommender.save_plan(recommender.final_plan, 0)
                     print("\nCourse plan finalized and saved!")
                     break
                 else:
-                    # Get courses to blacklist
                     print("\nEnter course codes to exclude (comma-separated, or 'skip' to try again):")
                     blacklist_input = input().strip()
                     if blacklist_input.lower() != 'skip':

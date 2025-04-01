@@ -1,144 +1,148 @@
-import pandas as pd
+from pymongo import MongoClient
 import json
-from typing import Dict, List
+from typing import Dict, List, Any
 
 class StudentDataCollector:
     def __init__(self):
-        self.PROGRAMMING_LANGUAGES = [
-            "Python", "Java", "C++", "JavaScript", "C#", "R", "MATLAB",
-            "Go", "Rust", "Swift", "Kotlin", "PHP", "Ruby", "TypeScript",
-            "SQL", "Scala", "Julia", "Haskell", "Perl", "Assembly"
-        ]
-        
-        self.MATH_AREAS = [
-            "Calculus", "Linear Algebra", "Statistics", "Probability",
-            "Discrete Mathematics", "Number Theory", "Graph Theory",
-            "Differential Equations", "Numerical Analysis", "Real Analysis",
-            "Complex Analysis", "Topology", "Abstract Algebra", "Optimization",
-            "Game Theory", "Set Theory", "Logic", "Geometry", "Trigonometry",
-            "Combinatorics"
-        ]
-    
-    def display_options(self, options: List[str], title: str) -> None:
-        """Display numbered list of options."""
-        print(f"\n{title}")
-        print("-" * 50)
-        for i, option in enumerate(options, 1):
-            print(f"{i:2}. {option}")
-        print("-" * 50)
-    
-    def get_valid_rating(self, prompt: str, min_val: int = 1, max_val: int = 5) -> int:
-        """Get valid rating input from user."""
-        while True:
-            try:
-                rating = int(input(prompt))
-                if min_val <= rating <= max_val:
-                    return rating
-                print(f"Please enter a number between {min_val} and {max_val}")
-            except ValueError:
-                print("Please enter a valid number")
-    
-    def collect_student_data(self) -> Dict:
-        """Collect all student information."""
-        print("\nWelcome to the Course Planning System!")
-        print("Please provide your information to help us create your personalized course plan.")
-        
+        # MongoDB Connection
+        self.MONGO_URI = "mongodb+srv://cliftaus:US1vE3LSIWq379L9@burnout.lpo5x.mongodb.net/"
+        self.client = MongoClient(self.MONGO_URI)
+        self.db = self.client["subject_details"]
+        self.users_db = self.client["user_details"]
+
+    def get_available_subjects(self) -> List[Dict[str, Any]]:
+        """Get list of available subjects from MongoDB."""
+        courses_collection = self.db["courses"]
+        return list(courses_collection.find({}, {'_id': 0}))
+
+    def collect_student_data(self) -> Dict[str, Any]:
+        """Collect student information and preferences."""
+        print("\nWelcome to the Course Recommender System!")
+        print("Please provide the following information to help us recommend courses.\n")
+
         # Basic Information
-        nuid = input("\nEnter your NUid: ").strip()
+        nuid = input("Enter your NUid: ").strip()
         
         # Programming Experience
-        self.display_options(self.PROGRAMMING_LANGUAGES, "Programming Languages")
-        prog_exp = {}
-        while True:
-            lang = input("\nEnter a programming language (or 'done' to finish): ").strip()
-            if lang.lower() == 'done':
-                break
-            if lang in self.PROGRAMMING_LANGUAGES:
-                rating = self.get_valid_rating(f"Rate your proficiency in {lang} (1-5): ")
-                prog_exp[lang] = rating
-            else:
-                print("Please select from the listed languages")
-        
+        print("\nRate your programming experience (1-5):")
+        print("1: No experience")
+        print("2: Basic understanding")
+        print("3: Some practical experience")
+        print("4: Significant experience")
+        print("5: Expert level")
+        programming_exp = int(input("Your rating: ").strip())
+
         # Math Experience
-        self.display_options(self.MATH_AREAS, "Mathematics Areas")
-        math_exp = {}
-        while True:
-            area = input("\nEnter a math area (or 'done' to finish): ").strip()
-            if area.lower() == 'done':
-                break
-            if area in self.MATH_AREAS:
-                rating = self.get_valid_rating(f"Rate your proficiency in {area} (1-5): ")
-                math_exp[area] = rating
-            else:
-                print("Please select from the listed areas")
-        
+        print("\nRate your mathematics experience (1-5):")
+        print("1: Basic arithmetic")
+        print("2: High school algebra")
+        print("3: Calculus")
+        print("4: Advanced calculus")
+        print("5: Graduate-level mathematics")
+        math_exp = int(input("Your rating: ").strip())
+
+        # Detailed Programming Experience
+        print("\nSelect your programming experience areas (comma-separated):")
+        print("Available options: Python, Java, C++, JavaScript, Web Development, Mobile Development, None")
+        detailed_prog = input("Your selections: ").strip()
+        detailed_programming_exp = [lang.strip() for lang in detailed_prog.split(',')]
+
+        # Detailed Math Experience
+        print("\nSelect your mathematics experience areas (comma-separated):")
+        print("Available options: Algebra, Calculus, Statistics, Linear Algebra, Discrete Mathematics, None")
+        detailed_math = input("Your selections: ").strip()
+        detailed_math_exp = [area.strip() for area in detailed_math.split(',')]
+
+        # Get available subjects
+        available_subjects = self.get_available_subjects()
+        subject_ids = [subject['subject_id'] for subject in available_subjects]
+
         # Completed Courses
+        print("\nEnter completed courses (comma-separated) or 'none':")
+        print(f"Available courses: {', '.join(subject_ids)}")
+        completed_input = input("Your completed courses: ").strip().lower()
+        
         completed_courses = {}
-        if input("\nHave you completed any courses? (yes/no): ").lower().startswith('y'):
-            print("\nEnter completed courses information:")
-            print("Format: COURSE_CODE,GRADE (e.g., CS5001,A)")
-            while True:
-                course_input = input("\nEnter course and grade (or 'done' to finish): ").strip()
-                if course_input.lower() == 'done':
-                    break
-                try:
-                    code, grade = course_input.split(',')
-                    code = code.strip().upper()
-                    grade = grade.strip().upper()
-                    
-                    completed_courses[code] = {
-                        "grade": grade,
-                        "rating": self.get_valid_rating(f"Rate your experience with {code} (1-5): ")
+        if completed_input != 'none':
+            for course in completed_input.split(','):
+                course = course.strip()
+                if course in subject_ids:
+                    grade = float(input(f"Enter your grade for {course} (0-100): ").strip())
+                    completed_courses[course] = {
+                        'final_grade': grade
                     }
-                except ValueError:
-                    print("Invalid format. Please use COURSE_CODE,GRADE format")
-        
-        # Core Subjects and Desired Outcomes
-        print("\nEnter your core subjects (required courses)")
-        print("Format: comma-separated course codes (e.g., CS5001,CS5002,CS5004)")
-        core_subjects = input("Core subjects: ").strip()
-        
-        print("\nEnter your desired learning outcomes")
-        print("Format: comma-separated outcomes (e.g., machine_learning,data_science,software_engineering)")
-        desired_outcomes = input("Desired outcomes: ").strip()
-        
-        # Calculate average experiences
-        avg_prog_exp = round(sum(prog_exp.values()) / len(prog_exp)) if prog_exp else 1
-        avg_math_exp = round(sum(math_exp.values()) / len(math_exp)) if math_exp else 1
-        
+
+        # Core Subjects
+        print("\nEnter your core subjects (comma-separated):")
+        print(f"Available subjects: {', '.join(subject_ids)}")
+        core_subjects = input("Your core subjects: ").strip()
+
+        # Desired Outcomes
+        print("\nSelect desired learning outcomes (comma-separated):")
+        all_outcomes = set()
+        for subject in available_subjects:
+            if 'course_outcomes' in subject:
+                all_outcomes.update(subject['course_outcomes'])
+        print(f"Available outcomes: {', '.join(sorted(all_outcomes))}")
+        desired_outcomes = input("Your desired outcomes: ").strip()
+
         # Create student data dictionary
         student_data = {
-            'NUid': nuid,
-            'programming_experience': avg_prog_exp,
-            'math_experience': avg_math_exp,
+            'NUID': nuid,
+            'programming_experience': programming_exp,
+            'math_experience': math_exp,
             'completed_courses': completed_courses,
             'core_subjects': core_subjects,
             'desired_outcomes': desired_outcomes,
-            'detailed_programming_exp': prog_exp,
-            'detailed_math_exp': math_exp
+            'detailed_programming_exp': detailed_programming_exp,
+            'detailed_math_exp': detailed_math_exp
         }
-        
-        # Save to CSV
+
+        # Save to MongoDB
         self.save_student_data(student_data)
-        return student_data
-    
-    def save_student_data(self, student_data: Dict) -> None:
-        """Save student data to CSV file."""
-        df = pd.DataFrame([{
-            'NUid': student_data['NUid'],
-            'programming_experience': student_data['programming_experience'],
-            'math_experience': student_data['math_experience'],
-            'completed_courses_details': json.dumps(student_data['completed_courses']),
-            'core_subjects': student_data['core_subjects'],
-            'desired_outcomes': student_data['desired_outcomes'],
-            'detailed_programming_exp': json.dumps(student_data['detailed_programming_exp']),
-            'detailed_math_exp': json.dumps(student_data['detailed_math_exp'])
-        }])
         
-        filename = f"student_{student_data['NUid']}.csv"
-        df.to_csv(filename, index=False)
-        print(f"\nStudent data saved to {filename}")
+        return student_data
+
+    def save_student_data(self, student_data: Dict[str, Any]) -> None:
+        """Save student data to MongoDB."""
+        try:
+            users_collection = self.users_db["users"]
+            
+            # Ensure required fields exist
+            if 'NUID' not in student_data:
+                raise ValueError("Student data missing NUID")
+                
+            # Ensure proper data types
+            if not isinstance(student_data.get('completed_courses', {}), dict):
+                student_data['completed_courses'] = {}
+            if not isinstance(student_data.get('core_subjects', ''), str):
+                student_data['core_subjects'] = ','.join(student_data['core_subjects'])
+            if not isinstance(student_data.get('desired_outcomes', ''), str):
+                student_data['desired_outcomes'] = ','.join(student_data['desired_outcomes'])
+                
+            print("\nSaving student data:")
+            print(f"NUID: {student_data['NUID']}")
+            print(f"Core subjects: {student_data['core_subjects']}")
+            print(f"Completed courses: {list(student_data['completed_courses'].keys())}")
+            
+            # Save to MongoDB
+            result = users_collection.replace_one(
+                {"NUID": student_data['NUID']},
+                student_data,
+                upsert=True
+            )
+            
+            if result.matched_count > 0:
+                print(f"\nUpdated existing student record for NUID: {student_data['NUID']}")
+            else:
+                print(f"\nCreated new student record for NUID: {student_data['NUID']}")
+                
+        except Exception as e:
+            print(f"Error saving student data: {str(e)}")
+            raise
 
 if __name__ == "__main__":
     collector = StudentDataCollector()
     student_data = collector.collect_student_data()
+    print("\nCollected Student Data:")
+    print(json.dumps(student_data, indent=2))

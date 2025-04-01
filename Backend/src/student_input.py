@@ -7,7 +7,7 @@ from burnout_calculator import calculate_burnout
 
 # Load course data
 subjects_df, outcomes_df, prereqs_df, coreqs_df = load_subject_data()
-all_subjects = subjects_df['subject_code'].tolist()
+all_subjects = subjects_df['subject_id'].tolist()
 
 # GA Parameters
 POPULATION_SIZE = 50
@@ -161,7 +161,7 @@ def load_burnout_scores(nuid):
     """Load precomputed burnout scores if available."""
     try:
         scores_df = pd.read_csv(f'burnout_scores_{nuid}.csv')
-        return {row['subject_code']: row['burnout_score'] for _, row in scores_df.iterrows()}
+        return {row['subject_id']: row['burnout_score'] for _, row in scores_df.iterrows()}
     except FileNotFoundError:
         return None
 
@@ -178,17 +178,17 @@ def calculate_fitness(semester, taken, student_data, burnout_scores=None):
     outcome_score = 0
     
     desired = set(student_data["desired_outcomes"].split(","))
-    for subject_code in semester:
+    for subject_id in semester:
         # Use precomputed burnout scores if available, otherwise calculate
-        if burnout_scores and subject_code in burnout_scores:
-            burnout = burnout_scores[subject_code]
+        if burnout_scores and subject_id in burnout_scores:
+            burnout = burnout_scores[subject_id]
         else:
-            burnout = calculate_burnout(student_data, subject_code, subjects_df, prereqs_df, outcomes_df)
+            burnout = calculate_burnout(student_data, subject_id, subjects_df, prereqs_df, outcomes_df)
         total_burnout += burnout
-        prereqs = set(prereqs_df[prereqs_df['subject_code'] == subject_code]['prereq_subject_code'])
+        prereqs = set(prereqs_df[prereqs_df['subject_id'] == subject_id]['prereq_subject_id'])
         unmet_prereqs = prereqs - taken
         prereq_penalty += len(unmet_prereqs) * 10
-        subject_outcomes = set(outcomes_df[outcomes_df['subject_code'] == subject_code]['outcome'])
+        subject_outcomes = set(outcomes_df[outcomes_df['subject_id'] == subject_id]['outcome'])
         overlap = len(desired & subject_outcomes)
         outcome_score += overlap
     
@@ -246,19 +246,19 @@ def display_plan(plan):
     print("\nCurrent 8-Semester Course Plan:")
     for i, semester in enumerate(plan, 1):
         print(f"Semester {i}:")
-        for subject_code in semester:
-            burnout = calculate_burnout(student_data, subject_code, subjects_df, prereqs_df, outcomes_df)
-            name = subjects_df[subjects_df['subject_code'] == subject_code]['name'].iloc[0]
-            print(f"  {subject_code} - {name}: Burnout Score = {burnout:.3f}")
+        for subject_id in semester:
+            burnout = calculate_burnout(student_data, subject_id, subjects_df, prereqs_df, outcomes_df)
+            name = subjects_df[subjects_df['subject_id'] == subject_id]['name'].iloc[0]
+            print(f"  {subject_id} - {name}: Burnout Score = {burnout:.3f}")
 
 def save_plan_to_csv(plan, nuid, fitness_score):
     """Save the plan in a format similar to the example."""
     subject_list = {}
     for i, semester in enumerate(plan, 1):
-        for j, subject_code in enumerate(semester, 1):
-            burnout = calculate_burnout(student_data, subject_code, subjects_df, prereqs_df, outcomes_df)
-            name = subjects_df[subjects_df['subject_code'] == subject_code]['name'].iloc[0]
-            subject_list[f"Semester {i} Subject {j}"] = f"{subject_code}: {name} (Burnout: {burnout:.3f})"
+        for j, subject_id in enumerate(semester, 1):
+            burnout = calculate_burnout(student_data, subject_id, subjects_df, prereqs_df, outcomes_df)
+            name = subjects_df[subjects_df['subject_id'] == subject_id]['name'].iloc[0]
+            subject_list[f"Semester {i} Subject {j}"] = f"{subject_id}: {name} (Burnout: {burnout:.3f})"
     
     schedule_df = pd.DataFrame([{
         'NUid': nuid,
