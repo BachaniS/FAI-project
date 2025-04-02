@@ -1,7 +1,5 @@
-import pandas as pd
 import numpy as np
 import random
-import json
 from utils import (
     load_course_data, save_schedules, get_subject_name, get_unmet_prerequisites, load_student_data, update_knowledge_profile, save_knowledge_profile,
     get_student_completed_courses, get_student_core_subjects
@@ -221,7 +219,6 @@ def genetic_algorithm(available_subjects, taken, student_data, core_remaining):
         
         # Check if we found a better solution
         if gen_best_fitness > best_fitness:
-            improvement = gen_best_fitness - best_fitness
             best_fitness = gen_best_fitness
             best_schedule = population[gen_best_idx]
             stall_counter = 0  # Reset stall counter
@@ -636,9 +633,6 @@ def main():
     subjects_df = load_course_data()
     all_subjects = subjects_df['subject_id'].tolist()
     
-    # Track final fitness for reporting
-    final_fitness = 0
-    
     # Plan each semester interactively
     for sem_idx in range(SEMESTERS):
         # Get available subjects that aren't blacklisted or already selected
@@ -680,7 +674,6 @@ def main():
                 programming_skills, math_skills = update_knowledge_profile(student_data, taken)
                 save_knowledge_profile(nuid, programming_skills, math_skills)
                 core_remaining = [c for c in core_remaining if c not in best_semester]
-                final_fitness += fitness
                 break
             elif satisfied == "no":
                 # Ask which course to blacklist

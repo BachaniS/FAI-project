@@ -12,10 +12,8 @@ import time
 import json
 import random
 from pymongo import MongoClient
+import datetime
 
-# Configuration constants
-MAX_RECOMMENDATIONS = 5
-LIKELIHOOD_THRESHOLD = 0.7  # Threshold for high likelihood
 HIGHLY_COMPETITIVE_THRESHOLD = 0.9  # Threshold for highly competitive courses
 
 MONGO_URI = "mongodb+srv://cliftaus:US1vE3LSIWq379L9@burnout.lpo5x.mongodb.net/"
@@ -847,7 +845,7 @@ def recommend_schedule(nuid):
         show_loading_animation("Running final optimization", 5)
         
         final_subjects = final_list.copy()
-        initial_taken = set(student_data.iloc[0].get("completed_courses", {}).keys())
+        initial_taken = set(student_data.iloc[0].get("completed_courses", {}))
         
         best_plan, best_burnout = rerun_genetic_algorithm(final_subjects, student_data, initial_taken)
         

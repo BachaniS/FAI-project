@@ -116,8 +116,6 @@ def save_schedules(nuid, schedule_data):
         db = client["user_details"]
         schedule_collection = db["user_schedules"]
 
-        top_recommendations = schedule[:5] if isinstance(schedule, list) else schedule
-
         schedule_doc = {
             "NUID": nuid,
             "updated": pd.Timestamp.now(),
