@@ -1,4 +1,21 @@
 {
+  "programming_languages": [
+    "C",
+    "C#",
+    "C++",
+    "Go",
+    "Haskell",
+    "Java",
+    "JavaScript",
+    "Kotlin",
+    "MATLAB",
+    "Python",
+    "R",
+    "Rust",
+    "Scala",
+    "SQL",
+    "Assembly"
+  ],
   "programming_tags": [
     "2D Graphics",
     "3D Graphics",
@@ -165,6 +182,7 @@
     "Basic knowledge of Statistics",
     "Bayesian inference",
     "CAP Theorem",
+    "Algorithms",
     "Calculus",
     "Combinatorics",
     "Complexity Analysis",
