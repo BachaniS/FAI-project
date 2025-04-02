@@ -138,10 +138,8 @@ def select_interests():
     # Remove duplicates if necessary
     desired_outcomes = list(set(desired_outcomes))
     
-    print(f"✅ Desired Outcomes: {', '.join(desired_outcomes)}")
-
     # Get user selection
-    return desired_outcomes
+    return 
 
 def get_student_input():
     """

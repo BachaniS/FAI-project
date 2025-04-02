@@ -1,1779 +1,2005 @@
-[
-  {
-    "subject_id": "CS5001",
-    "subject_name": "Intensive Foundations of Computer Science",
-    "seats": 260,
-    "enrollments": 255,
-    "weekly_course_time": 15,
-    "assignment_count": 7,
-    "assignment_time": 10,
-    "assignment_weight": 0.45,
-    "assignment_grade": 87.0,
-    "project_weight": 0.0,
-    "project_grade": 0.0,
-    "exam_count": 2,
-    "exam_grade": 85.0,
-    "exam_weight": 0.55,
-    "final_grade": 84.0,
-    "course_outcomes": [
-      "Python",
-      "Problem Solving"
-    ],
-    "programming_knowledge_needed": [],
-    "math_requirements": [],
-    "other_requirements": [],
-    "prerequisite": [],
-    "corequisite": [
-      "CS5003"
-    ]
+[{
+  "_id": {
+    "$oid": "67ec8946a45c70e156ce4730"
   },
-  {
-    "subject_id": "CS5002",
-    "subject_name": "Discrete Structures",
-    "seats": 263,
-    "enrollments": 283,
-    "weekly_course_time": 15,
-    "assignment_count": 6,
-    "assignment_time": 5,
-    "assignment_weight": 0.3,
-    "assignment_grade": 82.0,
-    "project_weight": 0.3,
-    "project_grade": 85.0,
-    "exam_count": 1,
-    "exam_grade": 82.0,
-    "exam_weight": 0.4,
-    "final_grade": 82.0,
-    "course_outcomes": [
-      "Discrete Mathematics",
-      "Graph Theory",
-      "Combinatorics",
-      "Logic",
-      "Set Theory"
-    ],
-    "programming_knowledge_needed": [],
-    "math_requirements": [],
-    "other_requirements": [],
-    "prerequisite": [],
-    "corequisite": []
+  "subject_id": "CS5001",
+  "subject_name": "Intensive Foundations of Computer Science",
+  "seats": 260,
+  "enrollments": 255,
+  "weekly_course_time": 15,
+  "assignment_count": 7,
+  "assignment_time": 10,
+  "assignment_weight": 0.45,
+  "assignment_grade": 87,
+  "project_weight": 0,
+  "project_grade": 0,
+  "exam_count": 2,
+  "exam_grade": 85,
+  "exam_weight": 0.55,
+  "final_grade": 84,
+  "course_outcomes": [
+    "Python",
+    "Problem Solving"
+  ],
+  "programming_knowledge_needed": [],
+  "math_requirements": [],
+  "other_requirements": [],
+  "prerequisite": [],
+  "corequisite": [
+    "CS5003"
+  ],
+  "description": ""
+},
+{
+  "_id": {
+    "$oid": "67ec8946a45c70e156ce4731"
   },
-  {
-    "subject_id": "CS5004",
-    "subject_name": "Object-Oriented Design",
-    "seats": 241,
-    "enrollments": 239,
-    "weekly_course_time": 12,
-    "assignment_count": 5,
-    "assignment_time": 6,
-    "assignment_weight": 0.35,
-    "assignment_grade": 92.0,
-    "project_weight": 0.25,
-    "project_grade": 90.0,
-    "exam_count": 1,
-    "exam_grade": 88.0,
-    "exam_weight": 0.4,
-    "final_grade": 92.0,
-    "course_outcomes": [
-      "Object-Oriented Programming",
-      "Design Patterns",
-      "UML",
-      "Java",
-      "C++",
-      "C#"
-    ],
-    "programming_knowledge_needed": [],
-    "math_requirements": [],
-    "other_requirements": [],
-    "prerequisite": [
-      "CS5001"
-    ],
-    "corequisite": [
-      "CS5005"
-    ]
+  "subject_id": "CS5002",
+  "subject_name": "Discrete Structures",
+  "seats": 263,
+  "enrollments": 283,
+  "weekly_course_time": 15,
+  "assignment_count": 6,
+  "assignment_time": 5,
+  "assignment_weight": 0.3,
+  "assignment_grade": 82,
+  "project_weight": 0.3,
+  "project_grade": 85,
+  "exam_count": 1,
+  "exam_grade": 82,
+  "exam_weight": 0.4,
+  "final_grade": 82,
+  "course_outcomes": [
+    "Discrete Mathematics",
+    "Graph Theory",
+    "Combinatorics",
+    "Logic",
+    "Set Theory"
+  ],
+  "programming_knowledge_needed": [],
+  "math_requirements": [],
+  "other_requirements": [],
+  "prerequisite": [],
+  "corequisite": [],
+  "description": ""
+},
+{
+  "_id": {
+    "$oid": "67ec8946a45c70e156ce4732"
   },
-  {
-    "subject_id": "CS5008",
-    "subject_name": "Data Structures, Algorithms, and Their Applications within Computer Systems",
-    "seats": 264,
-    "enrollments": 311,
-    "weekly_course_time": 10,
-    "assignment_count": 6,
-    "assignment_time": 5,
-    "assignment_weight": 0.35,
-    "assignment_grade": 94.0,
-    "project_weight": 0.25,
-    "project_grade": 92.0,
-    "exam_count": 1,
-    "exam_grade": 90.0,
-    "exam_weight": 0.4,
-    "final_grade": 94.0,
-    "course_outcomes": [
-      "Algorithms",
-      "Data Structures",
-      "Complexity Analysis",
-      "Java",
-      "C++",
-      "Computer Systems"
-    ],
-    "programming_knowledge_needed": [
-      "C"
-    ],
-    "math_requirements": [],
-    "other_requirements": [],
-    "prerequisite": [
-      "CS5001"
-    ],
-    "corequisite": [
-      "CS5009"
-    ]
+  "subject_id": "CS5004",
+  "subject_name": "Object-Oriented Design",
+  "seats": 241,
+  "enrollments": 239,
+  "weekly_course_time": 12,
+  "assignment_count": 5,
+  "assignment_time": 6,
+  "assignment_weight": 0.35,
+  "assignment_grade": 92,
+  "project_weight": 0.25,
+  "project_grade": 90,
+  "exam_count": 1,
+  "exam_grade": 88,
+  "exam_weight": 0.4,
+  "final_grade": 92,
+  "course_outcomes": [
+    "Object-Oriented Programming",
+    "Design Patterns",
+    "UML",
+    "Java",
+    "C++",
+    "C#"
+  ],
+  "programming_knowledge_needed": [],
+  "math_requirements": [],
+  "other_requirements": [],
+  "prerequisite": [
+    "CS5001"
+  ],
+  "corequisite": [
+    "CS5005"
+  ],
+  "description": ""
+},
+{
+  "_id": {
+    "$oid": "67ec8946a45c70e156ce4733"
   },
-  {
-    "subject_id": "CS5010",
-    "subject_name": "Programming Design Paradigm",
-    "seats": 236,
-    "enrollments": 234,
-    "weekly_course_time": 15,
-    "assignment_count": 5,
-    "assignment_time": 6,
-    "assignment_weight": 0.3,
-    "assignment_grade": 88.0,
-    "project_weight": 0.3,
-    "project_grade": 90.0,
-    "exam_count": 1,
-    "exam_grade": 87.0,
-    "exam_weight": 0.4,
-    "final_grade": 88.0,
-    "course_outcomes": [
-      "Python",
-      "Java",
-      "Haskell"
-    ],
-    "programming_knowledge_needed": [],
-    "math_requirements": [],
-    "other_requirements": [],
-    "prerequisite": [],
-    "corequisite": [
-      "CS5011"
-    ]
+  "subject_id": "CS5008",
+  "subject_name": "Data Structures, Algorithms, and Their Applications within Computer Systems",
+  "seats": 264,
+  "enrollments": 311,
+  "weekly_course_time": 10,
+  "assignment_count": 6,
+  "assignment_time": 5,
+  "assignment_weight": 0.35,
+  "assignment_grade": 94,
+  "project_weight": 0.25,
+  "project_grade": 92,
+  "exam_count": 1,
+  "exam_grade": 90,
+  "exam_weight": 0.4,
+  "final_grade": 94,
+  "course_outcomes": [
+    "Algorithms",
+    "Data Structures",
+    "Complexity Analysis",
+    "Java",
+    "C++",
+    "Computer Systems"
+  ],
+  "programming_knowledge_needed": [
+    "C"
+  ],
+  "math_requirements": [],
+  "other_requirements": [],
+  "prerequisite": [
+    "CS5001"
+  ],
+  "corequisite": [
+    "CS5009"
+  ],
+  "description": ""
+},
+{
+  "_id": {
+    "$oid": "67ec8946a45c70e156ce4734"
   },
-  {
-    "subject_id": "CS5047",
-    "subject_name": "Exploring AI Trends and Tools",
-    "seats": 286,
-    "enrollments": 280,
-    "weekly_course_time": 10,
-    "assignment_count": 4,
-    "assignment_time": 6,
-    "assignment_weight": 0.5,
-    "assignment_grade": 88.0,
-    "project_weight": 0.3,
-    "project_grade": 90.0,
-    "exam_count": 1,
-    "exam_grade": 88.0,
-    "exam_weight": 0.2,
-    "final_grade": 89.0,
-    "course_outcomes": [
-      "Artificial Intelligence",
-      "TensorFlow",
-      "PyTorch"
-    ],
-    "programming_knowledge_needed": [],
-    "math_requirements": [],
-    "other_requirements": [],
-    "prerequisite": [],
-    "corequisite": []
+  "subject_id": "CS5010",
+  "subject_name": "Programming Design Paradigm",
+  "seats": 236,
+  "enrollments": 234,
+  "weekly_course_time": 15,
+  "assignment_count": 5,
+  "assignment_time": 6,
+  "assignment_weight": 0.3,
+  "assignment_grade": 88,
+  "project_weight": 0.3,
+  "project_grade": 90,
+  "exam_count": 1,
+  "exam_grade": 87,
+  "exam_weight": 0.4,
+  "final_grade": 88,
+  "course_outcomes": [
+    "Python",
+    "Java",
+    "Haskell"
+  ],
+  "programming_knowledge_needed": [],
+  "math_requirements": [],
+  "other_requirements": [],
+  "prerequisite": [],
+  "corequisite": [
+    "CS5011"
+  ],
+  "description": ""
+},
+{
+  "_id": {
+    "$oid": "67ec8946a45c70e156ce4735"
   },
-  {
-    "subject_id": "CS5097",
-    "subject_name": "Mixed Reality",
-    "seats": 282,
-    "enrollments": 313,
-    "weekly_course_time": 8,
-    "assignment_count": 4,
-    "assignment_time": 5,
-    "assignment_weight": 0.4,
-    "assignment_grade": 85.0,
-    "project_weight": 0.3,
-    "project_grade": 87.0,
-    "exam_count": 1,
-    "exam_grade": 86.0,
-    "exam_weight": 0.3,
-    "final_grade": 86.0,
-    "course_outcomes": [
-      "Unity",
-      "Unreal Engine",
-      "Virtual Reality",
-      "Augmented Reality",
-      "Extended Reality",
-      "Development",
-      "3D Interaction",
-      "Spatial Computing"
-    ],
-    "programming_knowledge_needed": [],
-    "math_requirements": [],
-    "other_requirements": [],
-    "prerequisite": [],
-    "corequisite": []
+  "subject_id": "CS5047",
+  "subject_name": "Exploring AI Trends and Tools",
+  "seats": 286,
+  "enrollments": 280,
+  "weekly_course_time": 10,
+  "assignment_count": 4,
+  "assignment_time": 6,
+  "assignment_weight": 0.5,
+  "assignment_grade": 88,
+  "project_weight": 0.3,
+  "project_grade": 90,
+  "exam_count": 1,
+  "exam_grade": 88,
+  "exam_weight": 0.2,
+  "final_grade": 89,
+  "course_outcomes": [
+    "Artificial Intelligence",
+    "TensorFlow",
+    "PyTorch"
+  ],
+  "programming_knowledge_needed": [],
+  "math_requirements": [],
+  "other_requirements": [],
+  "prerequisite": [],
+  "corequisite": [],
+  "description": ""
+},
+{
+  "_id": {
+    "$oid": "67ec8946a45c70e156ce4736"
   },
-  {
-    "subject_id": "CS5100",
-    "subject_name": "Foundations of Artificial Intelligence",
-    "seats": 272,
-    "enrollments": 271,
-    "weekly_course_time": 10,
-    "assignment_count": 9,
-    "assignment_time": 6,
-    "assignment_weight": 0.6,
-    "assignment_grade": 95.0,
-    "project_weight": 0.4,
-    "project_grade": 90.0,
-    "exam_count": 1,
-    "exam_grade": 90.0,
-    "exam_weight": 0.0,
-    "final_grade": 90.0,
-    "course_outcomes": [
-      "Search Algorithms",
-      "Knowledge Representation",
-      "Logic",
-      "Python",
-      "Artificial Intelligence",
-      "Machine Learning",
-      "Natural Language Processing",
-      "Reinforcement Learning"
-    ],
-    "programming_knowledge_needed": [
-      "Python"
-    ],
-    "math_requirements": [
-      "Linear Algebra",
-      "Probability",
-      "Calculus"
-    ],
-    "other_requirements": [],
-    "prerequisite": [],
-    "corequisite": []
+  "subject_id": "CS5097",
+  "subject_name": "Mixed Reality",
+  "seats": 282,
+  "enrollments": 313,
+  "weekly_course_time": 8,
+  "assignment_count": 4,
+  "assignment_time": 5,
+  "assignment_weight": 0.4,
+  "assignment_grade": 85,
+  "project_weight": 0.3,
+  "project_grade": 87,
+  "exam_count": 1,
+  "exam_grade": 86,
+  "exam_weight": 0.3,
+  "final_grade": 86,
+  "course_outcomes": [
+    "Unity",
+    "Unreal Engine",
+    "Virtual Reality",
+    "Augmented Reality",
+    "Extended Reality",
+    "Development",
+    "3D Interaction",
+    "Spatial Computing"
+  ],
+  "programming_knowledge_needed": [],
+  "math_requirements": [],
+  "other_requirements": [],
+  "prerequisite": [],
+  "corequisite": [],
+  "description": ""
+},
+{
+  "_id": {
+    "$oid": "67ec8946a45c70e156ce4737"
   },
-  {
-    "subject_id": "CS5150",
-    "subject_name": "Game Artificial Intelligence",
-    "seats": 264,
-    "enrollments": 260,
-    "weekly_course_time": 10,
-    "assignment_count": 5,
-    "assignment_time": 5,
-    "assignment_weight": 0.35,
-    "assignment_grade": 87.0,
-    "project_weight": 0.35,
-    "project_grade": 89.0,
-    "exam_count": 1,
-    "exam_grade": 88.0,
-    "exam_weight": 0.3,
-    "final_grade": 88.0,
-    "course_outcomes": [
-      "Artificial Intelligence",
-      "Game Development",
-      "Pathfinding"
-    ],
-    "programming_knowledge_needed": [],
-    "math_requirements": [],
-    "other_requirements": [],
-    "prerequisite": [],
-    "corequisite": []
+  "subject_id": "CS5100",
+  "subject_name": "Foundations of Artificial Intelligence",
+  "seats": 272,
+  "enrollments": 271,
+  "weekly_course_time": 10,
+  "assignment_count": 9,
+  "assignment_time": 6,
+  "assignment_weight": 0.6,
+  "assignment_grade": 95,
+  "project_weight": 0.4,
+  "project_grade": 90,
+  "exam_count": 1,
+  "exam_grade": 90,
+  "exam_weight": 0,
+  "final_grade": 90,
+  "course_outcomes": [
+    "Search Algorithms",
+    "Knowledge Representation",
+    "Logic",
+    "Python",
+    "Artificial Intelligence",
+    "Machine Learning",
+    "Natural Language Processing",
+    "Reinforcement Learning"
+  ],
+  "programming_knowledge_needed": [
+    "Python"
+  ],
+  "math_requirements": [
+    "Linear Algebra",
+    "Probability",
+    "Calculus"
+  ],
+  "other_requirements": [],
+  "prerequisite": [],
+  "corequisite": [],
+  "description": ""
+},
+{
+  "_id": {
+    "$oid": "67ec8946a45c70e156ce4738"
   },
-  {
-    "subject_id": "CS5170",
-    "subject_name": "Artificial Intelligence for Human-Computer Interaction",
-    "seats": 259,
-    "enrollments": 254,
-    "weekly_course_time": 10,
-    "assignment_count": 5,
-    "assignment_time": 6,
-    "assignment_weight": 0.4,
-    "assignment_grade": 86.0,
-    "project_weight": 0.3,
-    "project_grade": 88.0,
-    "exam_count": 1,
-    "exam_grade": 87.0,
-    "exam_weight": 0.3,
-    "final_grade": 87.0,
-    "course_outcomes": [
-      "Artificial Intelligence",
-      "Human-Computer Interaction",
-      "User Interface Design"
-    ],
-    "programming_knowledge_needed": [],
-    "math_requirements": [
-      "Probability",
-      "Linear Algebra"
-    ],
-    "other_requirements": [],
-    "prerequisite": [
-      "CS5100"
-    ],
-    "corequisite": []
+  "subject_id": "CS5150",
+  "subject_name": "Game Artificial Intelligence",
+  "seats": 264,
+  "enrollments": 260,
+  "weekly_course_time": 10,
+  "assignment_count": 5,
+  "assignment_time": 5,
+  "assignment_weight": 0.35,
+  "assignment_grade": 87,
+  "project_weight": 0.35,
+  "project_grade": 89,
+  "exam_count": 1,
+  "exam_grade": 88,
+  "exam_weight": 0.3,
+  "final_grade": 88,
+  "course_outcomes": [
+    "Artificial Intelligence",
+    "Game Development",
+    "Pathfinding"
+  ],
+  "programming_knowledge_needed": [],
+  "math_requirements": [],
+  "other_requirements": [],
+  "prerequisite": [],
+  "corequisite": [],
+  "description": ""
+},
+{
+  "_id": {
+    "$oid": "67ec8946a45c70e156ce4739"
   },
-  {
-    "subject_id": "CS5180",
-    "subject_name": "Reinforcement Learning and Sequential Decision Making",
-    "seats": 235,
-    "enrollments": 226,
-    "weekly_course_time": 12,
-    "assignment_count": 5,
-    "assignment_time": 6,
-    "assignment_weight": 0.4,
-    "assignment_grade": 88.0,
-    "project_weight": 0.3,
-    "project_grade": 90.0,
-    "exam_count": 1,
-    "exam_grade": 89.0,
-    "exam_weight": 0.3,
-    "final_grade": 89.0,
-    "course_outcomes": [
-      "Reinforcement Learning",
-      "Markov",
-      "Decision"
-    ],
-    "programming_knowledge_needed": [],
-    "math_requirements": [],
-    "other_requirements": [],
-    "prerequisite": [],
-    "corequisite": []
+  "subject_id": "CS5170",
+  "subject_name": "Artificial Intelligence for Human-Computer Interaction",
+  "seats": 259,
+  "enrollments": 254,
+  "weekly_course_time": 10,
+  "assignment_count": 5,
+  "assignment_time": 6,
+  "assignment_weight": 0.4,
+  "assignment_grade": 86,
+  "project_weight": 0.3,
+  "project_grade": 88,
+  "exam_count": 1,
+  "exam_grade": 87,
+  "exam_weight": 0.3,
+  "final_grade": 87,
+  "course_outcomes": [
+    "Artificial Intelligence",
+    "Human-Computer Interaction",
+    "User Interface Design"
+  ],
+  "programming_knowledge_needed": [],
+  "math_requirements": [
+    "Probability",
+    "Linear Algebra"
+  ],
+  "other_requirements": [],
+  "prerequisite": [
+    "CS5100"
+  ],
+  "corequisite": [],
+  "description": ""
+},
+{
+  "_id": {
+    "$oid": "67ec8946a45c70e156ce473a"
   },
-  {
-    "subject_id": "CS5200",
-    "subject_name": "Database Management Systems",
-    "seats": 225,
-    "enrollments": 219,
-    "weekly_course_time": 10,
-    "assignment_count": 7,
-    "assignment_time": 10,
-    "assignment_weight": 0.23,
-    "assignment_grade": 90.0,
-    "project_weight": 0.2,
-    "project_grade": 95.0,
-    "exam_count": 4,
-    "exam_grade": 88.0,
-    "exam_weight": 0.54,
-    "final_grade": 89.0,
-    "course_outcomes": [
-      "SQL",
-      "Database Design"
-    ],
-    "programming_knowledge_needed": [],
-    "math_requirements": [],
-    "other_requirements": [],
-    "prerequisite": [],
-    "corequisite": []
+  "subject_id": "CS5180",
+  "subject_name": "Reinforcement Learning and Sequential Decision Making",
+  "seats": 235,
+  "enrollments": 226,
+  "weekly_course_time": 12,
+  "assignment_count": 5,
+  "assignment_time": 6,
+  "assignment_weight": 0.4,
+  "assignment_grade": 88,
+  "project_weight": 0.3,
+  "project_grade": 90,
+  "exam_count": 1,
+  "exam_grade": 89,
+  "exam_weight": 0.3,
+  "final_grade": 89,
+  "course_outcomes": [
+    "Reinforcement Learning",
+    "Markov",
+    "Decision"
+  ],
+  "programming_knowledge_needed": [],
+  "math_requirements": [],
+  "other_requirements": [],
+  "prerequisite": [],
+  "corequisite": [],
+  "description": ""
+},
+{
+  "_id": {
+    "$oid": "67ec8946a45c70e156ce473b"
   },
-  {
-    "subject_id": "CS5310",
-    "subject_name": "Computer Graphics",
-    "seats": 200,
-    "enrollments": 198,
-    "weekly_course_time": 10,
-    "assignment_count": 5,
-    "assignment_time": 5,
-    "assignment_weight": 0.35,
-    "assignment_grade": 87.0,
-    "project_weight": 0.3,
-    "project_grade": 89.0,
-    "exam_count": 1,
-    "exam_grade": 88.0,
-    "exam_weight": 0.35,
-    "final_grade": 88.0,
-    "course_outcomes": [
-      "Computer Graphics",
-      "2D Graphics",
-      "3D Graphics"
-    ],
-    "programming_knowledge_needed": [],
-    "math_requirements": [
-      "Linear Algebra"
-    ],
-    "other_requirements": [],
-    "prerequisite": [],
-    "corequisite": []
+  "subject_id": "CS5200",
+  "subject_name": "Database Management Systems",
+  "seats": 225,
+  "enrollments": 219,
+  "weekly_course_time": 10,
+  "assignment_count": 7,
+  "assignment_time": 10,
+  "assignment_weight": 0.23,
+  "assignment_grade": 90,
+  "project_weight": 0.2,
+  "project_grade": 95,
+  "exam_count": 4,
+  "exam_grade": 88,
+  "exam_weight": 0.54,
+  "final_grade": 89,
+  "course_outcomes": [
+    "SQL",
+    "Database Design"
+  ],
+  "programming_knowledge_needed": [],
+  "math_requirements": [],
+  "other_requirements": [],
+  "prerequisite": [],
+  "corequisite": [],
+  "description": ""
+},
+{
+  "_id": {
+    "$oid": "67ec8946a45c70e156ce473c"
   },
-  {
-    "subject_id": "CS5330",
-    "subject_name": "Pattern Recognition and Computer Vision",
-    "seats": 222,
-    "enrollments": 216,
-    "weekly_course_time": 12,
-    "assignment_count": 5,
-    "assignment_time": 6,
-    "assignment_weight": 0.4,
-    "assignment_grade": 86.0,
-    "project_weight": 0.3,
-    "project_grade": 88.0,
-    "exam_count": 1,
-    "exam_grade": 87.0,
-    "exam_weight": 0.3,
-    "final_grade": 87.0,
-    "course_outcomes": [
-      "Computer Vision",
-      "Pattern Recognition"
-    ],
-    "programming_knowledge_needed": [],
-    "math_requirements": [
-      "Linear Algebra"
-    ],
-    "other_requirements": [],
-    "prerequisite": [],
-    "corequisite": []
+  "subject_id": "CS5310",
+  "subject_name": "Computer Graphics",
+  "seats": 200,
+  "enrollments": 198,
+  "weekly_course_time": 10,
+  "assignment_count": 5,
+  "assignment_time": 5,
+  "assignment_weight": 0.35,
+  "assignment_grade": 87,
+  "project_weight": 0.3,
+  "project_grade": 89,
+  "exam_count": 1,
+  "exam_grade": 88,
+  "exam_weight": 0.35,
+  "final_grade": 88,
+  "course_outcomes": [
+    "Computer Graphics",
+    "2D Graphics",
+    "3D Graphics"
+  ],
+  "programming_knowledge_needed": [],
+  "math_requirements": [
+    "Linear Algebra"
+  ],
+  "other_requirements": [],
+  "prerequisite": [],
+  "corequisite": [],
+  "description": ""
+},
+{
+  "_id": {
+    "$oid": "67ec8946a45c70e156ce473d"
   },
-  {
-    "subject_id": "CS5335",
-    "subject_name": "Robotic Science and Systems",
-    "seats": 291,
-    "enrollments": 281,
-    "weekly_course_time": 12,
-    "assignment_count": 5,
-    "assignment_time": 6,
-    "assignment_weight": 0.4,
-    "assignment_grade": 88.0,
-    "project_weight": 0.3,
-    "project_grade": 90.0,
-    "exam_count": 1,
-    "exam_grade": 89.0,
-    "exam_weight": 0.3,
-    "final_grade": 89.0,
-    "course_outcomes": [
-      "Robotics",
-      "Kinematics"
-    ],
-    "programming_knowledge_needed": [],
-    "math_requirements": [],
-    "other_requirements": [],
-    "prerequisite": [],
-    "corequisite": []
+  "subject_id": "CS5330",
+  "subject_name": "Pattern Recognition and Computer Vision",
+  "seats": 222,
+  "enrollments": 216,
+  "weekly_course_time": 12,
+  "assignment_count": 5,
+  "assignment_time": 6,
+  "assignment_weight": 0.4,
+  "assignment_grade": 86,
+  "project_weight": 0.3,
+  "project_grade": 88,
+  "exam_count": 1,
+  "exam_grade": 87,
+  "exam_weight": 0.3,
+  "final_grade": 87,
+  "course_outcomes": [
+    "Computer Vision",
+    "Pattern Recognition"
+  ],
+  "programming_knowledge_needed": [],
+  "math_requirements": [
+    "Linear Algebra"
+  ],
+  "other_requirements": [],
+  "prerequisite": [],
+  "corequisite": [],
+  "description": ""
+},
+{
+  "_id": {
+    "$oid": "67ec8946a45c70e156ce473e"
   },
-  {
-    "subject_id": "CS5340",
-    "subject_name": "Computer/Human Interaction",
-    "seats": 292,
-    "enrollments": 339,
-    "weekly_course_time": 10,
-    "assignment_count": 5,
-    "assignment_time": 5,
-    "assignment_weight": 0.35,
-    "assignment_grade": 85.0,
-    "project_weight": 0.3,
-    "project_grade": 87.0,
-    "exam_count": 1,
-    "exam_grade": 86.0,
-    "exam_weight": 0.35,
-    "final_grade": 86.0,
-    "course_outcomes": [
-      "Human-Computer Interaction",
-      "User Interface Design",
-      "User Experience Design"
-    ],
-    "programming_knowledge_needed": [
-      "C"
-    ],
-    "math_requirements": [],
-    "other_requirements": [],
-    "prerequisite": [],
-    "corequisite": []
+  "subject_id": "CS5335",
+  "subject_name": "Robotic Science and Systems",
+  "seats": 291,
+  "enrollments": 281,
+  "weekly_course_time": 12,
+  "assignment_count": 5,
+  "assignment_time": 6,
+  "assignment_weight": 0.4,
+  "assignment_grade": 88,
+  "project_weight": 0.3,
+  "project_grade": 90,
+  "exam_count": 1,
+  "exam_grade": 89,
+  "exam_weight": 0.3,
+  "final_grade": 89,
+  "course_outcomes": [
+    "Robotics",
+    "Kinematics"
+  ],
+  "programming_knowledge_needed": [],
+  "math_requirements": [],
+  "other_requirements": [],
+  "prerequisite": [],
+  "corequisite": [],
+  "description": ""
+},
+{
+  "_id": {
+    "$oid": "67ec8946a45c70e156ce473f"
   },
-  {
-    "subject_id": "CS5350",
-    "subject_name": "Applied Geometric Representation and Computation",
-    "seats": 281,
-    "enrollments": 273,
-    "weekly_course_time": 5,
-    "assignment_count": 5,
-    "assignment_time": 4,
-    "assignment_weight": 0.35,
-    "assignment_grade": 86.0,
-    "project_weight": 0.3,
-    "project_grade": 89.0,
-    "exam_count": 1,
-    "exam_grade": 88.0,
-    "exam_weight": 0.35,
-    "final_grade": 87.0,
-    "course_outcomes": [
-      "Geometric transformations",
-      "3D modeling techniques"
-    ],
-    "programming_knowledge_needed": [],
-    "math_requirements": [
-      "Linear Algebra",
-      "Discrete Mathematics"
-    ],
-    "other_requirements": [],
-    "prerequisite": [],
-    "corequisite": []
+  "subject_id": "CS5340",
+  "subject_name": "Computer/Human Interaction",
+  "seats": 292,
+  "enrollments": 339,
+  "weekly_course_time": 10,
+  "assignment_count": 5,
+  "assignment_time": 5,
+  "assignment_weight": 0.35,
+  "assignment_grade": 85,
+  "project_weight": 0.3,
+  "project_grade": 87,
+  "exam_count": 1,
+  "exam_grade": 86,
+  "exam_weight": 0.35,
+  "final_grade": 86,
+  "course_outcomes": [
+    "Human-Computer Interaction",
+    "User Interface Design",
+    "User Experience Design"
+  ],
+  "programming_knowledge_needed": [
+    "C"
+  ],
+  "math_requirements": [],
+  "other_requirements": [],
+  "prerequisite": [],
+  "corequisite": [],
+  "description": ""
+},
+{
+  "_id": {
+    "$oid": "67ec8946a45c70e156ce4740"
   },
-  {
-    "subject_id": "CS5360",
-    "subject_name": "Noninteractive Computer Graphics",
-    "seats": 214,
-    "enrollments": 212,
-    "weekly_course_time": 4,
-    "assignment_count": 5,
-    "assignment_time": 4,
-    "assignment_weight": 0.4,
-    "assignment_grade": 84.0,
-    "project_weight": 0.25,
-    "project_grade": 87.0,
-    "exam_count": 1,
-    "exam_grade": 85.0,
-    "exam_weight": 0.35,
-    "final_grade": 85.0,
-    "course_outcomes": [
-      "Ray tracing",
-      "rasterization",
-      "saders"
-    ],
-    "programming_knowledge_needed": [],
-    "math_requirements": [
-      "Discrete Mathematics"
-    ],
-    "other_requirements": [],
-    "prerequisite": [],
-    "corequisite": []
+  "subject_id": "CS5350",
+  "subject_name": "Applied Geometric Representation and Computation",
+  "seats": 281,
+  "enrollments": 273,
+  "weekly_course_time": 5,
+  "assignment_count": 5,
+  "assignment_time": 4,
+  "assignment_weight": 0.35,
+  "assignment_grade": 86,
+  "project_weight": 0.3,
+  "project_grade": 89,
+  "exam_count": 1,
+  "exam_grade": 88,
+  "exam_weight": 0.35,
+  "final_grade": 87,
+  "course_outcomes": [
+    "Geometric transformations",
+    "3D modeling techniques"
+  ],
+  "programming_knowledge_needed": [],
+  "math_requirements": [
+    "Linear Algebra",
+    "Discrete Mathematics"
+  ],
+  "other_requirements": [],
+  "prerequisite": [],
+  "corequisite": [],
+  "description": ""
+},
+{
+  "_id": {
+    "$oid": "67ec8946a45c70e156ce4741"
   },
-  {
-    "subject_id": "CS5400",
-    "subject_name": "Principles of Programming Language",
-    "seats": 268,
-    "enrollments": 262,
-    "weekly_course_time": 4,
-    "assignment_count": 6,
-    "assignment_time": 4,
-    "assignment_weight": 0.3,
-    "assignment_grade": 87.0,
-    "project_weight": 0.3,
-    "project_grade": 90.0,
-    "exam_count": 1,
-    "exam_grade": 88.0,
-    "exam_weight": 0.4,
-    "final_grade": 88.0,
-    "course_outcomes": [
-      "Programming paradigms",
-      "language design"
-    ],
-    "programming_knowledge_needed": [],
-    "math_requirements": [],
-    "other_requirements": [],
-    "prerequisite": [
-      "CS5010"
-    ],
-    "corequisite": []
+  "subject_id": "CS5360",
+  "subject_name": "Noninteractive Computer Graphics",
+  "seats": 214,
+  "enrollments": 212,
+  "weekly_course_time": 4,
+  "assignment_count": 5,
+  "assignment_time": 4,
+  "assignment_weight": 0.4,
+  "assignment_grade": 84,
+  "project_weight": 0.25,
+  "project_grade": 87,
+  "exam_count": 1,
+  "exam_grade": 85,
+  "exam_weight": 0.35,
+  "final_grade": 85,
+  "course_outcomes": [
+    "Ray tracing",
+    "rasterization",
+    "saders"
+  ],
+  "programming_knowledge_needed": [],
+  "math_requirements": [
+    "Discrete Mathematics"
+  ],
+  "other_requirements": [],
+  "prerequisite": [],
+  "corequisite": [],
+  "description": ""
+},
+{
+  "_id": {
+    "$oid": "67ec8946a45c70e156ce4742"
   },
-  {
-    "subject_id": "CS5500",
-    "subject_name": "Foundations of Software Engineering",
-    "seats": 228,
-    "enrollments": 236,
-    "weekly_course_time": 5,
-    "assignment_count": 6,
-    "assignment_time": 4,
-    "assignment_weight": 0.3,
-    "assignment_grade": 85.0,
-    "project_weight": 0.4,
-    "project_grade": 89.0,
-    "exam_count": 1,
-    "exam_grade": 86.0,
-    "exam_weight": 0.3,
-    "final_grade": 87.0,
-    "course_outcomes": [
-      "Object-Oriented Design",
-      "Software Development Life Cycle",
-      "Unit Testing",
-      "Agile Methodology"
-    ],
-    "programming_knowledge_needed": [
-      "JavaScript",
-      "Object-Oriented Design"
-    ],
-    "math_requirements": [],
-    "other_requirements": [],
-    "prerequisite": [
-      "CS5010"
-    ],
-    "corequisite": []
+  "subject_id": "CS5400",
+  "subject_name": "Principles of Programming Language",
+  "seats": 268,
+  "enrollments": 262,
+  "weekly_course_time": 4,
+  "assignment_count": 6,
+  "assignment_time": 4,
+  "assignment_weight": 0.3,
+  "assignment_grade": 87,
+  "project_weight": 0.3,
+  "project_grade": 90,
+  "exam_count": 1,
+  "exam_grade": 88,
+  "exam_weight": 0.4,
+  "final_grade": 88,
+  "course_outcomes": [
+    "Programming paradigms",
+    "language design"
+  ],
+  "programming_knowledge_needed": [],
+  "math_requirements": [],
+  "other_requirements": [],
+  "prerequisite": [
+    "CS5010"
+  ],
+  "corequisite": [],
+  "description": ""
+},
+{
+  "_id": {
+    "$oid": "67ec8946a45c70e156ce4743"
   },
-  {
-    "subject_id": "CS5520",
-    "subject_name": "Mobile Application Development",
-    "seats": 215,
-    "enrollments": 250,
-    "weekly_course_time": 6,
-    "assignment_count": 6,
-    "assignment_time": 5,
-    "assignment_weight": 0.3,
-    "assignment_grade": 85.0,
-    "project_weight": 0.4,
-    "project_grade": 88.0,
-    "exam_count": 1,
-    "exam_grade": 85.0,
-    "exam_weight": 0.3,
-    "final_grade": 86.0,
-    "course_outcomes": [
-      "Java",
-      "Kotlin",
-      "Android Studio",
-      "Firebase",
-      "MVVM"
-    ],
-    "programming_knowledge_needed": [
-      "Java",
-      "Object-Oriented Design"
-    ],
-    "math_requirements": [
-      "Linear Algebra"
-    ],
-    "other_requirements": [],
-    "prerequisite": [],
-    "corequisite": []
+  "subject_id": "CS5500",
+  "subject_name": "Foundations of Software Engineering",
+  "seats": 228,
+  "enrollments": 236,
+  "weekly_course_time": 5,
+  "assignment_count": 6,
+  "assignment_time": 4,
+  "assignment_weight": 0.3,
+  "assignment_grade": 85,
+  "project_weight": 0.4,
+  "project_grade": 89,
+  "exam_count": 1,
+  "exam_grade": 86,
+  "exam_weight": 0.3,
+  "final_grade": 87,
+  "course_outcomes": [
+    "Object-Oriented Design",
+    "Software Development Life Cycle",
+    "Unit Testing",
+    "Agile Methodology"
+  ],
+  "programming_knowledge_needed": [
+    "JavaScript",
+    "Object-Oriented Design"
+  ],
+  "math_requirements": [],
+  "other_requirements": [],
+  "prerequisite": [
+    "CS5010"
+  ],
+  "corequisite": [],
+  "description": ""
+},
+{
+  "_id": {
+    "$oid": "67ec8946a45c70e156ce4744"
   },
-  {
-    "subject_id": "CS5540",
-    "subject_name": "Game Programming",
-    "seats": 287,
-    "enrollments": 285,
-    "weekly_course_time": 5,
-    "assignment_count": 5,
-    "assignment_time": 4,
-    "assignment_weight": 0.35,
-    "assignment_grade": 83.0,
-    "project_weight": 0.3,
-    "project_grade": 86.0,
-    "exam_count": 1,
-    "exam_grade": 84.0,
-    "exam_weight": 0.35,
-    "final_grade": 85.0,
-    "course_outcomes": [
-      "Unity",
-      "Unreal Engine"
-    ],
-    "programming_knowledge_needed": [],
-    "math_requirements": [
-      "Discrete Mathematics"
-    ],
-    "other_requirements": [],
-    "prerequisite": [
-      "CS5004"
-    ],
-    "corequisite": []
+  "subject_id": "CS5520",
+  "subject_name": "Mobile Application Development",
+  "seats": 215,
+  "enrollments": 250,
+  "weekly_course_time": 6,
+  "assignment_count": 6,
+  "assignment_time": 5,
+  "assignment_weight": 0.3,
+  "assignment_grade": 85,
+  "project_weight": 0.4,
+  "project_grade": 88,
+  "exam_count": 1,
+  "exam_grade": 85,
+  "exam_weight": 0.3,
+  "final_grade": 86,
+  "course_outcomes": [
+    "Java",
+    "Kotlin",
+    "Android Studio",
+    "Firebase",
+    "MVVM"
+  ],
+  "programming_knowledge_needed": [
+    "Java",
+    "Object-Oriented Design"
+  ],
+  "math_requirements": [
+    "Linear Algebra"
+  ],
+  "other_requirements": [],
+  "prerequisite": [],
+  "corequisite": [],
+  "description": ""
+},
+{
+  "_id": {
+    "$oid": "67ec8946a45c70e156ce4745"
   },
-  {
-    "subject_id": "CS5600",
-    "subject_name": "Computer Systems",
-    "seats": 271,
-    "enrollments": 264,
-    "weekly_course_time": 5,
-    "assignment_count": 6,
-    "assignment_time": 4,
-    "assignment_weight": 0.3,
-    "assignment_grade": 85.0,
-    "project_weight": 0.35,
-    "project_grade": 88.0,
-    "exam_count": 1,
-    "exam_grade": 87.0,
-    "exam_weight": 0.35,
-    "final_grade": 87.0,
-    "course_outcomes": [
-      "Memory Management",
-      "C",
-      "Computer Systems"
-    ],
-    "programming_knowledge_needed": [
-      "C"
-    ],
-    "math_requirements": [],
-    "other_requirements": [],
-    "prerequisite": [],
-    "corequisite": []
+  "subject_id": "CS5540",
+  "subject_name": "Game Programming",
+  "seats": 287,
+  "enrollments": 285,
+  "weekly_course_time": 5,
+  "assignment_count": 5,
+  "assignment_time": 4,
+  "assignment_weight": 0.35,
+  "assignment_grade": 83,
+  "project_weight": 0.3,
+  "project_grade": 86,
+  "exam_count": 1,
+  "exam_grade": 84,
+  "exam_weight": 0.35,
+  "final_grade": 85,
+  "course_outcomes": [
+    "Unity",
+    "Unreal Engine"
+  ],
+  "programming_knowledge_needed": [],
+  "math_requirements": [
+    "Discrete Mathematics"
+  ],
+  "other_requirements": [],
+  "prerequisite": [
+    "CS5004"
+  ],
+  "corequisite": [],
+  "description": ""
+},
+{
+  "_id": {
+    "$oid": "67ec8946a45c70e156ce4746"
   },
-  {
-    "subject_id": "CS5610",
-    "subject_name": "Web Development",
-    "seats": 255,
-    "enrollments": 253,
-    "weekly_course_time": 5,
-    "assignment_count": 5,
-    "assignment_time": 4,
-    "assignment_weight": 0.35,
-    "assignment_grade": 84.0,
-    "project_weight": 0.3,
-    "project_grade": 87.0,
-    "exam_count": 1,
-    "exam_grade": 86.0,
-    "exam_weight": 0.35,
-    "final_grade": 86.0,
-    "course_outcomes": [
-      "HTML",
-      "CSS",
-      "JavaScript",
-      "React",
-      "Node.js",
-      "RESTful APIs",
-      "Web Security"
-    ],
-    "programming_knowledge_needed": [
-      "HTML",
-      "CSS",
-      "SQL"
-    ],
-    "math_requirements": [
-      "Probability",
-      "Discrete Mathematics"
-    ],
-    "other_requirements": [],
-    "prerequisite": [],
-    "corequisite": []
+  "subject_id": "CS5600",
+  "subject_name": "Computer Systems",
+  "seats": 271,
+  "enrollments": 264,
+  "weekly_course_time": 5,
+  "assignment_count": 6,
+  "assignment_time": 4,
+  "assignment_weight": 0.3,
+  "assignment_grade": 85,
+  "project_weight": 0.35,
+  "project_grade": 88,
+  "exam_count": 1,
+  "exam_grade": 87,
+  "exam_weight": 0.35,
+  "final_grade": 87,
+  "course_outcomes": [
+    "Memory Management",
+    "C",
+    "Computer Systems"
+  ],
+  "programming_knowledge_needed": [
+    "C"
+  ],
+  "math_requirements": [],
+  "other_requirements": [],
+  "prerequisite": [],
+  "corequisite": [],
+  "description": ""
+},
+{
+  "_id": {
+    "$oid": "67ec8946a45c70e156ce4747"
   },
-  {
-    "subject_id": "CS5700",
-    "subject_name": "Fundamentals of Computer Networking",
-    "seats": 263,
-    "enrollments": 255,
-    "weekly_course_time": 6,
-    "assignment_count": 6,
-    "assignment_time": 5,
-    "assignment_weight": 0.4,
-    "assignment_grade": 87.0,
-    "project_weight": 0.3,
-    "project_grade": 90.0,
-    "exam_count": 1,
-    "exam_grade": 89.0,
-    "exam_weight": 0.3,
-    "final_grade": 88.0,
-    "course_outcomes": [
-      "TCP/IP",
-      "Routing Algorithms"
-    ],
-    "programming_knowledge_needed": [],
-    "math_requirements": [
-      "Discrete Mathematics",
-      "Probability"
-    ],
-    "other_requirements": [],
-    "prerequisite": [],
-    "corequisite": []
+  "subject_id": "CS5610",
+  "subject_name": "Web Development",
+  "seats": 255,
+  "enrollments": 253,
+  "weekly_course_time": 5,
+  "assignment_count": 5,
+  "assignment_time": 4,
+  "assignment_weight": 0.35,
+  "assignment_grade": 84,
+  "project_weight": 0.3,
+  "project_grade": 87,
+  "exam_count": 1,
+  "exam_grade": 86,
+  "exam_weight": 0.35,
+  "final_grade": 86,
+  "course_outcomes": [
+    "HTML",
+    "CSS",
+    "JavaScript",
+    "React",
+    "Node.js",
+    "RESTful APIs",
+    "Web Security"
+  ],
+  "programming_knowledge_needed": [
+    "HTML",
+    "CSS",
+    "SQL"
+  ],
+  "math_requirements": [
+    "Probability",
+    "Discrete Mathematics"
+  ],
+  "other_requirements": [],
+  "prerequisite": [],
+  "corequisite": [],
+  "description": ""
+},
+{
+  "_id": {
+    "$oid": "67ec8946a45c70e156ce4748"
   },
-  {
-    "subject_id": "CS5800",
-    "subject_name": "Algorithms",
-    "seats": 227,
-    "enrollments": 226,
-    "weekly_course_time": 6,
-    "assignment_count": 6,
-    "assignment_time": 5,
-    "assignment_weight": 0.35,
-    "assignment_grade": 85.0,
-    "project_weight": 0.4,
-    "project_grade": 89.0,
-    "exam_count": 1,
-    "exam_grade": 85.0,
-    "exam_weight": 0.25,
-    "final_grade": 86.0,
-    "course_outcomes": [
-      "Dynamic Programming",
-      "Sorting Algorithms",
-      "Searching Algorithms",
-      "Graph Algorithms",
-      "Divide-and-Conquer",
-      "Complexity Analysis"
-    ],
-    "programming_knowledge_needed": [
-      "Java",
-      "Python"
-    ],
-    "math_requirements": [
-      "Linear Algebra"
-    ],
-    "other_requirements": [],
-    "prerequisite": [],
-    "corequisite": []
+  "subject_id": "CS5700",
+  "subject_name": "Fundamentals of Computer Networking",
+  "seats": 263,
+  "enrollments": 255,
+  "weekly_course_time": 6,
+  "assignment_count": 6,
+  "assignment_time": 5,
+  "assignment_weight": 0.4,
+  "assignment_grade": 87,
+  "project_weight": 0.3,
+  "project_grade": 90,
+  "exam_count": 1,
+  "exam_grade": 89,
+  "exam_weight": 0.3,
+  "final_grade": 88,
+  "course_outcomes": [
+    "TCP/IP",
+    "Routing Algorithms"
+  ],
+  "programming_knowledge_needed": [],
+  "math_requirements": [
+    "Discrete Mathematics",
+    "Probability"
+  ],
+  "other_requirements": [],
+  "prerequisite": [],
+  "corequisite": [],
+  "description": ""
+},
+{
+  "_id": {
+    "$oid": "67ec8946a45c70e156ce4749"
   },
-  {
-    "subject_id": "CS5850",
-    "subject_name": "Building Game Engines",
-    "seats": 274,
-    "enrollments": 270,
-    "weekly_course_time": 4,
-    "assignment_count": 5,
-    "assignment_time": 4,
-    "assignment_weight": 0.3,
-    "assignment_grade": 85.0,
-    "project_weight": 0.3,
-    "project_grade": 88.0,
-    "exam_count": 1,
-    "exam_grade": 86.0,
-    "exam_weight": 0.4,
-    "final_grade": 87.0,
-    "course_outcomes": [
-      "Engine architecture",
-      "Entity-Component Systems",
-      "Physics Simulation",
-      "Rendering Optimization",
-      "C++"
-    ],
-    "programming_knowledge_needed": [
-      "Operating Systems"
-    ],
-    "math_requirements": [
-      "Differential Calculus"
-    ],
-    "other_requirements": [],
-    "prerequisite": [],
-    "corequisite": []
+  "subject_id": "CS5800",
+  "subject_name": "Algorithms",
+  "seats": 227,
+  "enrollments": 226,
+  "weekly_course_time": 6,
+  "assignment_count": 6,
+  "assignment_time": 5,
+  "assignment_weight": 0.35,
+  "assignment_grade": 85,
+  "project_weight": 0.4,
+  "project_grade": 89,
+  "exam_count": 1,
+  "exam_grade": 85,
+  "exam_weight": 0.25,
+  "final_grade": 86,
+  "course_outcomes": [
+    "Dynamic Programming",
+    "Sorting Algorithms",
+    "Searching Algorithms",
+    "Graph Algorithms",
+    "Divide-and-Conquer",
+    "Complexity Analysis"
+  ],
+  "programming_knowledge_needed": [
+    "Java",
+    "Python"
+  ],
+  "math_requirements": [
+    "Linear Algebra"
+  ],
+  "other_requirements": [],
+  "prerequisite": [],
+  "corequisite": [],
+  "description": ""
+},
+{
+  "_id": {
+    "$oid": "67ec8946a45c70e156ce474a"
   },
-  {
-    "subject_id": "CS5933",
-    "subject_name": "Advanced Computer Science Topics for Teachers",
-    "seats": 202,
-    "enrollments": 225,
-    "weekly_course_time": 4,
-    "assignment_count": 5,
-    "assignment_time": 4,
-    "assignment_weight": 0.3,
-    "assignment_grade": 84.0,
-    "project_weight": 0.3,
-    "project_grade": 87.0,
-    "exam_count": 1,
-    "exam_grade": 85.0,
-    "exam_weight": 0.4,
-    "final_grade": 86.0,
-    "course_outcomes": [
-      "Teaching methodologies"
-    ],
-    "programming_knowledge_needed": [],
-    "math_requirements": [],
-    "other_requirements": [
-      "Teaching experience"
-    ],
-    "prerequisite": [],
-    "corequisite": []
+  "subject_id": "CS5850",
+  "subject_name": "Building Game Engines",
+  "seats": 274,
+  "enrollments": 270,
+  "weekly_course_time": 4,
+  "assignment_count": 5,
+  "assignment_time": 4,
+  "assignment_weight": 0.3,
+  "assignment_grade": 85,
+  "project_weight": 0.3,
+  "project_grade": 88,
+  "exam_count": 1,
+  "exam_grade": 86,
+  "exam_weight": 0.4,
+  "final_grade": 87,
+  "course_outcomes": [
+    "Engine architecture",
+    "Entity-Component Systems",
+    "Physics Simulation",
+    "Rendering Optimization",
+    "C++"
+  ],
+  "programming_knowledge_needed": [
+    "Operating Systems"
+  ],
+  "math_requirements": [
+    "Differential Calculus"
+  ],
+  "other_requirements": [],
+  "prerequisite": [],
+  "corequisite": [],
+  "description": ""
+},
+{
+  "_id": {
+    "$oid": "67ec8946a45c70e156ce474b"
   },
-  {
-    "subject_id": "CS5934",
-    "subject_name": "Introduction to Inclusive Computer Science Teaching",
-    "seats": 265,
-    "enrollments": 298,
-    "weekly_course_time": 5,
-    "assignment_count": 5,
-    "assignment_time": 4,
-    "assignment_weight": 0.3,
-    "assignment_grade": 85.0,
-    "project_weight": 0.3,
-    "project_grade": 88.0,
-    "exam_count": 1,
-    "exam_grade": 86.0,
-    "exam_weight": 0.4,
-    "final_grade": 86.0,
-    "course_outcomes": [
-      "Equity in CS education",
-      "accessibility"
-    ],
-    "programming_knowledge_needed": [
-      "Varies"
-    ],
-    "math_requirements": [],
-    "other_requirements": [
-      "Teaching experience"
-    ],
-    "prerequisite": [],
-    "corequisite": []
+  "subject_id": "CS5933",
+  "subject_name": "Advanced Computer Science Topics for Teachers",
+  "seats": 202,
+  "enrollments": 225,
+  "weekly_course_time": 4,
+  "assignment_count": 5,
+  "assignment_time": 4,
+  "assignment_weight": 0.3,
+  "assignment_grade": 84,
+  "project_weight": 0.3,
+  "project_grade": 87,
+  "exam_count": 1,
+  "exam_grade": 85,
+  "exam_weight": 0.4,
+  "final_grade": 86,
+  "course_outcomes": [
+    "Teaching methodologies"
+  ],
+  "programming_knowledge_needed": [],
+  "math_requirements": [],
+  "other_requirements": [
+    "Teaching experience"
+  ],
+  "prerequisite": [],
+  "corequisite": [],
+  "description": ""
+},
+{
+  "_id": {
+    "$oid": "67ec8946a45c70e156ce474c"
   },
-  {
-    "subject_id": "CS5964",
-    "subject_name": "Projects for Professionals",
-    "seats": 261,
-    "enrollments": 264,
-    "weekly_course_time": 5,
-    "assignment_count": 4,
-    "assignment_time": 5,
-    "assignment_weight": 0.3,
-    "assignment_grade": 86.0,
-    "project_weight": 0.4,
-    "project_grade": 89.0,
-    "exam_count": 0,
-    "exam_grade": 0.0,
-    "exam_weight": 0.0,
-    "final_grade": 88.0,
-    "course_outcomes": [
-      "Project management"
-    ],
-    "programming_knowledge_needed": [],
-    "math_requirements": [],
-    "other_requirements": [
-      "Industry experience"
-    ],
-    "prerequisite": [],
-    "corequisite": []
+  "subject_id": "CS5934",
+  "subject_name": "Introduction to Inclusive Computer Science Teaching",
+  "seats": 265,
+  "enrollments": 298,
+  "weekly_course_time": 5,
+  "assignment_count": 5,
+  "assignment_time": 4,
+  "assignment_weight": 0.3,
+  "assignment_grade": 85,
+  "project_weight": 0.3,
+  "project_grade": 88,
+  "exam_count": 1,
+  "exam_grade": 86,
+  "exam_weight": 0.4,
+  "final_grade": 86,
+  "course_outcomes": [
+    "Equity in CS education",
+    "accessibility"
+  ],
+  "programming_knowledge_needed": [
+    "Varies"
+  ],
+  "math_requirements": [],
+  "other_requirements": [
+    "Teaching experience"
+  ],
+  "prerequisite": [],
+  "corequisite": [],
+  "description": ""
+},
+{
+  "_id": {
+    "$oid": "67ec8946a45c70e156ce474d"
   },
-  {
-    "subject_id": "CS5965",
-    "subject_name": "Engaging with Industry Partners for Rising Professionals",
-    "seats": 298,
-    "enrollments": 297,
-    "weekly_course_time": 5,
-    "assignment_count": 4,
-    "assignment_time": 5,
-    "assignment_weight": 0.3,
-    "assignment_grade": 85.0,
-    "project_weight": 0.5,
-    "project_grade": 90.0,
-    "exam_count": 0,
-    "exam_grade": 0.0,
-    "exam_weight": 0.0,
-    "final_grade": 89.0,
-    "course_outcomes": [
-      "Industry collaboration"
-    ],
-    "programming_knowledge_needed": [
-      "Varies"
-    ],
-    "math_requirements": [],
-    "other_requirements": [
-      "Industry experience"
-    ],
-    "prerequisite": [],
-    "corequisite": []
+  "subject_id": "CS5964",
+  "subject_name": "Projects for Professionals",
+  "seats": 261,
+  "enrollments": 264,
+  "weekly_course_time": 5,
+  "assignment_count": 4,
+  "assignment_time": 5,
+  "assignment_weight": 0.3,
+  "assignment_grade": 86,
+  "project_weight": 0.4,
+  "project_grade": 89,
+  "exam_count": 0,
+  "exam_grade": 0,
+  "exam_weight": 0,
+  "final_grade": 88,
+  "course_outcomes": [
+    "Project management"
+  ],
+  "programming_knowledge_needed": [],
+  "math_requirements": [],
+  "other_requirements": [
+    "Industry experience"
+  ],
+  "prerequisite": [],
+  "corequisite": [],
+  "description": ""
+},
+{
+  "_id": {
+    "$oid": "67ec8946a45c70e156ce474e"
   },
-  {
-    "subject_id": "CS6200",
-    "subject_name": "Information Retrieval",
-    "seats": 240,
-    "enrollments": 238,
-    "weekly_course_time": 4,
-    "assignment_count": 5,
-    "assignment_time": 4,
-    "assignment_weight": 0.4,
-    "assignment_grade": 85.0,
-    "project_weight": 0.3,
-    "project_grade": 88.0,
-    "exam_count": 1,
-    "exam_grade": 87.0,
-    "exam_weight": 0.3,
-    "final_grade": 87.0,
-    "course_outcomes": [
-      "TF-IDF",
-      "PageRank",
-      "vector space models",
-      "IR models"
-    ],
-    "programming_knowledge_needed": [],
-    "math_requirements": [
-      "Probability",
-      "Linear Algebra"
-    ],
-    "other_requirements": [],
-    "prerequisite": [],
-    "corequisite": []
+  "subject_id": "CS5965",
+  "subject_name": "Engaging with Industry Partners for Rising Professionals",
+  "seats": 298,
+  "enrollments": 297,
+  "weekly_course_time": 5,
+  "assignment_count": 4,
+  "assignment_time": 5,
+  "assignment_weight": 0.3,
+  "assignment_grade": 85,
+  "project_weight": 0.5,
+  "project_grade": 90,
+  "exam_count": 0,
+  "exam_grade": 0,
+  "exam_weight": 0,
+  "final_grade": 89,
+  "course_outcomes": [
+    "Industry collaboration"
+  ],
+  "programming_knowledge_needed": [
+    "Varies"
+  ],
+  "math_requirements": [],
+  "other_requirements": [
+    "Industry experience"
+  ],
+  "prerequisite": [],
+  "corequisite": [],
+  "description": ""
+},
+{
+  "_id": {
+    "$oid": "67ec8946a45c70e156ce474f"
   },
-  {
-    "subject_id": "DS5010",
-    "subject_name": "Introduction to Programming for Data Science",
-    "seats": 263,
-    "enrollments": 286,
-    "weekly_course_time": 4,
-    "assignment_count": 5,
-    "assignment_time": 5,
-    "assignment_weight": 0.35,
-    "assignment_grade": 86.0,
-    "project_weight": 0.3,
-    "project_grade": 88.0,
-    "exam_count": 1,
-    "exam_grade": 87.0,
-    "exam_weight": 0.35,
-    "final_grade": 87.0,
-    "course_outcomes": [
-      "Python",
-      "R",
-      "Pandas",
-      "Jupyter Notebooks",
-      "Data Cleaning",
-      "Data Processing"
-    ],
-    "programming_knowledge_needed": [
-      "Python"
-    ],
-    "math_requirements": [],
-    "other_requirements": [],
-    "prerequisite": [],
-    "corequisite": []
+  "subject_id": "CS6200",
+  "subject_name": "Information Retrieval",
+  "seats": 240,
+  "enrollments": 238,
+  "weekly_course_time": 4,
+  "assignment_count": 5,
+  "assignment_time": 4,
+  "assignment_weight": 0.4,
+  "assignment_grade": 85,
+  "project_weight": 0.3,
+  "project_grade": 88,
+  "exam_count": 1,
+  "exam_grade": 87,
+  "exam_weight": 0.3,
+  "final_grade": 87,
+  "course_outcomes": [
+    "TF-IDF",
+    "PageRank",
+    "vector space models",
+    "IR models"
+  ],
+  "programming_knowledge_needed": [],
+  "math_requirements": [
+    "Probability",
+    "Linear Algebra"
+  ],
+  "other_requirements": [],
+  "prerequisite": [],
+  "corequisite": [],
+  "description": ""
+},
+{
+  "_id": {
+    "$oid": "67ec8946a45c70e156ce4750"
   },
-  {
-    "subject_id": "DS5020",
-    "subject_name": "Introduction to Linear Algebra and Probability for Data Science",
-    "seats": 224,
-    "enrollments": 217,
-    "weekly_course_time": 6,
-    "assignment_count": 5,
-    "assignment_time": 5,
-    "assignment_weight": 0.35,
-    "assignment_grade": 85.0,
-    "project_weight": 0.3,
-    "project_grade": 87.0,
-    "exam_count": 1,
-    "exam_grade": 86.0,
-    "exam_weight": 0.35,
-    "final_grade": 86.0,
-    "course_outcomes": [
-      "Statistics",
-      "Probability",
-      "Linear Algebra",
-      "Python"
-    ],
-    "programming_knowledge_needed": [
-      "Python"
-    ],
-    "math_requirements": [
-      "Basic knowledge of Statistics",
-      "Probability",
-      "Linear Algebra",
-      "Matrix operations"
-    ],
-    "other_requirements": [],
-    "prerequisite": [],
-    "corequisite": []
+  "subject_id": "DS5010",
+  "subject_name": "Introduction to Programming for Data Science",
+  "seats": 263,
+  "enrollments": 286,
+  "weekly_course_time": 4,
+  "assignment_count": 5,
+  "assignment_time": 5,
+  "assignment_weight": 0.35,
+  "assignment_grade": 86,
+  "project_weight": 0.3,
+  "project_grade": 88,
+  "exam_count": 1,
+  "exam_grade": 87,
+  "exam_weight": 0.35,
+  "final_grade": 87,
+  "course_outcomes": [
+    "Python",
+    "R",
+    "Pandas",
+    "Jupyter Notebooks",
+    "Data Cleaning",
+    "Data Processing"
+  ],
+  "programming_knowledge_needed": [
+    "Python"
+  ],
+  "math_requirements": [],
+  "other_requirements": [],
+  "prerequisite": [],
+  "corequisite": [],
+  "description": ""
+},
+{
+  "_id": {
+    "$oid": "67ec8946a45c70e156ce4751"
   },
-  {
-    "subject_id": "DS5110",
-    "subject_name": "Introduction to Data Management and Processing",
-    "seats": 228,
-    "enrollments": 224,
-    "weekly_course_time": 5,
-    "assignment_count": 5,
-    "assignment_time": 5,
-    "assignment_weight": 0.35,
-    "assignment_grade": 87.0,
-    "project_weight": 0.3,
-    "project_grade": 89.0,
-    "exam_count": 1,
-    "exam_grade": 88.0,
-    "exam_weight": 0.35,
-    "final_grade": 88.0,
-    "course_outcomes": [
-      "SQL",
-      "ETL Pipelines",
-      "Data Warehousing",
-      "Apache Spark"
-    ],
-    "programming_knowledge_needed": [
-      "Python"
-    ],
-    "math_requirements": [],
-    "other_requirements": [],
-    "prerequisite": [],
-    "corequisite": []
+  "subject_id": "DS5020",
+  "subject_name": "Introduction to Linear Algebra and Probability for Data Science",
+  "seats": 224,
+  "enrollments": 217,
+  "weekly_course_time": 6,
+  "assignment_count": 5,
+  "assignment_time": 5,
+  "assignment_weight": 0.35,
+  "assignment_grade": 85,
+  "project_weight": 0.3,
+  "project_grade": 87,
+  "exam_count": 1,
+  "exam_grade": 86,
+  "exam_weight": 0.35,
+  "final_grade": 86,
+  "course_outcomes": [
+    "Statistics",
+    "Probability",
+    "Linear Algebra",
+    "Python"
+  ],
+  "programming_knowledge_needed": [
+    "Python"
+  ],
+  "math_requirements": [
+    "Basic knowledge of Statistics",
+    "Probability",
+    "Linear Algebra",
+    "Matrix operations"
+  ],
+  "other_requirements": [],
+  "prerequisite": [],
+  "corequisite": [],
+  "description": ""
+},
+{
+  "_id": {
+    "$oid": "67ec8946a45c70e156ce4752"
   },
-  {
-    "subject_id": "DS5220",
-    "subject_name": "Supervised Machine Learning and Learning Theory",
-    "seats": 286,
-    "enrollments": 299,
-    "weekly_course_time": 6,
-    "assignment_count": 5,
-    "assignment_time": 6,
-    "assignment_weight": 0.4,
-    "assignment_grade": 88.0,
-    "project_weight": 0.3,
-    "project_grade": 90.0,
-    "exam_count": 1,
-    "exam_grade": 89.0,
-    "exam_weight": 0.3,
-    "final_grade": 89.0,
-    "course_outcomes": [
-      "Python",
-      "R",
-      "MATLAB",
-      "Algorithms",
-      "SVMs",
-      "Decision Trees",
-      "Overfitting",
-      "Cross-Validation"
-    ],
-    "programming_knowledge_needed": [
-      "Python"
-    ],
-    "math_requirements": [],
-    "other_requirements": [
-      "Python",
-      "R",
-      "MATLAB"
-    ],
-    "prerequisite": [],
-    "corequisite": []
+  "subject_id": "DS5110",
+  "subject_name": "Introduction to Data Management and Processing",
+  "seats": 228,
+  "enrollments": 224,
+  "weekly_course_time": 5,
+  "assignment_count": 5,
+  "assignment_time": 5,
+  "assignment_weight": 0.35,
+  "assignment_grade": 87,
+  "project_weight": 0.3,
+  "project_grade": 89,
+  "exam_count": 1,
+  "exam_grade": 88,
+  "exam_weight": 0.35,
+  "final_grade": 88,
+  "course_outcomes": [
+    "SQL",
+    "ETL Pipelines",
+    "Data Warehousing",
+    "Apache Spark"
+  ],
+  "programming_knowledge_needed": [
+    "Python"
+  ],
+  "math_requirements": [],
+  "other_requirements": [],
+  "prerequisite": [],
+  "corequisite": [],
+  "description": ""
+},
+{
+  "_id": {
+    "$oid": "67ec8946a45c70e156ce4753"
   },
-  {
-    "subject_id": "DS5230",
-    "subject_name": "Unsupervised Machine Learning and Data Mining",
-    "seats": 213,
-    "enrollments": 232,
-    "weekly_course_time": 6,
-    "assignment_count": 5,
-    "assignment_time": 6,
-    "assignment_weight": 0.4,
-    "assignment_grade": 87.0,
-    "project_weight": 0.3,
-    "project_grade": 89.0,
-    "exam_count": 1,
-    "exam_grade": 88.0,
-    "exam_weight": 0.3,
-    "final_grade": 88.0,
-    "course_outcomes": [
-      "Python",
-      "R",
-      "MATLAB",
-      "Algorithms"
-    ],
-    "programming_knowledge_needed": [
-      "Python",
-      "R",
-      "MATLAB"
-    ],
-    "math_requirements": [],
-    "other_requirements": [
-      "Python",
-      "R",
-      "MATLAB"
-    ],
-    "prerequisite": [],
-    "corequisite": []
+  "subject_id": "DS5220",
+  "subject_name": "Supervised Machine Learning and Learning Theory",
+  "seats": 286,
+  "enrollments": 299,
+  "weekly_course_time": 6,
+  "assignment_count": 5,
+  "assignment_time": 6,
+  "assignment_weight": 0.4,
+  "assignment_grade": 88,
+  "project_weight": 0.3,
+  "project_grade": 90,
+  "exam_count": 1,
+  "exam_grade": 89,
+  "exam_weight": 0.3,
+  "final_grade": 89,
+  "course_outcomes": [
+    "Python",
+    "R",
+    "MATLAB",
+    "Algorithms",
+    "SVMs",
+    "Decision Trees",
+    "Overfitting",
+    "Cross-Validation"
+  ],
+  "programming_knowledge_needed": [
+    "Python"
+  ],
+  "math_requirements": [],
+  "other_requirements": [
+    "Python",
+    "R",
+    "MATLAB"
+  ],
+  "prerequisite": [],
+  "corequisite": [],
+  "description": ""
+},
+{
+  "_id": {
+    "$oid": "67ec8946a45c70e156ce4754"
   },
-  {
-    "subject_id": "DS5500",
-    "subject_name": "Data Science Capstone",
-    "seats": 259,
-    "enrollments": 257,
-    "weekly_course_time": 12,
-    "assignment_count": 4,
-    "assignment_time": 8,
-    "assignment_weight": 0.3,
-    "assignment_grade": 90.0,
-    "project_weight": 0.5,
-    "project_grade": 92.0,
-    "exam_count": 1,
-    "exam_grade": 91.0,
-    "exam_weight": 0.2,
-    "final_grade": 91.0,
-    "course_outcomes": [
-      "Data Wrangling",
-      "Machine Learning"
-    ],
-    "programming_knowledge_needed": [
-      "Python"
-    ],
-    "math_requirements": [],
-    "other_requirements": [],
-    "prerequisite": [
-      "CS5800"
-    ],
-    "corequisite": []
+  "subject_id": "DS5230",
+  "subject_name": "Unsupervised Machine Learning and Data Mining",
+  "seats": 213,
+  "enrollments": 232,
+  "weekly_course_time": 6,
+  "assignment_count": 5,
+  "assignment_time": 6,
+  "assignment_weight": 0.4,
+  "assignment_grade": 87,
+  "project_weight": 0.3,
+  "project_grade": 89,
+  "exam_count": 1,
+  "exam_grade": 88,
+  "exam_weight": 0.3,
+  "final_grade": 88,
+  "course_outcomes": [
+    "Python",
+    "R",
+    "MATLAB",
+    "Algorithms"
+  ],
+  "programming_knowledge_needed": [
+    "Python",
+    "R",
+    "MATLAB"
+  ],
+  "math_requirements": [],
+  "other_requirements": [
+    "Python",
+    "R",
+    "MATLAB"
+  ],
+  "prerequisite": [],
+  "corequisite": [],
+  "description": ""
+},
+{
+  "_id": {
+    "$oid": "67ec8946a45c70e156ce4755"
   },
-  {
-    "subject_id": "CS6120",
-    "subject_name": "Natural Language Processing",
-    "seats": 210,
-    "enrollments": 208,
-    "weekly_course_time": 4,
-    "assignment_count": 5,
-    "assignment_time": 4,
-    "assignment_weight": 0.4,
-    "assignment_grade": 85.0,
-    "project_weight": 0.3,
-    "project_grade": 88.0,
-    "exam_count": 1,
-    "exam_grade": 87.0,
-    "exam_weight": 0.3,
-    "final_grade": 87.0,
-    "course_outcomes": [
-      "Tokenization",
-      "Transformers",
-      "BERT",
-      "GPT",
-      "Sentiment Analysis",
-      "Python"
-    ],
-    "programming_knowledge_needed": [
-      "Python"
-    ],
-    "math_requirements": [
-      "Probability",
-      "Linear Algebra"
-    ],
-    "other_requirements": [],
-    "prerequisite": [],
-    "corequisite": []
+  "subject_id": "DS5500",
+  "subject_name": "Data Science Capstone",
+  "seats": 259,
+  "enrollments": 257,
+  "weekly_course_time": 12,
+  "assignment_count": 4,
+  "assignment_time": 8,
+  "assignment_weight": 0.3,
+  "assignment_grade": 90,
+  "project_weight": 0.5,
+  "project_grade": 92,
+  "exam_count": 1,
+  "exam_grade": 91,
+  "exam_weight": 0.2,
+  "final_grade": 91,
+  "course_outcomes": [
+    "Data Wrangling",
+    "Machine Learning"
+  ],
+  "programming_knowledge_needed": [
+    "Python"
+  ],
+  "math_requirements": [],
+  "other_requirements": [],
+  "prerequisite": [
+    "CS5800"
+  ],
+  "corequisite": [],
+  "description": ""
+},
+{
+  "_id": {
+    "$oid": "67ec8946a45c70e156ce4756"
   },
-  {
-    "subject_id": "CS6130",
-    "subject_name": "Affective Computing",
-    "seats": 233,
-    "enrollments": 224,
-    "weekly_course_time": 4,
-    "assignment_count": 4,
-    "assignment_time": 5,
-    "assignment_weight": 0.35,
-    "assignment_grade": 82.0,
-    "project_weight": 0.25,
-    "project_grade": 85.0,
-    "exam_count": 1,
-    "exam_grade": 88.0,
-    "exam_weight": 0.4,
-    "final_grade": 85.0,
-    "course_outcomes": [
-      "Emotion Recognition",
-      "Biosignal Processing",
-      "Ethics",
-      "Python",
-      "MATLAB"
-    ],
-    "programming_knowledge_needed": [
-      "Python"
-    ],
-    "math_requirements": [
-      "Basic Statistics"
-    ],
-    "other_requirements": [],
-    "prerequisite": [],
-    "corequisite": []
+  "subject_id": "CS6120",
+  "subject_name": "Natural Language Processing",
+  "seats": 210,
+  "enrollments": 208,
+  "weekly_course_time": 4,
+  "assignment_count": 5,
+  "assignment_time": 4,
+  "assignment_weight": 0.4,
+  "assignment_grade": 85,
+  "project_weight": 0.3,
+  "project_grade": 88,
+  "exam_count": 1,
+  "exam_grade": 87,
+  "exam_weight": 0.3,
+  "final_grade": 87,
+  "course_outcomes": [
+    "Tokenization",
+    "Transformers",
+    "BERT",
+    "GPT",
+    "Sentiment Analysis",
+    "Python"
+  ],
+  "programming_knowledge_needed": [
+    "Python"
+  ],
+  "math_requirements": [
+    "Probability",
+    "Linear Algebra"
+  ],
+  "other_requirements": [],
+  "prerequisite": [],
+  "corequisite": [],
+  "description": ""
+},
+{
+  "_id": {
+    "$oid": "67ec8946a45c70e156ce4757"
   },
-  {
-    "subject_id": "CS6140",
-    "subject_name": "Machine Learning",
-    "seats": 203,
-    "enrollments": 195,
-    "weekly_course_time": 4,
-    "assignment_count": 6,
-    "assignment_time": 5,
-    "assignment_weight": 0.5,
-    "assignment_grade": 88.0,
-    "project_weight": 0.2,
-    "project_grade": 90.0,
-    "exam_count": 1,
-    "exam_grade": 89.0,
-    "exam_weight": 0.3,
-    "final_grade": 89.0,
-    "course_outcomes": [
-      "Regression",
-      "Classification",
-      "Feature Engineering",
-      "Scikit-learn",
-      "Python"
-    ],
-    "programming_knowledge_needed": [
-      "Python"
-    ],
-    "math_requirements": [
-      "Probability",
-      "Linear Algebra",
-      "Statistics",
-      "Algorithms"
-    ],
-    "other_requirements": [],
-    "prerequisite": [
-      "CS5800"
-    ],
-    "corequisite": []
+  "subject_id": "CS6130",
+  "subject_name": "Affective Computing",
+  "seats": 233,
+  "enrollments": 224,
+  "weekly_course_time": 4,
+  "assignment_count": 4,
+  "assignment_time": 5,
+  "assignment_weight": 0.35,
+  "assignment_grade": 82,
+  "project_weight": 0.25,
+  "project_grade": 85,
+  "exam_count": 1,
+  "exam_grade": 88,
+  "exam_weight": 0.4,
+  "final_grade": 85,
+  "course_outcomes": [
+    "Emotion Recognition",
+    "Biosignal Processing",
+    "Ethics",
+    "Python",
+    "MATLAB"
+  ],
+  "programming_knowledge_needed": [
+    "Python"
+  ],
+  "math_requirements": [
+    "Basic Statistics"
+  ],
+  "other_requirements": [],
+  "prerequisite": [],
+  "corequisite": [],
+  "description": ""
+},
+{
+  "_id": {
+    "$oid": "67ec8946a45c70e156ce4758"
   },
-  {
-    "subject_id": "CS6200",
-    "subject_name": "Information Retrieval",
-    "seats": 224,
-    "enrollments": 248,
-    "weekly_course_time": 4,
-    "assignment_count": 5,
-    "assignment_time": 4,
-    "assignment_weight": 0.4,
-    "assignment_grade": 84.0,
-    "project_weight": 0.3,
-    "project_grade": 87.0,
-    "exam_count": 1,
-    "exam_grade": 86.0,
-    "exam_weight": 0.3,
-    "final_grade": 86.0,
-    "course_outcomes": [
-      "Search Algorithms",
-      "TF-IDF",
-      "PageRank",
-      "Elasticsearch"
-    ],
-    "programming_knowledge_needed": [
-      "Python",
-      "Java"
-    ],
-    "math_requirements": [
-      "Probability",
-      "Linear Algebra",
-      "Algorithms"
-    ],
-    "other_requirements": [],
-    "prerequisite": [],
-    "corequisite": []
+  "subject_id": "CS6140",
+  "subject_name": "Machine Learning",
+  "seats": 203,
+  "enrollments": 195,
+  "weekly_course_time": 4,
+  "assignment_count": 6,
+  "assignment_time": 5,
+  "assignment_weight": 0.5,
+  "assignment_grade": 88,
+  "project_weight": 0.2,
+  "project_grade": 90,
+  "exam_count": 1,
+  "exam_grade": 89,
+  "exam_weight": 0.3,
+  "final_grade": 89,
+  "course_outcomes": [
+    "Regression",
+    "Classification",
+    "Feature Engineering",
+    "Scikit-learn",
+    "Python"
+  ],
+  "programming_knowledge_needed": [
+    "Python"
+  ],
+  "math_requirements": [
+    "Probability",
+    "Linear Algebra",
+    "Statistics",
+    "Algorithms"
+  ],
+  "other_requirements": [],
+  "prerequisite": [
+    "CS5800"
+  ],
+  "corequisite": [],
+  "description": ""
+},
+{
+  "_id": {
+    "$oid": "67ec8946a45c70e156ce4759"
   },
-  {
-    "subject_id": "CS6220",
-    "subject_name": "Data Mining Techniques",
-    "seats": 259,
-    "enrollments": 271,
-    "weekly_course_time": 4,
-    "assignment_count": 6,
-    "assignment_time": 5,
-    "assignment_weight": 0.5,
-    "assignment_grade": 87.0,
-    "project_weight": 0.2,
-    "project_grade": 89.0,
-    "exam_count": 1,
-    "exam_grade": 88.0,
-    "exam_weight": 0.3,
-    "final_grade": 88.0,
-    "course_outcomes": [
-      "Classification",
-      "Prediction",
-      "Ensemble methods"
-    ],
-    "programming_knowledge_needed": [
-      "Python"
-    ],
-    "math_requirements": [
-      "Linear Algebra",
-      "Probability",
-      "Algorithms"
-    ],
-    "other_requirements": [],
-    "prerequisite": [
-      "CS5800"
-    ],
-    "corequisite": []
+  "subject_id": "CS6200",
+  "subject_name": "Information Retrieval",
+  "seats": 224,
+  "enrollments": 248,
+  "weekly_course_time": 4,
+  "assignment_count": 5,
+  "assignment_time": 4,
+  "assignment_weight": 0.4,
+  "assignment_grade": 84,
+  "project_weight": 0.3,
+  "project_grade": 87,
+  "exam_count": 1,
+  "exam_grade": 86,
+  "exam_weight": 0.3,
+  "final_grade": 86,
+  "course_outcomes": [
+    "Search Algorithms",
+    "TF-IDF",
+    "PageRank",
+    "Elasticsearch"
+  ],
+  "programming_knowledge_needed": [
+    "Python",
+    "Java"
+  ],
+  "math_requirements": [
+    "Probability",
+    "Linear Algebra",
+    "Algorithms"
+  ],
+  "other_requirements": [],
+  "prerequisite": [],
+  "corequisite": [],
+  "description": ""
+},
+{
+  "_id": {
+    "$oid": "67ec8946a45c70e156ce475a"
   },
-  {
-    "subject_id": "CS6240",
-    "subject_name": "Large-Scale Parallel Data Processing",
-    "seats": 205,
-    "enrollments": 216,
-    "weekly_course_time": 4,
-    "assignment_count": 5,
-    "assignment_time": 6,
-    "assignment_weight": 0.4,
-    "assignment_grade": 83.0,
-    "project_weight": 0.3,
-    "project_grade": 86.0,
-    "exam_count": 1,
-    "exam_grade": 85.0,
-    "exam_weight": 0.3,
-    "final_grade": 85.0,
-    "course_outcomes": [
-      "MapReduce",
-      "Hadoop",
-      "Spark",
-      "Distributed Computing",
-      "Cloud Platforms",
-      "AWS"
-    ],
-    "programming_knowledge_needed": [
-      "Java",
-      "Scala"
-    ],
-    "math_requirements": [
-      "Linear Algebra",
-      "Probability",
-      "Algorithms"
-    ],
-    "other_requirements": [],
-    "prerequisite": [
-      "CS5800"
-    ],
-    "corequisite": []
+  "subject_id": "CS6220",
+  "subject_name": "Data Mining Techniques",
+  "seats": 259,
+  "enrollments": 271,
+  "weekly_course_time": 4,
+  "assignment_count": 6,
+  "assignment_time": 5,
+  "assignment_weight": 0.5,
+  "assignment_grade": 87,
+  "project_weight": 0.2,
+  "project_grade": 89,
+  "exam_count": 1,
+  "exam_grade": 88,
+  "exam_weight": 0.3,
+  "final_grade": 88,
+  "course_outcomes": [
+    "Classification",
+    "Prediction",
+    "Ensemble methods"
+  ],
+  "programming_knowledge_needed": [
+    "Python"
+  ],
+  "math_requirements": [
+    "Linear Algebra",
+    "Probability",
+    "Algorithms"
+  ],
+  "other_requirements": [],
+  "prerequisite": [
+    "CS5800"
+  ],
+  "corequisite": [],
+  "description": ""
+},
+{
+  "_id": {
+    "$oid": "67ec8946a45c70e156ce475b"
   },
-  {
-    "subject_id": "CS6350",
-    "subject_name": "Empirical Research Methods",
-    "seats": 213,
-    "enrollments": 210,
-    "weekly_course_time": 4,
-    "assignment_count": 4,
-    "assignment_time": 5,
-    "assignment_weight": 0.4,
-    "assignment_grade": 82.0,
-    "project_weight": 0.2,
-    "project_grade": 84.0,
-    "exam_count": 1,
-    "exam_grade": 83.0,
-    "exam_weight": 0.4,
-    "final_grade": 83.0,
-    "course_outcomes": [
-      "Methods for conducting empirical research"
-    ],
-    "programming_knowledge_needed": [],
-    "math_requirements": [
-      "Basic Statistics"
-    ],
-    "other_requirements": [],
-    "prerequisite": [],
-    "corequisite": []
+  "subject_id": "CS6240",
+  "subject_name": "Large-Scale Parallel Data Processing",
+  "seats": 205,
+  "enrollments": 216,
+  "weekly_course_time": 4,
+  "assignment_count": 5,
+  "assignment_time": 6,
+  "assignment_weight": 0.4,
+  "assignment_grade": 83,
+  "project_weight": 0.3,
+  "project_grade": 86,
+  "exam_count": 1,
+  "exam_grade": 85,
+  "exam_weight": 0.3,
+  "final_grade": 85,
+  "course_outcomes": [
+    "MapReduce",
+    "Hadoop",
+    "Spark",
+    "Distributed Computing",
+    "Cloud Platforms",
+    "AWS"
+  ],
+  "programming_knowledge_needed": [
+    "Java",
+    "Scala"
+  ],
+  "math_requirements": [
+    "Linear Algebra",
+    "Probability",
+    "Algorithms"
+  ],
+  "other_requirements": [],
+  "prerequisite": [
+    "CS5800"
+  ],
+  "corequisite": [],
+  "description": ""
+},
+{
+  "_id": {
+    "$oid": "67ec8946a45c70e156ce475c"
   },
-  {
-    "subject_id": "CS6410",
-    "subject_name": "Compilers",
-    "seats": 247,
-    "enrollments": 272,
-    "weekly_course_time": 4,
-    "assignment_count": 6,
-    "assignment_time": 6,
-    "assignment_weight": 0.5,
-    "assignment_grade": 86.0,
-    "project_weight": 0.3,
-    "project_grade": 88.0,
-    "exam_count": 1,
-    "exam_grade": 87.0,
-    "exam_weight": 0.2,
-    "final_grade": 87.0,
-    "course_outcomes": [
-      "Lexical Analysis",
-      "Parsing",
-      "Code Generation",
-      "LLVM"
-    ],
-    "programming_knowledge_needed": [
-      "C"
-    ],
-    "math_requirements": [],
-    "other_requirements": [],
-    "prerequisite": [
-      "CS5400"
-    ],
-    "corequisite": []
+  "subject_id": "CS6350",
+  "subject_name": "Empirical Research Methods",
+  "seats": 213,
+  "enrollments": 210,
+  "weekly_course_time": 4,
+  "assignment_count": 4,
+  "assignment_time": 5,
+  "assignment_weight": 0.4,
+  "assignment_grade": 82,
+  "project_weight": 0.2,
+  "project_grade": 84,
+  "exam_count": 1,
+  "exam_grade": 83,
+  "exam_weight": 0.4,
+  "final_grade": 83,
+  "course_outcomes": [
+    "Methods for conducting empirical research"
+  ],
+  "programming_knowledge_needed": [],
+  "math_requirements": [
+    "Basic Statistics"
+  ],
+  "other_requirements": [],
+  "prerequisite": [],
+  "corequisite": [],
+  "description": ""
+},
+{
+  "_id": {
+    "$oid": "67ec8946a45c70e156ce475d"
   },
-  {
-    "subject_id": "CS6510",
-    "subject_name": "Advanced Software Development",
-    "seats": 232,
-    "enrollments": 238,
-    "weekly_course_time": 4,
-    "assignment_count": 4,
-    "assignment_time": 6,
-    "assignment_weight": 0.4,
-    "assignment_grade": 83.0,
-    "project_weight": 0.4,
-    "project_grade": 85.0,
-    "exam_count": 0,
-    "exam_grade": 0.0,
-    "exam_weight": 0.2,
-    "final_grade": 84.0,
-    "course_outcomes": [
-      "Large-scale projects",
-      "Microservices",
-      "Docker",
-      "Kubernetes",
-      "DevOps",
-      "API Design"
-    ],
-    "programming_knowledge_needed": [
-      "Python",
-      "Java"
-    ],
-    "math_requirements": [],
-    "other_requirements": [],
-    "prerequisite": [
-      "CS5004",
-      "CS5500"
-    ],
-    "corequisite": []
+  "subject_id": "CS6410",
+  "subject_name": "Compilers",
+  "seats": 247,
+  "enrollments": 272,
+  "weekly_course_time": 4,
+  "assignment_count": 6,
+  "assignment_time": 6,
+  "assignment_weight": 0.5,
+  "assignment_grade": 86,
+  "project_weight": 0.3,
+  "project_grade": 88,
+  "exam_count": 1,
+  "exam_grade": 87,
+  "exam_weight": 0.2,
+  "final_grade": 87,
+  "course_outcomes": [
+    "Lexical Analysis",
+    "Parsing",
+    "Code Generation",
+    "LLVM"
+  ],
+  "programming_knowledge_needed": [
+    "C"
+  ],
+  "math_requirements": [],
+  "other_requirements": [],
+  "prerequisite": [
+    "CS5400"
+  ],
+  "corequisite": [],
+  "description": ""
+},
+{
+  "_id": {
+    "$oid": "67ec8946a45c70e156ce475e"
   },
-  {
-    "subject_id": "CS6620",
-    "subject_name": "Fundamentals of Cloud Computing",
-    "seats": 257,
-    "enrollments": 255,
-    "weekly_course_time": 4,
-    "assignment_count": 5,
-    "assignment_time": 5,
-    "assignment_weight": 0.4,
-    "assignment_grade": 84.0,
-    "project_weight": 0.3,
-    "project_grade": 86.0,
-    "exam_count": 1,
-    "exam_grade": 85.0,
-    "exam_weight": 0.3,
-    "final_grade": 85.0,
-    "course_outcomes": [
-      "AWS",
-      "Azure",
-      "Virtualization",
-      "Serverless Architecture",
-      "Infrastructure as Code",
-      "Terraform",
-      "Cloud Platforms"
-    ],
-    "programming_knowledge_needed": [],
-    "math_requirements": [],
-    "other_requirements": [],
-    "prerequisite": [],
-    "corequisite": []
+  "subject_id": "CS6510",
+  "subject_name": "Advanced Software Development",
+  "seats": 232,
+  "enrollments": 238,
+  "weekly_course_time": 4,
+  "assignment_count": 4,
+  "assignment_time": 6,
+  "assignment_weight": 0.4,
+  "assignment_grade": 83,
+  "project_weight": 0.4,
+  "project_grade": 85,
+  "exam_count": 0,
+  "exam_grade": 0,
+  "exam_weight": 0.2,
+  "final_grade": 84,
+  "course_outcomes": [
+    "Large-scale projects",
+    "Microservices",
+    "Docker",
+    "Kubernetes",
+    "DevOps",
+    "API Design"
+  ],
+  "programming_knowledge_needed": [
+    "Python",
+    "Java"
+  ],
+  "math_requirements": [],
+  "other_requirements": [],
+  "prerequisite": [
+    "CS5004",
+    "CS5500"
+  ],
+  "corequisite": [],
+  "description": ""
+},
+{
+  "_id": {
+    "$oid": "67ec8946a45c70e156ce475f"
   },
-  {
-    "subject_id": "CS6640",
-    "subject_name": "Operating Systems Implementation",
-    "seats": 286,
-    "enrollments": 278,
-    "weekly_course_time": 4,
-    "assignment_count": 6,
-    "assignment_time": 6,
-    "assignment_weight": 0.5,
-    "assignment_grade": 87.0,
-    "project_weight": 0.2,
-    "project_grade": 89.0,
-    "exam_count": 1,
-    "exam_grade": 88.0,
-    "exam_weight": 0.3,
-    "final_grade": 88.0,
-    "course_outcomes": [
-      "OS kernel design",
-      "Kernel Development",
-      "File Systems",
-      "Multithreading",
-      "Operating Systems"
-    ],
-    "programming_knowledge_needed": [
-      "C"
-    ],
-    "math_requirements": [],
-    "other_requirements": [],
-    "prerequisite": [
-      "CS5600"
-    ],
-    "corequisite": []
+  "subject_id": "CS6620",
+  "subject_name": "Fundamentals of Cloud Computing",
+  "seats": 257,
+  "enrollments": 255,
+  "weekly_course_time": 4,
+  "assignment_count": 5,
+  "assignment_time": 5,
+  "assignment_weight": 0.4,
+  "assignment_grade": 84,
+  "project_weight": 0.3,
+  "project_grade": 86,
+  "exam_count": 1,
+  "exam_grade": 85,
+  "exam_weight": 0.3,
+  "final_grade": 85,
+  "course_outcomes": [
+    "AWS",
+    "Azure",
+    "Virtualization",
+    "Serverless Architecture",
+    "Infrastructure as Code",
+    "Terraform",
+    "Cloud Platforms"
+  ],
+  "programming_knowledge_needed": [],
+  "math_requirements": [],
+  "other_requirements": [],
+  "prerequisite": [],
+  "corequisite": [],
+  "description": ""
+},
+{
+  "_id": {
+    "$oid": "67ec8946a45c70e156ce4760"
   },
-  {
-    "subject_id": "CS6650",
-    "subject_name": "Building Scalable Distributed Systems",
-    "seats": 228,
-    "enrollments": 224,
-    "weekly_course_time": 4,
-    "assignment_count": 5,
-    "assignment_time": 5,
-    "assignment_weight": 0.4,
-    "assignment_grade": 83.0,
-    "project_weight": 0.3,
-    "project_grade": 85.0,
-    "exam_count": 1,
-    "exam_grade": 84.0,
-    "exam_weight": 0.3,
-    "final_grade": 84.0,
-    "course_outcomes": [
-      "Distributed systems",
-      "Consensus Algorithms",
-      "Raft",
-      "Load Balancing",
-      "CAP Theorem"
-    ],
-    "programming_knowledge_needed": [
-      "C"
-    ],
-    "math_requirements": [],
-    "other_requirements": [],
-    "prerequisite": [],
-    "corequisite": []
+  "subject_id": "CS6640",
+  "subject_name": "Operating Systems Implementation",
+  "seats": 286,
+  "enrollments": 278,
+  "weekly_course_time": 4,
+  "assignment_count": 6,
+  "assignment_time": 6,
+  "assignment_weight": 0.5,
+  "assignment_grade": 87,
+  "project_weight": 0.2,
+  "project_grade": 89,
+  "exam_count": 1,
+  "exam_grade": 88,
+  "exam_weight": 0.3,
+  "final_grade": 88,
+  "course_outcomes": [
+    "OS kernel design",
+    "Kernel Development",
+    "File Systems",
+    "Multithreading",
+    "Operating Systems"
+  ],
+  "programming_knowledge_needed": [
+    "C"
+  ],
+  "math_requirements": [],
+  "other_requirements": [],
+  "prerequisite": [
+    "CS5600"
+  ],
+  "corequisite": [],
+  "description": ""
+},
+{
+  "_id": {
+    "$oid": "67ec8946a45c70e156ce4761"
   },
-  {
-    "subject_id": "CS7150",
-    "subject_name": "Deep Learning",
-    "seats": 272,
-    "enrollments": 300,
-    "weekly_course_time": 12,
-    "assignment_count": 5,
-    "assignment_time": 6,
-    "assignment_weight": 0.4,
-    "assignment_grade": 90.0,
-    "project_weight": 0.3,
-    "project_grade": 92.0,
-    "exam_count": 1,
-    "exam_grade": 91.0,
-    "exam_weight": 0.3,
-    "final_grade": 91.0,
-    "course_outcomes": [
-      "Deep Learning",
-      "Neural Networks",
-      "CNN",
-      "RNN",
-      "PyTorch",
-      "TensorFlow",
-      "GPU Acceleration"
-    ],
-    "programming_knowledge_needed": [
-      "Python"
-    ],
-    "math_requirements": [
-      "Linear Algebra",
-      "Calculus"
-    ],
-    "other_requirements": [],
-    "prerequisite": [
-      "CS6140"
-    ],
-    "corequisite": []
+  "subject_id": "CS6650",
+  "subject_name": "Building Scalable Distributed Systems",
+  "seats": 228,
+  "enrollments": 224,
+  "weekly_course_time": 4,
+  "assignment_count": 5,
+  "assignment_time": 5,
+  "assignment_weight": 0.4,
+  "assignment_grade": 83,
+  "project_weight": 0.3,
+  "project_grade": 85,
+  "exam_count": 1,
+  "exam_grade": 84,
+  "exam_weight": 0.3,
+  "final_grade": 84,
+  "course_outcomes": [
+    "Distributed systems",
+    "Consensus Algorithms",
+    "Raft",
+    "Load Balancing",
+    "CAP Theorem"
+  ],
+  "programming_knowledge_needed": [
+    "C"
+  ],
+  "math_requirements": [],
+  "other_requirements": [],
+  "prerequisite": [],
+  "corequisite": [],
+  "description": ""
+},
+{
+  "_id": {
+    "$oid": "67ec8946a45c70e156ce4762"
   },
-  {
-    "subject_id": "CS7200",
-    "subject_name": "Statistical Methods for Computer Science",
-    "seats": 271,
-    "enrollments": 265,
-    "weekly_course_time": 10,
-    "assignment_count": 5,
-    "assignment_time": 5,
-    "assignment_weight": 0.35,
-    "assignment_grade": 87.0,
-    "project_weight": 0.3,
-    "project_grade": 89.0,
-    "exam_count": 1,
-    "exam_grade": 88.0,
-    "exam_weight": 0.35,
-    "final_grade": 88.0,
-    "course_outcomes": [
-      "Applied statistics",
-      "Bayesian inference"
-    ],
-    "programming_knowledge_needed": [],
-    "math_requirements": [
-      "Probability",
-      "Statistics"
-    ],
-    "other_requirements": [],
-    "prerequisite": [],
-    "corequisite": []
+  "subject_id": "CS7150",
+  "subject_name": "Deep Learning",
+  "seats": 272,
+  "enrollments": 300,
+  "weekly_course_time": 12,
+  "assignment_count": 5,
+  "assignment_time": 6,
+  "assignment_weight": 0.4,
+  "assignment_grade": 90,
+  "project_weight": 0.3,
+  "project_grade": 92,
+  "exam_count": 1,
+  "exam_grade": 91,
+  "exam_weight": 0.3,
+  "final_grade": 91,
+  "course_outcomes": [
+    "Deep Learning",
+    "Neural Networks",
+    "CNN",
+    "RNN",
+    "PyTorch",
+    "TensorFlow",
+    "GPU Acceleration"
+  ],
+  "programming_knowledge_needed": [
+    "Python"
+  ],
+  "math_requirements": [
+    "Linear Algebra",
+    "Calculus"
+  ],
+  "other_requirements": [],
+  "prerequisite": [
+    "CS6140"
+  ],
+  "corequisite": [],
+  "description": ""
+},
+{
+  "_id": {
+    "$oid": "67ec8946a45c70e156ce4763"
   },
-  {
-    "subject_id": "CS7250",
-    "subject_name": "Information Visualization: Theory and Applications",
-    "seats": 212,
-    "enrollments": 235,
-    "weekly_course_time": 8,
-    "assignment_count": 4,
-    "assignment_time": 5,
-    "assignment_weight": 0.3,
-    "assignment_grade": 85.0,
-    "project_weight": 0.4,
-    "project_grade": 87.0,
-    "exam_count": 1,
-    "exam_grade": 86.0,
-    "exam_weight": 0.3,
-    "final_grade": 86.0,
-    "course_outcomes": [
-      "Data visualization theory"
-    ],
-    "programming_knowledge_needed": [],
-    "math_requirements": [],
-    "other_requirements": [],
-    "prerequisite": [],
-    "corequisite": []
+  "subject_id": "CS7200",
+  "subject_name": "Statistical Methods for Computer Science",
+  "seats": 271,
+  "enrollments": 265,
+  "weekly_course_time": 10,
+  "assignment_count": 5,
+  "assignment_time": 5,
+  "assignment_weight": 0.35,
+  "assignment_grade": 87,
+  "project_weight": 0.3,
+  "project_grade": 89,
+  "exam_count": 1,
+  "exam_grade": 88,
+  "exam_weight": 0.35,
+  "final_grade": 88,
+  "course_outcomes": [
+    "Applied statistics",
+    "Bayesian inference"
+  ],
+  "programming_knowledge_needed": [],
+  "math_requirements": [
+    "Probability",
+    "Statistics"
+  ],
+  "other_requirements": [],
+  "prerequisite": [],
+  "corequisite": [],
+  "description": ""
+},
+{
+  "_id": {
+    "$oid": "67ec8946a45c70e156ce4764"
   },
-  {
-    "subject_id": "CS7300",
-    "subject_name": "Empirical Research Methods for Human Computer Interaction",
-    "seats": 288,
-    "enrollments": 283,
-    "weekly_course_time": 10,
-    "assignment_count": 5,
-    "assignment_time": 5,
-    "assignment_weight": 0.35,
-    "assignment_grade": 86.0,
-    "project_weight": 0.3,
-    "project_grade": 88.0,
-    "exam_count": 1,
-    "exam_grade": 87.0,
-    "exam_weight": 0.35,
-    "final_grade": 87.0,
-    "course_outcomes": [
-      "Human subject studies"
-    ],
-    "programming_knowledge_needed": [],
-    "math_requirements": [],
-    "other_requirements": [],
-    "prerequisite": [],
-    "corequisite": []
+  "subject_id": "CS7250",
+  "subject_name": "Information Visualization: Theory and Applications",
+  "seats": 212,
+  "enrollments": 235,
+  "weekly_course_time": 8,
+  "assignment_count": 4,
+  "assignment_time": 5,
+  "assignment_weight": 0.3,
+  "assignment_grade": 85,
+  "project_weight": 0.4,
+  "project_grade": 87,
+  "exam_count": 1,
+  "exam_grade": 86,
+  "exam_weight": 0.3,
+  "final_grade": 86,
+  "course_outcomes": [
+    "Data visualization theory"
+  ],
+  "programming_knowledge_needed": [],
+  "math_requirements": [],
+  "other_requirements": [],
+  "prerequisite": [],
+  "corequisite": [],
+  "description": ""
+},
+{
+  "_id": {
+    "$oid": "67ec8946a45c70e156ce4765"
   },
-  {
-    "subject_id": "CS7400",
-    "subject_name": "Intensive Principles of Programming Languages",
-    "seats": 230,
-    "enrollments": 223,
-    "weekly_course_time": 8,
-    "assignment_count": 5,
-    "assignment_time": 5,
-    "assignment_weight": 0.35,
-    "assignment_grade": 88.0,
-    "project_weight": 0.3,
-    "project_grade": 90.0,
-    "exam_count": 1,
-    "exam_grade": 89.0,
-    "exam_weight": 0.35,
-    "final_grade": 89.0,
-    "course_outcomes": [
-      "Syntax",
-      "semantics of programming languages"
-    ],
-    "programming_knowledge_needed": [],
-    "math_requirements": [],
-    "other_requirements": [],
-    "prerequisite": [],
-    "corequisite": []
+  "subject_id": "CS7300",
+  "subject_name": "Empirical Research Methods for Human Computer Interaction",
+  "seats": 288,
+  "enrollments": 283,
+  "weekly_course_time": 10,
+  "assignment_count": 5,
+  "assignment_time": 5,
+  "assignment_weight": 0.35,
+  "assignment_grade": 86,
+  "project_weight": 0.3,
+  "project_grade": 88,
+  "exam_count": 1,
+  "exam_grade": 87,
+  "exam_weight": 0.35,
+  "final_grade": 87,
+  "course_outcomes": [
+    "Human subject studies"
+  ],
+  "programming_knowledge_needed": [],
+  "math_requirements": [],
+  "other_requirements": [],
+  "prerequisite": [],
+  "corequisite": [],
+  "description": "This course introduces human subject research methods for human-computer interaction and personal health informatics, covering experimental design, implementation, analysis, and publication. It explores qualitative methods like interviews and focus groups, as well as statistical analyses, applicable to any scientific study involving people and computational systems."
+},
+{
+  "_id": {
+    "$oid": "67ec8946a45c70e156ce4766"
   },
-  {
-    "subject_id": "CS7600",
-    "subject_name": "Intensive Computer Systems",
-    "seats": 286,
-    "enrollments": 278,
-    "weekly_course_time": 10,
-    "assignment_count": 6,
-    "assignment_time": 5,
-    "assignment_weight": 0.4,
-    "assignment_grade": 87.0,
-    "project_weight": 0.3,
-    "project_grade": 89.0,
-    "exam_count": 1,
-    "exam_grade": 88.0,
-    "exam_weight": 0.3,
-    "final_grade": 88.0,
-    "course_outcomes": [
-      "OS structure",
-      "concurrency",
-      "Computer Systems"
-    ],
-    "programming_knowledge_needed": [],
-    "math_requirements": [],
-    "other_requirements": [],
-    "prerequisite": [],
-    "corequisite": []
+  "subject_id": "CS7400",
+  "subject_name": "Intensive Principles of Programming Languages",
+  "seats": 230,
+  "enrollments": 223,
+  "weekly_course_time": 8,
+  "assignment_count": 5,
+  "assignment_time": 5,
+  "assignment_weight": 0.35,
+  "assignment_grade": 88,
+  "project_weight": 0.3,
+  "project_grade": 90,
+  "exam_count": 1,
+  "exam_grade": 89,
+  "exam_weight": 0.35,
+  "final_grade": 89,
+  "course_outcomes": [
+    "Syntax",
+    "semantics of programming languages"
+  ],
+  "programming_knowledge_needed": [],
+  "math_requirements": [],
+  "other_requirements": [],
+  "prerequisite": [],
+  "corequisite": [],
+  "description": "Studies the basic components of programming languages, specification of syntax and semantics, and description and implementation of programming language features. Discusses examples from a variety of languages."
+},
+{
+  "_id": {
+    "$oid": "67ec8946a45c70e156ce4767"
   },
-  {
-    "subject_id": "CS7800",
-    "subject_name": "Advanced Algorithms",
-    "seats": 222,
-    "enrollments": 217,
-    "weekly_course_time": 12,
-    "assignment_count": 6,
-    "assignment_time": 6,
-    "assignment_weight": 0.45,
-    "assignment_grade": 89.0,
-    "project_weight": 0.3,
-    "project_grade": 91.0,
-    "exam_count": 1,
-    "exam_grade": 90.0,
-    "exam_weight": 0.25,
-    "final_grade": 90.0,
-    "course_outcomes": [
-      "Advanced algorithmic techniques",
-      "NP-Completeness",
-      "Approximation Algorithms",
-      "Randomized Algorithms"
-    ],
-    "programming_knowledge_needed": [],
-    "math_requirements": [
-      "Linear Algebra",
-      "Probability"
-    ],
-    "other_requirements": [],
-    "prerequisite": [
-      "CS5800"
-    ],
-    "corequisite": []
-  }
-]
+  "subject_id": "CS7600",
+  "subject_name": "Intensive Computer Systems",
+  "seats": 286,
+  "enrollments": 278,
+  "weekly_course_time": 10,
+  "assignment_count": 6,
+  "assignment_time": 5,
+  "assignment_weight": 0.4,
+  "assignment_grade": 87,
+  "project_weight": 0.3,
+  "project_grade": 89,
+  "exam_count": 1,
+  "exam_grade": 88,
+  "exam_weight": 0.3,
+  "final_grade": 88,
+  "course_outcomes": [
+    "OS structure",
+    "concurrency",
+    "Computer Systems"
+  ],
+  "programming_knowledge_needed": [],
+  "math_requirements": [],
+  "other_requirements": [],
+  "prerequisite": [],
+  "corequisite": [],
+  "description": "This course explores the structure, design, and internal operation of computer systems, focusing on operating systems, hardware components, memory management, file systems, and user interfaces. It also covers distributed and real-time systems, concurrency, scheduling, security, fault tolerance, and performance, with programming exercises to reinforce key concepts."
+},
+{
+  "_id": {
+    "$oid": "67ec8946a45c70e156ce4768"
+  },
+  "subject_id": "CS7800",
+  "subject_name": "Advanced Algorithms",
+  "seats": 222,
+  "enrollments": 217,
+  "weekly_course_time": 12,
+  "assignment_count": 6,
+  "assignment_time": 6,
+  "assignment_weight": 0.45,
+  "assignment_grade": 89,
+  "project_weight": 0.3,
+  "project_grade": 91,
+  "exam_count": 1,
+  "exam_grade": 90,
+  "exam_weight": 0.25,
+  "final_grade": 90,
+  "course_outcomes": [
+    "Advanced algorithmic techniques",
+    "NP-Completeness",
+    "Approximation Algorithms",
+    "Randomized Algorithms"
+  ],
+  "programming_knowledge_needed": [],
+  "math_requirements": [
+    "Linear Algebra",
+    "Probability"
+  ],
+  "other_requirements": [],
+  "prerequisite": [
+    "CS5800"
+  ],
+  "corequisite": [],
+  "description": ""
+}]

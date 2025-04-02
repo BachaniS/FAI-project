@@ -51,6 +51,28 @@ def load_scores(nuid):
     student_data = collection.find_one({"NUID": nuid})
     return pd.DataFrame(student_data["courses"]) if student_data else None
 
+def load_interest_categories():
+    '''
+    Load interest categories from JSON file
+    Return:
+        Dictionary of interest categories and their related terms
+    '''
+    try:
+        file_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "interest_categories.json")
+        
+        with open(file_path, 'r') as f:
+            interest_categories = json.load(f)
+            
+        return interest_categories
+    except Exception as e:
+        print(f"⚠️ Error loading interest categories: {e}")
+        return {
+            "artificial intelligence": ["Artificial Intelligence"],
+            "machine learning": ["Machine Learning"],
+            "web": ["JavaScript", "Web Development"],
+            "data science": ["Data Science"],
+            "computer vision": ["Computer Vision"]
+        }
 ## Saving functions ##
 
 def save_scores(nuid, burnout_scores):
@@ -195,6 +217,21 @@ def save_knowledge_profile(nuid, programming_experience, math_experience):
     else:
         print(f"No student found with NUid {nuid}. Profile not updated.")
 
+def save_desired_outcomes(nuid, desired_outcomes):
+    db = client["user_details"]
+    collection = db["users"]
+    
+    result = collection.update_one(
+    {"NUID": nuid}, 
+    {"$set": {"desired_outcomes": desired_outcomes}}, 
+    upsert=True
+    )
+
+    if result.matched_count > 0:
+        print(f"Profile updated for student {nuid}.")
+    else:
+        print(f"No student found with NUid {nuid}. Profile not updated.")
+
 ## Getter functions ##
 
 def get_student_completed_courses(student_data):
@@ -209,6 +246,7 @@ def get_student_core_subjects(student_data):
     core_subjects = student_data['core_subjects'].iloc[0]
 
     if core_subjects:
+        core_subjects = [s.strip() for s in core_subjects if s.strip()]
         return core_subjects
     else:
         return []
@@ -331,6 +369,14 @@ def get_burnout_score(subject_code, scores_df):
                     return burnout_score
     return 0
 
+def get_student_desired_outcomes(student_data):
+    interests = student_data['desired_outcomes'].iloc[0]
+
+    if interests:
+        return interests
+    else:
+        return []
+
 def prereq_satisfied(student_data, prereqs):
     '''
     Check if a student has satisfied all prerequisites for a subject.
@@ -352,6 +398,7 @@ def prereq_satisfied(student_data, prereqs):
         
     # Check if all prerequisites are in completed courses
     return all(prereq in completed_courses for prereq in prereqs)
+
 
 if __name__ == "__main__":
     subjects_df = load_course_data()
@@ -414,7 +461,7 @@ if __name__ == "__main__":
 
     # Test student completed_courses
     print("Testing student data extraction\n")
-    student_id = '103'
+    student_id = '444'
 
     student_data = load_student_data(student_id)
 
@@ -466,5 +513,3 @@ if __name__ == "__main__":
     for skill, value in math_skills.items():
         initial_value = initial_math.get(skill, 0)
         print(f"  {skill}: {initial_value} -> {value}")
-
-    save_knowledge_profile(student_id, programming_skills, math_skills)

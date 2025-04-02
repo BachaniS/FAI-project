@@ -179,13 +179,8 @@ def calculate_utility(student_data, subject_code, subjects_df):
     Calculate the overall utility function with prerequisite penalty
     U = α·I + β·(1-Pfinal) + γ·OAS - δ·PrereqPenalty
     '''
-    # Default utility weights
-    utility_weights = {
-        'alpha': 0.4,  # Weight for interest/relevance
-        'beta': 0.3,   # Weight for burnout avoidance
-        'gamma': 0.3,  # Weight for outcome alignment
-        'delta': 0.5   # Weight for prerequisite penalty
-    }
+    burnout_weight = 0.6    # Weight for burnout avoidance
+    outcome_weight = 0.4    # Weight for outcome alignment
     
     # Calculate burnout probability
     burnout_prob = calculate_burnout(student_data, subject_code, subjects_df)
@@ -203,9 +198,8 @@ def calculate_utility(student_data, subject_code, subjects_df):
     
     # Calculate overall utility
     utility = (
-        utility_weights['alpha'] * oas + 
-        utility_weights['beta'] * (1 - burnout_prob) + 
-        utility_weights['delta'] * prereq_penalty
+        burnout_weight * (1 - burnout_prob) + 
+        outcome_weight * oas
     )
     
     return utility

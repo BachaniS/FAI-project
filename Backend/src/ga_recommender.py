@@ -195,6 +195,8 @@ def genetic_algorithm(available_subjects, taken, student_data, core_remaining):
     Returns:
         Best semester schedule
     '''
+    taken = set(taken)
+    core_remaining = list(core_remaining)
     # Initialize population
     population = initialize_population(available_subjects, core_remaining)
     
@@ -289,7 +291,9 @@ def rerun_genetic_algorithm(final_subjects, student_data, initial_taken):
     
     population = []
     # Identify core subjects for special handling
-    core_subjects = get_student_core_subjects(student_data)
+    core_subjects = list(get_student_core_subjects(student_data))
+    final_subjects = list(final_subjects)
+    initial_taken = set(initial_taken)
     
     # Stopping condition parameters
     max_stall_generations = 20     # Stop if no improvement for this many generations
@@ -453,7 +457,7 @@ def calculate_total_burnout(plan, student_data, initial_taken):
     '''
     subjects_df = load_course_data()
     total_burnout = 0
-    current_taken = initial_taken.copy()
+    current_taken = set(initial_taken.copy())
     
     # Calculate burnout semester by semester
     for semester in plan:
@@ -480,6 +484,7 @@ def optimize_schedule(plan, student_data, initial_taken):
     Returns:
         Optimized plan and its burnout score
     '''
+    initial_taken = set(initial_taken)
     subjects_df = load_course_data()
     
     # Flatten the plan to get all selected courses
@@ -537,7 +542,12 @@ def display_plan(plan, student_data, taken):
     subjects_df = load_course_data()
     
     print("\nCurrent Course Plan:")
-    current_taken = taken.copy()
+    
+    # Fix: Ensure taken is a set, not a list
+    if not isinstance(taken, set):
+        current_taken = set(taken)
+    else:
+        current_taken = taken.copy()
     
     for i, semester in enumerate(plan, 1):
         if semester:
@@ -601,7 +611,6 @@ def save_plan_to_db(plan, nuid, fitness_score, student_data, taken):
     save_schedules(nuid, schedule_data)
     print(f"\nPlan saved to database for student {nuid}")
 
-
 def main():
     global blacklist, final_list
     
@@ -645,6 +654,10 @@ def main():
         
         # Interactive loop until user is satisfied with this semester
         while True:
+            # Fix: Make sure core_remaining is a list, not a set
+            if not isinstance(core_remaining, list):
+                core_remaining = list(core_remaining)
+                
             # Run GA to get the best schedule for this semester
             best_semester = genetic_algorithm(available_subjects, taken, student_data, core_remaining)
             
