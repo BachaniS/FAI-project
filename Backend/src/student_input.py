@@ -1,98 +1,232 @@
 from pymongo import MongoClient
 import os 
 import json
+
 MONGO_URI = "mongodb+srv://cliftaus:US1vE3LSIWq379L9@burnout.lpo5x.mongodb.net/"
 
 client = MongoClient(MONGO_URI)
 db = client["user_details"]
 collection = db["users"]
 
-path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "knowledge_tags.json")
-with open(path, "r") as file:
-    tags = json.load(file)
+def load_interest_categories():
+    '''
+    Load interest categories from JSON file
+    Return:
+        Dictionary of interest categories and their related terms
+    '''
+    try:
+        file_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "interest_categories.json")
+        
+        with open(file_path, 'r') as f:
+            interest_categories = json.load(f)
+            
+        return interest_categories
+    except Exception as e:
+        print(f"⚠️ Error loading interest categories: {e}")
+        return {
+            "artificial intelligence": ["Artificial Intelligence"],
+            "machine learning": ["Machine Learning"],
+            "web": ["JavaScript", "Web Development"],
+            "data science": ["Data Science"],
+            "computer vision": ["Computer Vision"]
+        }
 
+def load_knowledge_tags():
+    """Load knowledge tags from JSON file"""
+    try:
+        path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "knowledge_tags.json")
+        with open(path, "r") as file:
+            tags = json.load(file)
+        return tags
+    except Exception as e:
+        print(f"⚠️ Error loading knowledge tags: {e}")
+        return {
+            "programming_languages": ["Python", "Java", "C++", "JavaScript"],
+            "math_tags": ["Linear Algebra", "Calculus", "Statistics", "Discrete Math"]
+        }
+
+tags = load_knowledge_tags()
 PROGRAMMING_LANGUAGES = set(tags.get('programming_languages', []))
 MATH_AREAS = set(tags.get('math_tags', []))
+
+def print_section_header(title, width=60, char="="):
+    """Print a formatted section header"""
+    print("\n" + char*width)
+    print(title)
+    print(char*width)
 
 def display_tags_simple(tags, category_name):
     """Display tags in a simple numbered list format"""
     print(f"\nAvailable {category_name} ({len(tags)} total):")
     print("-" * 50)
     
-    for i, tag in enumerate(tags):
-        print(f"{i+1:2}. {tag}")
+    # Display in multiple columns for better readability
+    tags_list = sorted(list(tags))
+    col_width = max(len(tag) for tag in tags_list) + 5
+    items_per_row = 2
+    
+    for i in range(0, len(tags_list), items_per_row):
+        row_items = tags_list[i:i+items_per_row]
+        row = ""
+        for idx, tag in enumerate(row_items):
+            row += f"{i+idx+1:2}. {tag:<{col_width}} "
+        print(row)
     
     print("-" * 50)
 
+def select_from_numbered_list(items, prompt):
+    """Let the user select multiple items from a numbered list"""
+    selected = []
+    
+    items = sorted(list(items))
+    display_tags_simple(items, "Options")
+    
+    print("\nEnter numbers corresponding to your choices (comma-separated, e.g., 1,3,5)")
+    print("Or type 'none' if you don't have any")
+    
+    choice = input(f"{prompt}: ").strip().lower()
+    if choice == 'none':
+        return []
+    
+    try:
+        for num in choice.split(','):
+            idx = int(num.strip()) - 1
+            if 0 <= idx < len(items):
+                selected.append(items[idx])
+        
+        if selected:
+            print(f"✅ Selected: {', '.join(selected)}")
+        
+        return selected
+    except ValueError:
+        print("⚠️ Invalid input. Please enter numbers separated by commas.")
+        return select_from_numbered_list(items, prompt)
+
+def select_interests():
+    """Let the user select interests from the same categories used in recommendations"""
+    print_section_header("🔍 SELECT YOUR INTERESTS")
+    print("\nYour interests help us recommend courses that align with your goals.")
+    
+    interest_categories = load_interest_categories()
+    
+    # Create a numbered list of all categories
+    interests = list(interest_categories.keys())
+    
+    # Display interests in a readable format
+    print(f"\nAvailable Interest Categories ({len(interests)} total):")
+    print("-" * 50)
+    
+    col_width = max(len(interest) for interest in interests) + 5
+    items_per_row = 2
+    
+    for i in range(0, len(interests), items_per_row):
+        row_items = interests[i:i+items_per_row]
+        row = ""
+        for idx, interest in enumerate(row_items):
+            row += f"{i+idx+1:2}. {interest:<{col_width}} "
+        print(row)
+    
+    print("-" * 50)
+    
+    # Get user selection
+    return select_from_numbered_list(interests, "Select your interests")
+
 def get_student_input():
-    nuid = input("Enter your NUID: ")
+    """
+    Streamlined student input process that aligns with the recommendation system
+    """
+    print_section_header("🎓 STUDENT PROFILE CREATION")
+    print("\nThis will create your student profile for personalized course recommendations.")
+    
+    # Basic information
+    nuid = input("\nEnter your NUID: ")
     name = input("Enter your full name: ")
     
-    display_tags_simple(PROGRAMMING_LANGUAGES, "Programming Languages")
-    prog_languages = input("Enter your programming languages (comma-separated, e.g., Python, Java, C++): ").split(',')
+    # Programming experience
+    print_section_header("💻 PROGRAMMING EXPERIENCE")
+    print("\nSelect the programming languages you know, then rate your proficiency (1-5)")
+    
+    prog_languages = select_from_numbered_list(PROGRAMMING_LANGUAGES, "Select programming languages")
     prog_exp = {}
-    for lang in map(str.strip, prog_languages):
-        if lang:
-            proficiency = int(input(f"Rate your proficiency in {lang} (1-5, where 5 is expert): "))
-            prog_exp[lang] = proficiency
-
-    display_tags_simple(MATH_AREAS, "Math Areas")
-    math_areas = input("Enter your math areas (comma-separated, e.g., Linear Algebra, Calculus, Statistics): ").split(',')
+    for lang in prog_languages:
+        while True:
+            try:
+                proficiency = int(input(f"Rate your proficiency in {lang} (1-5, where 5 is expert): "))
+                if 1 <= proficiency <= 5:
+                    prog_exp[lang] = proficiency
+                    break
+                else:
+                    print("⚠️ Please enter a number between 1 and 5.")
+            except ValueError:
+                print("⚠️ Please enter a valid number.")
+    
+    # Math experience
+    print_section_header("📐 MATHEMATICS EXPERIENCE")
+    print("\nSelect the math areas you know, then rate your proficiency (1-5)")
+    
+    math_areas = select_from_numbered_list(sorted(list(MATH_AREAS)), 
+                                          "Select math areas")
     math_exp = {}
-    for area in map(str.strip, math_areas):
-        if area:
-            proficiency = int(input(f"Rate your proficiency in {area} (1-5, where 5 is expert): "))
-            math_exp[area] = proficiency
-
+    for area in math_areas:
+        while True:
+            try:
+                proficiency = int(input(f"Rate your proficiency in {area} (1-5, where 5 is expert): "))
+                if 1 <= proficiency <= 5:
+                    math_exp[area] = proficiency
+                    break
+                else:
+                    print("⚠️ Please enter a number between 1 and 5.")
+            except ValueError:
+                print("⚠️ Please enter a valid number.")
+    
+    # Completed courses - simplified to just the essential information
     completed_courses = {}
+    print_section_header("📚 COMPLETED COURSES")
+    print("\nEnter courses you've already completed (just the essential details)")
+    
     if input("Have you completed any courses? (yes/no): ").strip().lower() in ["yes", "y"]:
         while True:
-            subject_code = input("Enter subject code (or 'done' to finish): ").strip()
+            subject_code = input("\nEnter subject code (or 'done' to finish): ").strip()
             if subject_code.lower() in ["done", "d"]:
                 break
+            
+            # Simplified course details
             details = {
-                "Subject Names": input(f"Enter name for {subject_code}: "),
-                "Course Outcomes": input(f"Enter course outcomes for {subject_code} (comma-separated): "),
-                "Programming Knowledge Needed": input(f"Enter programming knowledge needed for {subject_code}: "),
-                "Math Requirements": input(f"Enter math requirements for {subject_code}: "),
-                "Other Requirements": input(f"Enter other requirements for {subject_code}: "),
+                "Subject Name": input(f"Enter name for {subject_code}: "),
                 "Weekly Workload (hours)": float(input(f"Enter weekly workload (hours) for {subject_code}: ")),
-                "Assignments #": int(input(f"Enter number of assignments for {subject_code}: ")),
-                "Hours per Assignment": float(input(f"Enter hours per assignment for {subject_code}: ")),
-                "Assignment Weight": float(input(f"Enter assignment weight (0-1) for {subject_code}: ")),
-                "Avg Assignment Grade": float(input(f"Enter your average assignment grade for {subject_code}: ")),
-                "Project Weight": float(input(f"Enter project weight (0-1) for {subject_code}: ")),
-                "Avg Project Grade": float(input(f"Enter your average project grade for {subject_code}: ")),
-                "Exam #": int(input(f"Enter number of exams for {subject_code}: ")),
-                "Avg Exam Grade": float(input(f"Enter your average exam grade for {subject_code}: ")),
-                "Exam Weight": float(input(f"Enter exam weight (0-1) for {subject_code}: ")),
-                "Avg Final Grade": float(input(f"Enter your final grade for {subject_code}: ")),
-                "Prerequisite": input(f"Enter prerequisite for {subject_code}: "),
-                "Corequisite": input(f"Enter corequisite for {subject_code}: "),
-                "Rating": int(input(f"Rate {subject_code} from 1-5: "))
+                "Final Grade": float(input(f"Enter your final grade (0-100) for {subject_code}: ")),
+                "Rating": int(input(f"Rate your experience with {subject_code} from 1-5: "))
             }
             completed_courses[subject_code] = details
     
-    # Initialize completed_courses as an empty array to match the DB structure
-    completed_courses = []
+    # Core subjects and interests - aligned with recommendation system
+    print_section_header("🧩 CORE SUBJECTS")
+    print("\nEnter required subjects for your program (e.g., CS5100, CS5200)")
     
-    core_subjects = input("Enter core subjects for your program (comma-separated, e.g., CS5100, CS5200): ").split(',')
-    desired_outcomes = input("What do you want to learn? (comma-separated, e.g., AI, ML, Deep Learning): ").split(',')
-
+    core_subjects_input = input("Core subjects (comma-separated): ")
+    core_subjects = [subject.strip() for subject in core_subjects_input.split(',') if subject.strip()]
+    
+    # Interests using the same categories as the recommendation system
+    print_section_header("🎯 LEARNING GOALS")
+    print("\nSelect what you want to learn or focus on in your courses")
+    
+    desired_outcomes = select_interests()
+    
+    # Build the student data structure
     student_data = {
         "NUID": nuid,
         "name": name,
         "programming_experience": prog_exp,
         "math_experience": math_exp,
         "completed_courses": completed_courses, 
-        "core_subjects": [subject.strip() for subject in core_subjects if subject.strip()],
-        "desired_outcomes": [outcome.strip() for outcome in desired_outcomes if outcome.strip()]
+        "core_subjects": core_subjects,
+        "desired_outcomes": desired_outcomes
     }
 
     # Insert into MongoDB
     collection.update_one({"NUID": nuid}, {"$set": student_data}, upsert=True)
 
-    print(f"Student data saved under id: {nuid}")
+    print(f"\n✅ Student profile created successfully for NUID: {nuid}")
     return student_data
 
 if __name__ == "__main__":

@@ -310,6 +310,27 @@ def get_unmet_prerequisites(subjects_df, subject_code, taken):
     prereqs = set(get_subject_prerequisites(subjects_df, subject_code))
     return prereqs - taken
 
+def get_utility_score(subject_code, scores_df):
+    # Find the course in the database
+    if 'courses' in scores_df.iloc[0]:
+        courses = scores_df.iloc[0]['courses']
+        for course in courses:
+            if course['subject_id'] == subject_code:
+                utility = course.get('utility')
+                if utility is not None:
+                    return utility
+    return 0
+
+def get_burnout_score(subject_code, scores_df):
+    if 'courses' in scores_df.iloc[0]:
+        courses = scores_df.iloc[0]['courses']
+        for course in courses:
+            if course['subject_id'] == subject_code:
+                burnout_score = course.get('burnout_score')
+                if burnout_score is not None:
+                    return burnout_score
+    return 0
+
 def prereq_satisfied(student_data, prereqs):
     '''
     Check if a student has satisfied all prerequisites for a subject.
