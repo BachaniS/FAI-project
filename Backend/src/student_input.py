@@ -26,6 +26,7 @@ def display_tags_simple(tags, category_name):
 
 def get_student_input():
     nuid = input("Enter your NUID: ")
+    name = input("Enter your full name: ")
     
     display_tags_simple(PROGRAMMING_LANGUAGES, "Programming Languages")
     prog_languages = input("Enter your programming languages (comma-separated, e.g., Python, Java, C++): ").split(',')
@@ -80,6 +81,7 @@ def get_student_input():
 
     student_data = {
         "NUID": nuid,
+        "name": name,
         "programming_experience": prog_exp,
         "math_experience": math_exp,
         "completed_courses": completed_courses, 
