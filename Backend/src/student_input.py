@@ -127,9 +127,21 @@ def select_interests():
         print(row)
     
     print("-" * 50)
+
+    selected_interests = select_from_numbered_list(interests, "Select your interests")
+    # Collect all topics related to the selected interests
+    desired_outcomes = []
+    for interest in selected_interests:
+        topics = interest_categories.get(interest, [])
+        desired_outcomes.extend(topics)
     
+    # Remove duplicates if necessary
+    desired_outcomes = list(set(desired_outcomes))
+    
+    print(f"✅ Desired Outcomes: {', '.join(desired_outcomes)}")
+
     # Get user selection
-    return select_from_numbered_list(interests, "Select your interests")
+    return desired_outcomes
 
 def get_student_input():
     """
