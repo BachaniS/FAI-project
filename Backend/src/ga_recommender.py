@@ -1,5 +1,6 @@
 import numpy as np
 import random
+import pandas as pd
 from utils import (
     load_course_data, save_schedules, get_subject_name, get_unmet_prerequisites, load_student_data, update_knowledge_profile, save_knowledge_profile,
     get_student_completed_courses, get_student_core_subjects
@@ -11,7 +12,7 @@ from burnout_calculator import (
 # GA Parameters
 POPULATION_SIZE = 30
 GENERATIONS = 100
-SEMESTERS = 2
+SEMESTERS = 4
 COURSES_PER_SEMESTER = 2
 MUTATION_RATE = 0.2
 blacklist = set()
@@ -180,7 +181,7 @@ def mutation(semester):
     
     return semester
 
-def genetic_algorithm(available_subjects, taken, student_data, core_remaining):
+# def genetic_algorithm(available_subjects, taken, student_data, core_remaining):
     '''
     Run the genetic algorithm to find the best semester schedule
     
@@ -272,6 +273,172 @@ def genetic_algorithm(available_subjects, taken, student_data, core_remaining):
     
     return best_schedule
 
+def genetic_algorithm(available_subjects, taken, student_data, core_remaining):
+    '''
+    Run the genetic algorithm to find the best pair of courses
+    
+    Args:
+        available_subjects: List of available subjects
+        taken: Set of completed courses
+        student_data: Student profile data
+        core_remaining: List of remaining core subjects
+        
+    Returns:
+        Best semester schedule (list of two courses)
+    '''
+    subjects_df = load_course_data()
+    taken = set(taken)
+    core_remaining = list(core_remaining)
+    
+    # Convert student_data to DataFrame if it's not already
+    if isinstance(student_data, set):
+        print("Warning: student_data is a set, converting to DataFrame")
+        student_data = pd.DataFrame([list(student_data)])
+    
+    # Initialize population with random pairs
+    population_size = 20
+    population = []
+    
+    # Create initial population of random course pairs
+    for _ in range(population_size):
+        # Prioritize core subjects in pairs if available
+        if core_remaining and random.random() < 0.5:
+            core_course = random.choice(core_remaining)
+            non_core = random.choice([s for s in available_subjects if s not in core_remaining])
+            pair = [core_course, non_core]
+        else:
+            pair = random.sample(available_subjects, min(2, len(available_subjects)))
+        population.append(pair)
+    
+    # Track the best pair found
+    best_fitness = float('-inf')
+    best_pair = None
+    stall_counter = 0
+    fitness_history = []
+    
+    # Stopping condition parameters
+    max_stall_generations = 20
+    function_tolerance = 1e-6
+    
+    # Run for specified number of generations
+    for generation in range(GENERATIONS):
+        # Calculate fitness for each pair
+        fitness_scores = []
+        for pair in population:
+            # Calculate various components of fitness
+            try:
+                total_burnout = sum(calculate_burnout(student_data, subject_id, subjects_df) 
+                                  for subject_id in pair) / 2
+                
+                outcome_score = sum(calculate_outcome_alignment_score(student_data, subject_id, subjects_df) 
+                                  for subject_id in pair) / 2
+            except Exception as e:
+                print(f"Error calculating scores: {e}")
+                total_burnout = 0
+                outcome_score = 0
+            
+            # Check prerequisites
+            prereq_penalty = sum(len(get_unmet_prerequisites(subjects_df, subject_id, taken)) 
+                               for subject_id in pair) * 10
+            
+            # Calculate core course bonus
+            core_bonus = sum(5 for course in pair if course in core_remaining)
+            
+            # Calculate combined fitness (higher is better)
+            fitness = (outcome_score * 0.4 +  # 40% weight to outcome alignment
+                      (1 - total_burnout) * 0.4 +  # 40% weight to inverse burnout
+                      (1 / (1 + prereq_penalty)) * 0.1 +  # 10% weight to prerequisite satisfaction
+                      (core_bonus * 0.1))  # 10% weight to core course inclusion
+            
+            fitness_scores.append(fitness)
+            
+            # Update best pair if this is better
+            if fitness > best_fitness:
+                best_fitness = fitness
+                best_pair = pair
+                stall_counter = 0
+            else:
+                stall_counter += 1
+        
+        # Update fitness history
+        fitness_history.append(max(fitness_scores))
+        if len(fitness_history) > max_stall_generations:
+            fitness_history.pop(0)
+        
+        # Check stopping conditions
+        if stall_counter >= max_stall_generations:
+            print(f"Stopping early: No improvement for {max_stall_generations} generations")
+            break
+            
+        if len(fitness_history) >= max_stall_generations:
+            avg_fitness = sum(fitness_history) / len(fitness_history)
+            if avg_fitness != 0:
+                relative_change = abs(fitness_history[-1] - fitness_history[0]) / abs(avg_fitness)
+                if relative_change < function_tolerance:
+                    print(f"Stopping early: Relative change in fitness below tolerance")
+                    break
+        
+        # Create new population with elitism
+        new_population = [population[fitness_scores.index(max(fitness_scores))]]
+        
+        # Fill rest of population
+        while len(new_population) < population_size:
+            # Tournament selection
+            tournament_size = 3
+            tournament_indices = random.sample(range(len(population)), tournament_size)
+            parent1 = population[max(tournament_indices, key=lambda i: fitness_scores[i])]
+            
+            tournament_indices = random.sample(range(len(population)), tournament_size)
+            parent2 = population[max(tournament_indices, key=lambda i: fitness_scores[i])]
+            
+            # Crossover
+            if random.random() < 0.8:  # 80% chance of crossover
+                all_courses = list(set(parent1 + parent2))
+                if len(all_courses) >= 2:
+                    child1 = random.sample(all_courses, 2)
+                    child2 = random.sample(all_courses, 2)
+                else:
+                    child1, child2 = parent1, parent2
+            else:
+                child1, child2 = parent1, parent2
+            
+            # Mutation
+            if random.random() < MUTATION_RATE:
+                idx = random.randint(0, 1)
+                available = [s for s in available_subjects if s not in child1]
+                if available:
+                    child1[idx] = random.choice(available)
+            
+            if random.random() < MUTATION_RATE:
+                idx = random.randint(0, 1)
+                available = [s for s in available_subjects if s not in child2]
+                if available:
+                    child2[idx] = random.choice(available)
+            
+            new_population.extend([child1, child2])
+        
+        # Replace old population
+        population = new_population[:population_size]
+        
+        # Log progress occasionally
+        if generation % 20 == 0:
+            print(f"Generation {generation}: Best Fitness = {best_fitness:.2f}")
+    
+    # If no good pair found, return random pair
+    if best_pair is None:
+        best_pair = random.sample(available_subjects, min(2, len(available_subjects)))
+    
+    # Print final result
+    print("\nBest Course Pair Found:")
+    for course in best_pair:
+        course_name = get_subject_name(subjects_df, course)
+        print(f"- {course} ({course_name})")
+    print(f"Fitness Score: {best_fitness:.2f}")
+    
+    return best_pair
+
+    
+    
 def rerun_genetic_algorithm(final_subjects, student_data, initial_taken):
     '''
     Re-run the genetic algorithm on the final list of selected subjects to optimize ordering

@@ -33,7 +33,7 @@ def get_user_interests(student_data=None, mode='new'):
         add_interests = input("Would you like to add interests to your profile? (yes/no): ").strip().lower()
         if add_interests not in ['yes', 'y']:
             print("No interests will be added.")
-            return desired_outcomes  # Return existing desired outcomes if no new interests are added
+            return desired_outcomes
         print_section_header("🔍 ADD TO YOUR INTERESTS")
         print("\nSelect additional areas of interest to add to your profile.")
     else:
@@ -496,7 +496,9 @@ def generate_recommendation_reasons(subject_name, interests, burnout_score, util
     if interests:
         matching_interests = [interest for interest in interests if interest.lower() in subject_name.lower()]
         if matching_interests:
-            reasons.append(f"Aligns with your interest in {', '.join(set(matching_interests)[:2])}")
+            # Convert to list before slicing
+            matching_interests_list = list(set(matching_interests))[:2]
+            reasons.append(f"Aligns with your interest in {', '.join(matching_interests_list)}")
     
     reasons.append("Selected by genetic algorithm for optimal academic fit")
     
@@ -1063,12 +1065,150 @@ def save_final_schedule_to_db(recommended_history, subjects_df, scores_df, nuid)
         print(f"\n❌ Error saving final schedule to database: {e}")
         return False
 
+def select_course_pairs_ga(student_data, subjects_df, max_generations=100, fitness_threshold=0.7):
+    """
+    Genetic Algorithm for selecting optimal course pairs
+    
+    Args:
+        student_data: DataFrame containing student information
+        subjects_df: DataFrame containing all subject information
+        max_generations: Maximum number of generations to run
+        fitness_threshold: Threshold for acceptable fitness score (0-1)
+        
+    Returns:
+        best_pair: List of two course names that form the best pair
+        best_fitness: The fitness score of the best pair
+    """
+    # Get list of all subject names and their IDs
+    subject_pairs = list(zip(subjects_df['subject_id'], subjects_df['subject_name']))
+    
+    # Initialize population with random pairs
+    population_size = 20
+    population = []
+    
+    # Create initial population of random course pairs
+    for _ in range(population_size):
+        pair = random.sample(subject_pairs, 2)
+        population.append(pair)
+    
+    best_fitness = 0
+    best_pair = None
+    stagnant_generations = 0
+    
+    for generation in range(max_generations):
+        # Calculate fitness for each pair
+        fitness_scores = []
+        for pair in population:
+            # Extract subject IDs for the pair
+            subject_ids = [course[0] for course in pair]
+            
+            # Calculate various components of fitness
+            burnout = sum(calculate_burnout(student_data, subject_id, subjects_df) 
+                         for subject_id in subject_ids) / 2
+            
+            outcome_alignment = sum(calculate_outcome_alignment_score(student_data, subject_id, subjects_df) 
+                                  for subject_id in subject_ids) / 2
+            
+            # Check prerequisites
+            completed_courses = set(get_student_completed_courses(student_data))
+            prereq_penalty = sum(len(get_unmet_prerequisites(subjects_df, subject_id, completed_courses)) 
+                               for subject_id in subject_ids)
+            
+            # Calculate combined fitness (0-1 scale)
+            fitness = (outcome_alignment * 0.4 +  # 40% weight to outcome alignment
+                      (1 - burnout) * 0.4 +      # 40% weight to inverse burnout
+                      (1 / (1 + prereq_penalty)) * 0.2)  # 20% weight to prerequisite satisfaction
+            
+            fitness_scores.append(fitness)
+            
+            # Update best pair if this is better
+            if fitness > best_fitness:
+                best_fitness = fitness
+                best_pair = pair
+                stagnant_generations = 0
+            else:
+                stagnant_generations += 1
+        
+        # Check if we've found a good enough solution
+        if best_fitness >= fitness_threshold:
+            print(f"Found suitable course pair at generation {generation} with fitness {best_fitness:.2f}")
+            break
+            
+        # Check if we're stuck
+        if stagnant_generations > 15:  # No improvement for 15 generations
+            print(f"No improvement for {stagnant_generations} generations. Stopping.")
+            break
+            
+        # Create next generation
+        new_population = []
+        
+        # Keep the best pair (elitism)
+        new_population.append(population[fitness_scores.index(max(fitness_scores))])
+        
+        # Create rest of new population
+        while len(new_population) < population_size:
+            # Tournament selection
+            tournament_size = 3
+            tournament_indices = random.sample(range(len(population)), tournament_size)
+            parent1 = population[max(tournament_indices, key=lambda i: fitness_scores[i])]
+            
+            tournament_indices = random.sample(range(len(population)), tournament_size)
+            parent2 = population[max(tournament_indices, key=lambda i: fitness_scores[i])]
+            
+            # Crossover
+            if random.random() < 0.8:  # 80% chance of crossover
+                # Mix courses between pairs
+                all_courses = list(parent1) + list(parent2)
+                child1 = tuple(random.sample(all_courses, 2))
+                child2 = tuple(random.sample(all_courses, 2))
+            else:
+                child1, child2 = parent1, parent2
+            
+            # Mutation
+            if random.random() < 0.2:  # 20% chance of mutation
+                # Replace one course in the pair with a random course
+                mutated_pair = list(child1)
+                mutated_pair[random.randint(0, 1)] = random.choice(subject_pairs)
+                child1 = tuple(mutated_pair)
+            
+            if random.random() < 0.2:
+                mutated_pair = list(child2)
+                mutated_pair[random.randint(0, 1)] = random.choice(subject_pairs)
+                child2 = tuple(mutated_pair)
+            
+            new_population.extend([child1, child2])
+        
+        # Trim population to original size
+        population = new_population[:population_size]
+        
+        if generation % 10 == 0:  # Print progress every 10 generations
+            print(f"Generation {generation}: Best Fitness = {best_fitness:.2f}")
+    
+    # Format the result
+    if best_pair:
+        result = {
+            'courses': [
+                {'subject_id': best_pair[0][0], 'subject_name': best_pair[0][1]},
+                {'subject_id': best_pair[1][0], 'subject_name': best_pair[1][1]}
+            ],
+            'fitness_score': best_fitness,
+            'generations_run': generation + 1
+        }
+        
+        # Print final result
+        print("\nBest Course Pair Found:")
+        print(f"1. {best_pair[0][1]} ({best_pair[0][0]})")
+        print(f"2. {best_pair[1][1]} ({best_pair[1][0]})")
+        print(f"Fitness Score: {best_fitness:.2f}")
+        
+        return result
+    else:
+        return None
+
 if __name__ == "__main__":
     try:
-        # Start the recommendation process
         nuid = prompt_for_student_info()
         
-        # Ask what mode user wants
         print_section_header("SELECT RECOMMENDATION MODE")
         print("Please select an option:")
         print("1. Full Schedule Planning - Create an optimized multi-semester plan")
@@ -1092,7 +1232,6 @@ if __name__ == "__main__":
             print("Invalid option. Defaulting to full schedule planning.")
             recommend_schedule(nuid)
         
-        # Final message
         print_section_header("🎉 RECOMMENDATION PROCESS COMPLETE")
         print("\nThank you for using the Course Recommendation System!")
         print("We hope these recommendations help you plan your academic journey.")
