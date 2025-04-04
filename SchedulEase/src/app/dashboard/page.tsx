@@ -15,21 +15,21 @@ import {
   LogOut
 } from "lucide-react";
 
-interface UserProfile {
+interface UserData {
   nuid: string;
-  fullName: string;
-  programmingSkills: { name: string; proficiency: number }[];
-  mathSkills: { name: string; proficiency: number }[];
-  completedCourses: string[];
+  name: string;
+  math_experience: { [key: string]: number };
+  programming_experience: { [key: string]: number };
 }
 
 export default function DashboardPage() {
   const router = useRouter();
-  const [userData, setUserData] = useState<UserProfile | null>(null);
+  const [userData, setUserData] = useState<UserData | null>(null);
 
   useEffect(() => {
     // Get user data from localStorage
     const storedUserData = localStorage.getItem('userData');
+    console.log(storedUserData);
     if (storedUserData) {
       setUserData(JSON.parse(storedUserData));
     } else {
@@ -107,7 +107,7 @@ export default function DashboardPage() {
                 <User className="h-8 w-8 text-blue-600" />
               </div>
               <div>
-                <h1 className="text-2xl font-bold text-gray-900">Welcome, {userData.fullName}!</h1>
+                <h1 className="text-2xl font-bold text-gray-900">Welcome, {userData.name}!</h1>
                 <p className="text-gray-600">NUID: {userData.nuid}</p>
               </div>
             </div>
@@ -145,17 +145,17 @@ export default function DashboardPage() {
         {/* Skills Section */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           <div className="bg-white rounded-lg shadow-lg p-6">
-            <h2 className="text-xl font-semibold mb-4">Programming Skills</h2>
+            <h2 className="text-xl font-semibold mb-4">Programming Experience</h2>
             <div className="space-y-2">
-              {userData.programmingSkills?.map((skill, index) => (
-                <div key={index} className="flex justify-between items-center">
-                  <span>{skill.name}</span>
+              {Object.entries(userData.programming_experience).map(([language, proficiency]) => (
+                <div key={language} className="flex justify-between items-center">
+                  <span>{language}</span>
                   <div className="flex space-x-1">
                     {[...Array(5)].map((_, i) => (
                       <div
                         key={i}
                         className={`h-2 w-6 rounded ${
-                          i < skill.proficiency ? 'bg-blue-500' : 'bg-gray-200'
+                          i < proficiency ? 'bg-blue-500' : 'bg-gray-200'
                         }`}
                       />
                     ))}
@@ -166,17 +166,17 @@ export default function DashboardPage() {
           </div>
 
           <div className="bg-white rounded-lg shadow-lg p-6">
-            <h2 className="text-xl font-semibold mb-4">Math Skills</h2>
+            <h2 className="text-xl font-semibold mb-4">Math Experience</h2>
             <div className="space-y-2">
-              {userData.mathSkills?.map((skill, index) => (
-                <div key={index} className="flex justify-between items-center">
-                  <span>{skill.name}</span>
+              {Object.entries(userData.math_experience).map(([subject, proficiency]) => (
+                <div key={subject} className="flex justify-between items-center">
+                  <span>{subject}</span>
                   <div className="flex space-x-1">
                     {[...Array(5)].map((_, i) => (
                       <div
                         key={i}
                         className={`h-2 w-6 rounded ${
-                          i < skill.proficiency ? 'bg-green-500' : 'bg-gray-200'
+                          i < proficiency ? 'bg-green-500' : 'bg-gray-200'
                         }`}
                       />
                     ))}
