@@ -1,6 +1,99 @@
+'use client';
+
 import { Calendar, AlertTriangle, CheckCircle } from "lucide-react";
+import { useEffect, useState } from "react";
+import axios from "axios";
+
+// Types
+interface Course {
+  code: string;
+  name: string;
+  credits: number;
+  prerequisites?: string;
+}
+
+interface Semester {
+  term: string;
+  totalCredits: number;
+  courses: Course[];
+}
+
+interface Schedule {
+  nuid: string;
+  schedule: {
+    semester: number;
+    courses: {
+      subject_id: string;
+      subject_name: string;
+      burnout: number;
+      fitness_score: number;
+    }[];
+  }[];
+  total_burnout: number;
+}
 
 export default function SchedulePage() {
+  const [currentSemester, setCurrentSemester] = useState<Semester | null>(null);
+  const [upcomingSemesters, setUpcomingSemesters] = useState<Semester[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    const fetchSchedule = async () => {
+      try {
+        // Replace with actual student ID
+        const studentId = "123";
+        // const studentId = "YOUR_STUDENT_ID";
+        const response = await axios.get<Schedule>(`http://localhost:8000/schedule/${studentId}`);
+        
+        // Transform backend data to frontend format
+        const schedule = response.data;
+        
+        // Set current semester
+        if (schedule.schedule[0]) {
+          setCurrentSemester({
+            term: "Spring 2024",
+            totalCredits: schedule.schedule[0].courses.length * 4,
+            courses: schedule.schedule[0].courses.map(course => ({
+              code: course.subject_id,
+              name: course.subject_name,
+              credits: 4,
+            }))
+          });
+        }
+
+        // Set upcoming semesters
+        const upcoming = schedule.schedule.slice(1).map((sem, index) => ({
+          term: index === 0 ? "Fall 2024" : "Spring 2025",
+          totalCredits: sem.courses.length * 4,
+          courses: sem.courses.map(course => ({
+            code: course.subject_id,
+            name: course.subject_name,
+            credits: 4,
+            prerequisites: "To be fetched", // You can fetch this separately if needed
+          }))
+        }));
+        setUpcomingSemesters(upcoming);
+        
+      } catch (err) {
+        setError("Failed to fetch schedule");
+        console.error("Error fetching schedule:", err);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchSchedule();
+  }, []);
+
+  if (loading) {
+    return <div>Loading schedule...</div>;
+  }
+
+  if (error) {
+    return <div className="text-red-600">{error}</div>;
+  }
+
   return (
     <div className="space-y-6">
       <div>
@@ -17,13 +110,13 @@ export default function SchedulePage() {
             <span className="text-sm text-gray-600">Spring 2024</span>
           </div>
           <div className="mt-4 space-y-4">
-            {currentSemester.courses.map((course) => (
+            {currentSemester?.courses.map((course) => (
               <CourseCard key={course.code} course={course} />
             ))}
             <div className="mt-4 pt-4 border-t">
               <div className="flex items-center justify-between text-sm">
                 <span className="text-gray-600">Total Credits:</span>
-                <span className="font-medium">{currentSemester.totalCredits}</span>
+                <span className="font-medium">{currentSemester?.totalCredits}</span>
               </div>
               <div className="flex items-center justify-between text-sm mt-2">
                 <span className="text-gray-600">Workload Status:</span>
@@ -134,72 +227,4 @@ function AnalysisCard({
       <p className="mt-2 text-sm text-gray-600">{description}</p>
     </div>
   );
-}
-
-interface Course {
-  code: string;
-  name: string;
-  credits: number;
-  prerequisites?: string;
-}
-
-const currentSemester = {
-  term: "Spring 2024",
-  totalCredits: 12,
-  courses: [
-    {
-      code: "CS5200",
-      name: "Database Management Systems",
-      credits: 4,
-    },
-    {
-      code: "CS5800",
-      name: "Algorithms",
-      credits: 4,
-    },
-    {
-      code: "CS6140",
-      name: "Machine Learning",
-      credits: 4,
-    },
-  ],
-};
-
-const upcomingSemesters = [
-  {
-    term: "Fall 2024",
-    totalCredits: 8,
-    courses: [
-      {
-        code: "CS6220",
-        name: "Data Mining Techniques",
-        credits: 4,
-        prerequisites: "CS5200, Statistics",
-      },
-      {
-        code: "CS6120",
-        name: "Natural Language Processing",
-        credits: 4,
-        prerequisites: "CS6140",
-      },
-    ],
-  },
-  {
-    term: "Spring 2025",
-    totalCredits: 8,
-    courses: [
-      {
-        code: "CS7180",
-        name: "Special Topics in AI",
-        credits: 4,
-        prerequisites: "CS6140",
-      },
-      {
-        code: "CS7995",
-        name: "Thesis",
-        credits: 4,
-        prerequisites: "None",
-      },
-    ],
-  },
-]; 
+} 

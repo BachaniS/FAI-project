@@ -2,6 +2,9 @@ from fastapi import FastAPI, HTTPException, Query, Body
 from pydantic import BaseModel, Field
 from typing import List, Dict, Optional, Set, Any
 from datetime import datetime
+from fastapi.middleware.cors import CORSMiddleware
+
+
 
 # Import custom modules
 from utils import (
@@ -14,6 +17,26 @@ from ga_recommender import (
     genetic_algorithm, rerun_genetic_algorithm
 )
 
+# Import the necessary functions from CLI_recommendation_system.py
+from CLI_recommendation_system import (
+    load_student_data, load_course_data, get_student_completed_courses,
+    get_student_core_subjects, calculate_burnout, calculate_utility,
+    calculate_outcome_alignment_score, get_burnout_score, get_utility_score,
+    get_student_desired_outcomes, filter_courses_by_interests,
+    run_genetic_algorithm_with_animation, convert_ga_schedule_to_recommendations,
+    identify_competitive_courses, get_unmet_prerequisites, get_subject_name,
+    get_burnout_status, get_difficulty_status, optimize_schedule,
+    rerun_genetic_algorithm, save_plan_to_db
+)
+
+app = FastAPI()
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["http://localhost:3000"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 # Models for request/response data
 class Student(BaseModel):
@@ -54,6 +77,19 @@ class Schedule(BaseModel):
     total_burnout: float
     updated: datetime = Field(default_factory=datetime.now)
 
+class UserLoginRequest(BaseModel):
+    nuid: str
+    name: str
+
+class UserRegisterRequest(BaseModel):
+    nuid: str
+    name: str
+
+class UserResponse(BaseModel):
+    success: bool
+    message: str
+    data: Optional[Dict[str, Any]] = None
+
 @app.get("/")
 def read_root():
     """Root endpoint with API information"""
@@ -68,7 +104,9 @@ def read_root():
             "POST /recommendations": "Generate course recommendations",
             "GET /schedule/{nuid}": "Get saved schedule for a student",
             "PUT /knowledge-profile/{nuid}": "Update student knowledge profile",
-            "POST /burnout-scores": "Save burnout scores"
+            "POST /burnout-scores": "Save burnout scores",
+            "POST /auth/login": "Login user",
+            "POST /auth/register": "Register user"
         }
     }
 
@@ -358,3 +396,392 @@ def update_taken_courses(nuid: str, courses: List[str] = Body(...)):
         return {"message": f"Courses updated for student {nuid}"}
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Error updating courses: {str(e)}")
+
+@app.get("/dashboard/overview/{nuid}")
+async def get_dashboard_overview(nuid: str):
+    """Get the main dashboard overview with real calculated data"""
+    try:
+        student_data = load_student_data(nuid)
+        subjects_df = load_course_data()
+        completed_courses = get_student_completed_courses(student_data)
+        core_subjects = get_student_core_subjects(student_data)
+        
+        # Get current workload and burnout calculations
+        current_courses = completed_courses  # Get current semester courses
+        current_workload = sum(4 for _ in current_courses)  # Assuming 4 credits per course
+        
+        # Calculate burnout risk for current schedule
+        burnout_scores = [calculate_burnout(student_data, course, subjects_df) 
+                         for course in current_courses]
+        avg_burnout = sum(burnout_scores) / len(burnout_scores) if burnout_scores else 0
+        
+        # Get recommended courses using the genetic algorithm
+        available_subjects = [s for s in subjects_df['subject_id'].tolist() 
+                            if s not in completed_courses]
+        interests = get_student_desired_outcomes(student_data)
+        
+        if interests:
+            available_subjects = filter_courses_by_interests(available_subjects, interests, subjects_df)
+        
+        recommended_courses = run_genetic_algorithm_with_animation(
+            available_subjects, completed_courses, student_data, core_subjects
+        )
+        
+        # Convert recommendations to detailed format
+        recommendations = convert_ga_schedule_to_recommendations(
+            recommended_courses, student_data, subjects_df, interests
+        )
+        
+        return {
+            "current_semester": {
+                "term": "Spring 2024",  # You might want to calculate this based on current date
+                "credit_hours": current_workload,
+                "burnout_risk": {
+                    "level": "High" if avg_burnout > 0.7 else "Medium" if avg_burnout > 0.4 else "Low",
+                    "score": avg_burnout
+                }
+            },
+            "recommended_courses": [
+                {
+                    "subject_id": rec["subject_code"],
+                    "name": rec["name"],
+                    "alignment_score": rec["match_score"],
+                    "burnout_risk": rec["burnout_score"],
+                    "utility_score": rec["utility_score"]
+                } for rec in recommendations[:2]  # Show top 2 recommendations
+            ]
+        }
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.get("/courses/catalog")
+async def get_course_catalog(
+    nuid: str,
+    search: Optional[str] = None,
+    category: Optional[str] = None,
+    page: int = 1,
+    limit: int = 10
+):
+    """Get the course catalog with real data and calculations"""
+    try:
+        student_data = load_student_data(nuid)
+        subjects_df = load_course_data()
+        completed_courses = get_student_completed_courses(student_data)
+        
+        # Filter available courses
+        all_courses = subjects_df['subject_id'].tolist()
+        available_courses = [c for c in all_courses if c not in completed_courses]
+        
+        # Apply category filter if specified
+        if category:
+            available_courses = [c for c in available_courses 
+                               if category.lower() in subjects_df[subjects_df['subject_id'] == c]['category'].iloc[0].lower()]
+        
+        # Calculate course details
+        courses = []
+        for subject_id in available_courses:
+            subject_row = subjects_df[subjects_df['subject_id'] == subject_id].iloc[0]
+            burnout_score = calculate_burnout(student_data, subject_id, subjects_df)
+            utility_score = calculate_utility(student_data, subject_id, subjects_df)
+            alignment_score = calculate_outcome_alignment_score(student_data, subject_id, subjects_df)
+            
+            courses.append({
+                "subject_id": subject_id,
+                "name": subject_row['subject_name'],
+                "description": subject_row.get('description', ''),
+                "credits": 4,  # You might want to get this from your data
+                "prerequisites": subject_row.get('prerequisites', []),
+                "workload": "High" if burnout_score > 0.7 else "Medium" if burnout_score > 0.4 else "Low",
+                "alignment_score": alignment_score,
+                "burnout_risk": burnout_score,
+                "utility_score": utility_score
+            })
+        
+        # Apply pagination
+        start_idx = (page - 1) * limit
+        end_idx = start_idx + limit
+        paginated_courses = courses[start_idx:end_idx]
+        
+        return {
+            "courses": paginated_courses,
+            "total": len(courses),
+            "page": page,
+            "limit": limit
+        }
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.get("/schedule/{nuid}")
+async def get_student_schedule(nuid: str):
+    """Get student's schedule with real calculations"""
+    try:
+        student_data = load_student_data(nuid)
+        subjects_df = load_course_data()
+        completed_courses = get_student_completed_courses(student_data)
+        core_subjects = get_student_core_subjects(student_data)
+        
+        # Generate schedule using genetic algorithm
+        available_subjects = [s for s in subjects_df['subject_id'].tolist() 
+                            if s not in completed_courses]
+        
+        # Run genetic algorithm for multiple semesters
+        schedule = []
+        taken = set(completed_courses)
+        for _ in range(2):  # For next 2 semesters
+            semester_courses = run_genetic_algorithm_with_animation(
+                available_subjects, taken, student_data, core_subjects
+            )
+            schedule.append(semester_courses)
+            taken.update(semester_courses)
+            available_subjects = [s for s in available_subjects if s not in taken]
+        
+        # Optimize the schedule
+        optimized_schedule, total_burnout = optimize_schedule(schedule, student_data, completed_courses)
+        
+        # Format the response
+        formatted_schedule = {
+            "current_semester": {
+                "term": "Spring 2024",
+                "courses": [
+                    {
+                        "subject_id": course,
+                        "name": get_subject_name(subjects_df, course),
+                        "credits": 4,
+                        "burnout_risk": calculate_burnout(student_data, course, subjects_df),
+                        "utility_score": calculate_utility(student_data, course, subjects_df)
+                    } for course in optimized_schedule[0]
+                ],
+                "total_credits": len(optimized_schedule[0]) * 4,
+                "workload_status": "High" if total_burnout > 0.7 else "Moderate" if total_burnout > 0.4 else "Low"
+            },
+            "upcoming_semesters": [
+                {
+                    "term": f"Fall 2024",  # You might want to calculate this
+                    "courses": [
+                        {
+                            "subject_id": course,
+                            "name": get_subject_name(subjects_df, course),
+                            "credits": 4,
+                            "prerequisites": list(get_unmet_prerequisites(subjects_df, course, completed_courses))
+                        } for course in semester
+                    ],
+                    "total_credits": len(semester) * 4
+                } for semester in optimized_schedule[1:]
+            ]
+        }
+        
+        return formatted_schedule
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.get("/burnout-analysis/{nuid}")
+async def get_burnout_analysis(nuid: str):
+    """Get detailed burnout analysis with real calculations"""
+    try:
+        student_data = load_student_data(nuid)
+        subjects_df = load_course_data()
+        current_courses = get_student_completed_courses(student_data)  # Get current semester courses
+        
+        # Calculate burnout metrics for each course
+        workload_distribution = []
+        total_hours = 0
+        for course in current_courses:
+            burnout_score = calculate_burnout(student_data, course, subjects_df)
+            # Estimate weekly hours based on burnout score
+            estimated_hours = int(10 + (burnout_score * 10))  # Scale 10-20 hours
+            total_hours += estimated_hours
+            
+            workload_distribution.append({
+                "course_id": course,
+                "hours_per_week": estimated_hours,
+                "status": "high" if burnout_score > 0.7 else "normal"
+            })
+        
+        # Calculate overall metrics
+        avg_burnout = sum(calculate_burnout(student_data, course, subjects_df) 
+                         for course in current_courses) / len(current_courses) if current_courses else 0
+        
+        return {
+            "overall_burnout_risk": {
+                "level": "High" if avg_burnout > 0.7 else "Medium" if avg_burnout > 0.4 else "Low",
+                "description": "Based on current schedule"
+            },
+            "weekly_study_hours": {
+                "total": total_hours,
+                "trend": "increasing" if avg_burnout > 0.6 else "stable"
+            },
+            "course_difficulty": {
+                "level": "High" if avg_burnout > 0.7 else "Moderate",
+                "description": "Relative to your background"
+            },
+            "workload_distribution": workload_distribution,
+            "stress_factors": {
+                "assignment_deadlines": "High" if avg_burnout > 0.7 else "Medium",
+                "course_complexity": "High" if avg_burnout > 0.6 else "Medium",
+                "weekly_workload": "High" if total_hours > 40 else "Medium",
+                "prerequisite_match": "Low" if avg_burnout < 0.3 else "Medium"
+            }
+        }
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.get("/academic-progress/{nuid}")
+async def get_academic_progress(nuid: str):
+    """Get academic progress with real calculations"""
+    try:
+        student_data = load_student_data(nuid)
+        subjects_df = load_course_data()
+        completed_courses = get_student_completed_courses(student_data)
+        core_subjects = get_student_core_subjects(student_data)
+        
+        # Calculate progress metrics
+        total_credits = 32  # You might want to get this from your data
+        completed_credits = len(completed_courses) * 4  # Assuming 4 credits per course
+        
+        completed_core = [c for c in completed_courses if c in core_subjects]
+        
+        return {
+            "credits_completed": completed_credits,
+            "total_credits": total_credits,
+            "core_courses": {
+                "completed": len(completed_core),
+                "total": len(core_subjects)
+            },
+            "current_gpa": 3.8,  # You might want to calculate this from grades
+            "requirements_met": (completed_credits / total_credits) * 100,
+            "degree_requirements": {
+                "core_courses": {
+                    "completed": len(completed_core),
+                    "total": len(core_subjects),
+                    "description": "Required foundational courses"
+                },
+                # Add other requirement categories based on your data
+            },
+            "course_history": {
+                # Format completed courses by semester
+                "Spring 2024": [
+                    {
+                        "subject_id": course,
+                        "name": get_subject_name(subjects_df, course),
+                        "grade": "A"  # You might want to get this from your data
+                    } for course in completed_courses
+                ]
+            }
+        }
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.post("/auth/login")
+async def login_user(user_data: UserLoginRequest):
+    """Login endpoint to verify user credentials"""
+    try:
+        # Connect to MongoDB
+        from pymongo import MongoClient
+        from utils import MONGO_URI
+        
+        client = MongoClient(MONGO_URI)
+        db = client["user_details"]
+        users_collection = db["users"]
+        
+        for user in users_collection.find():
+            print(user["name"])
+        
+        # Find user by NUID and name
+        user = users_collection.find_one({
+            "NUID": user_data.nuid,
+            "name": user_data.name
+        })
+        
+        print(user)
+        
+        if user is None:
+            return UserResponse(
+                success=False,
+                message="Invalid credentials. User not found.",
+                data=None
+            )
+        
+        # Remove MongoDB _id from response
+        user.pop('_id', None)
+        
+        return UserResponse(
+            success=True,
+            message="Login successful",
+            data=user
+        )
+
+    except Exception as e:
+        raise HTTPException(
+            status_code=500,
+            detail=f"Error during login: {str(e)}"
+        )
+
+@app.post("/auth/register")
+async def register_user(user_data: UserRegisterRequest):
+    """Register endpoint to create new user"""
+    try:
+        # Connect to MongoDB
+        from pymongo import MongoClient
+        from utils import MONGO_URI
+        
+        client = MongoClient(MONGO_URI)
+        db = client["user_details"]
+        users_collection = db["users"]
+        
+        # Check if user already exists
+        existing_user = users_collection.find_one({
+            "NUID": user_data.nuid
+        })
+        
+        if existing_user:
+            return UserResponse(
+                success=False,
+                message="User with this NUID already exists",
+                data=None
+            )
+        
+        # TODO: Implement full user registration
+        # For now, just create basic user entry
+        new_user = {
+            "NUID": user_data.nuid,
+            "name": user_data.name,
+            "created_at": datetime.now(),
+            "programming_experience": {},
+            "math_experience": {},
+            "completed_courses": {},
+            "core_subjects": [],
+            "desired_outcomes": []
+        }
+        
+        # Insert new user
+        result = users_collection.insert_one(new_user)
+        
+        if result.inserted_id:
+            return UserResponse(
+                success=True,
+                message="User registered successfully",
+                data={"nuid": user_data.nuid, "name": user_data.name}
+            )
+        else:
+            return UserResponse(
+                success=False,
+                message="Failed to register user",
+                data=None
+            )
+
+    except Exception as e:
+        raise HTTPException(
+            status_code=500,
+            detail=f"Error during registration: {str(e)}"
+        )
+
+# Add this at the end of your main.py file
+if __name__ == "__main__":
+    import uvicorn
+    uvicorn.run(
+        "main:app",
+        host="0.0.0.0",
+        port=8000,
+        reload=True
+    )
+

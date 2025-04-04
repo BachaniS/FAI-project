@@ -13,7 +13,7 @@ import {
 } from "lucide-react";
 
 const navigation = [
-  { name: "Dashboard", href: "/", icon: Home },
+  { name: "Dashboard", href: "/dashboard", icon: Home },
   { name: "Course Catalog", href: "/courses", icon: BookOpen },
   { name: "My Schedule", href: "/schedule", icon: Calendar },
   { name: "Academic Progress", href: "/progress", icon: GraduationCap },
