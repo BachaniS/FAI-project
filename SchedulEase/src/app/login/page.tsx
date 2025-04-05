@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
+import Link from 'next/link';
 
 interface LoginResponse {
   success: boolean;
@@ -107,7 +108,7 @@ export default function LoginPage() {
             </div>
           )}
 
-          <div>
+          <div className="space-y-4">
             <button
               type="submit"
               disabled={isLoading}
@@ -117,6 +118,18 @@ export default function LoginPage() {
             >
               {isLoading ? 'Signing in...' : 'Sign in'}
             </button>
+
+            <div className="text-center">
+              <div className="text-sm text-gray-600">
+                Don't have an account?{' '}
+                <Link 
+                  href="/register" 
+                  className="font-medium text-blue-600 hover:text-blue-500"
+                >
+                  Register here
+                </Link>
+              </div>
+            </div>
           </div>
         </form>
       </div>

@@ -655,15 +655,13 @@ async def get_academic_progress(nuid: str):
                     "total": len(core_subjects),
                     "description": "Required foundational courses"
                 },
-                # Add other requirement categories based on your data
             },
             "course_history": {
-                # Format completed courses by semester
                 "Spring 2024": [
                     {
                         "subject_id": course,
                         "name": get_subject_name(subjects_df, course),
-                        "grade": "A"  # You might want to get this from your data
+                        "grade": "A" 
                     } for course in completed_courses
                 ]
             }
@@ -728,48 +726,35 @@ async def register_user(user_data: UserRegisterRequest):
         db = client["user_details"]
         users_collection = db["users"]
         
-        # Check if user already exists
+        print("user_data", user_data)
+        
         existing_user = users_collection.find_one({
             "NUID": user_data.nuid
         })
+
+        
+        print(existing_user, len(user_data.model_dump()))
         
         if existing_user:
-            return UserResponse(
-                success=False,
-                message="User with this NUID already exists",
-                data=None
+            print("User with this NUID already exists")
+            raise HTTPException(
+                status_code=500,
+                detail=f"Error during registration: User with this NUID already exists"
             )
+            
+        if existing_user is None and len(user_data.model_dump()) < 3:
+            return 
+
+        users_collection.insert_one(user_data)
         
-        # TODO: Implement full user registration
-        # For now, just create basic user entry
-        new_user = {
-            "NUID": user_data.nuid,
-            "name": user_data.name,
-            "created_at": datetime.now(),
-            "programming_experience": {},
-            "math_experience": {},
-            "completed_courses": {},
-            "core_subjects": [],
-            "desired_outcomes": []
-        }
-        
-        # Insert new user
-        result = users_collection.insert_one(new_user)
-        
-        if result.inserted_id:
-            return UserResponse(
-                success=True,
-                message="User registered successfully",
-                data={"nuid": user_data.nuid, "name": user_data.name}
-            )
-        else:
-            return UserResponse(
-                success=False,
-                message="Failed to register user",
-                data=None
-            )
+        return UserResponse(
+            success=True,
+            message="User registered successfully", 
+            data={"nuid": user_data.nuid, "name": user_data.name}
+        )
 
     except Exception as e:
+        print(e)
         raise HTTPException(
             status_code=500,
             detail=f"Error during registration: {str(e)}"
