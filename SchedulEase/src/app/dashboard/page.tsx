@@ -147,7 +147,7 @@ export default function DashboardPage() {
           <div className="bg-white rounded-lg shadow-lg p-6">
             <h2 className="text-xl font-semibold mb-4">Programming Experience</h2>
             <div className="space-y-2">
-              {Object.entries(userData.programming_experience).map(([language, proficiency]) => (
+              {userData.programming_experience && Object.entries(userData.programming_experience).map(([language, proficiency]) => (
                 <div key={language} className="flex justify-between items-center">
                   <span>{language}</span>
                   <div className="flex space-x-1">
@@ -162,13 +162,16 @@ export default function DashboardPage() {
                   </div>
                 </div>
               ))}
+              {!userData.programming_experience && (
+                <p className="text-gray-500">No programming experience data available</p>
+              )}
             </div>
           </div>
 
           <div className="bg-white rounded-lg shadow-lg p-6">
             <h2 className="text-xl font-semibold mb-4">Math Experience</h2>
             <div className="space-y-2">
-              {Object.entries(userData.math_experience).map(([subject, proficiency]) => (
+              {userData.math_experience && Object.entries(userData.math_experience).map(([subject, proficiency]) => (
                 <div key={subject} className="flex justify-between items-center">
                   <span>{subject}</span>
                   <div className="flex space-x-1">
@@ -183,6 +186,9 @@ export default function DashboardPage() {
                   </div>
                 </div>
               ))}
+              {!userData.math_experience && (
+                <p className="text-gray-500">No math experience data available</p>
+              )}
             </div>
           </div>
         </div>

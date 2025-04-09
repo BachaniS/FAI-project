@@ -2,7 +2,6 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { interestCategories } from './interestCategories';
 
 const PROGRAMMING_LANGUAGES = [
   'Assembly', 'C', 'C#', 'C++', 'Go', 'Haskell', 'Java', 'JavaScript',
@@ -55,6 +54,46 @@ interface StudentData {
   core_subjects: string[];
   desired_outcomes: { [key: string]: string[] };
 }
+
+// Define the interest categories and their topics
+const INTEREST_CATEGORIES = {
+  'technical-domains': [
+    'artificial intelligence',
+    'machine learning',
+    'web',
+    'data science',
+    'database',
+    'security',
+    'mobile',
+    'systems',
+    'cloud',
+    'graphics',
+    'game development',
+    'computer science fundamentals',
+    'human-computer interaction',
+    'robotics',
+    'extended reality',
+    'software engineering',
+    'networks',
+    'mathematics',
+    'computer vision',
+    'natural language processing'
+  ],
+  'programming-languages': [
+    'python',
+    'java',
+    'cpp',
+    'csharp',
+    'javascript',
+    'rust',
+    'c',
+    'go',
+    'scala',
+    'r',
+    'matlab',
+    'programming language theory'
+  ]
+};
 
 export default function RegisterPage() {
   const router = useRouter();
@@ -211,17 +250,8 @@ export default function RegisterPage() {
 
     setIsLoading(true);
     try {
-      console.log('Current state values:', {
-        selectedInterests,
-        programmingExperience,
-        mathExperience,
-        completedCourses,
-        coreRequirements
-      });
-
       // Format interests as a simple array of strings
       const interests = selectedInterests.flatMap(interest => interest.topics);
-      console.log('Formatted interests:', interests);
 
       // Prepare the student data
       const studentData = {
@@ -230,13 +260,15 @@ export default function RegisterPage() {
         interests: interests,
         programming_experience: programmingExperience,
         math_experience: mathExperience,
-        completed_courses: completedCourses,
+        completed_courses: completedCourses.map(course => ({
+          subject_code: course.code,
+          course_name: course.name,
+          weekly_workload: course.weeklyWorkload,
+          final_grade: course.finalGrade.toString(), // Convert to string as per interface
+          experience_rating: course.experience
+        })),
         core_subjects: coreRequirements.map(req => req.subjectCode)
       };
-
-      // Log the final data being sent
-      console.log('Data being sent to backend:', studentData);
-      console.log('Stringified data:', JSON.stringify(studentData));
 
       const response = await fetch('http://localhost:8000/auth/register', {
         method: 'POST',
@@ -246,20 +278,20 @@ export default function RegisterPage() {
         body: JSON.stringify(studentData),
       });
 
-      // Log the response
-      console.log('Response status:', response.status);
       const responseData = await response.json();
-      console.log('Response data:', responseData);
 
       if (!response.ok) {
         throw new Error(responseData.message || 'Registration failed');
       }
 
+      // Store user data in localStorage for persistence
       localStorage.setItem('user_data', JSON.stringify(studentData));
+      
+      // Redirect to dashboard
       router.push('/dashboard');
     } catch (error) {
       console.error('Registration error:', error);
-      alert(error instanceof Error ? error.message : 'Registration failed. Please try again.');
+      setError(error instanceof Error ? error.message : 'Registration failed. Please try again.');
     } finally {
       setIsLoading(false);
     }
@@ -829,7 +861,7 @@ export default function RegisterPage() {
                       className="block w-full rounded-lg border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 pl-4 pr-10 py-3 text-base"
                     >
                       <option value="">Choose a category</option>
-                      {Object.keys(interestCategories).map(category => (
+                      {Object.keys(INTEREST_CATEGORIES).map(category => (
                         <option key={category} value={category}>
                           {category.split('-').map(word => 
                             word.charAt(0).toUpperCase() + word.slice(1)
@@ -858,7 +890,7 @@ export default function RegisterPage() {
                     </div>
                     <div className="max-h-[400px] overflow-y-auto rounded-lg border border-gray-200">
                       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-2 p-4">
-                        {interestCategories[currentCategory as keyof typeof interestCategories].map(topic => (
+                        {INTEREST_CATEGORIES[currentCategory as keyof typeof INTEREST_CATEGORIES]?.map(topic => (
                           <label 
                             key={topic} 
                             className={`

@@ -17,7 +17,6 @@ from ga_recommender import (
     genetic_algorithm, rerun_genetic_algorithm
 )
 
-# Import the necessary functions from CLI_recommendation_system.py
 from CLI_recommendation_system import (
     load_student_data, load_course_data, get_student_completed_courses,
     get_student_core_subjects, calculate_burnout, calculate_utility,
@@ -118,10 +117,8 @@ def get_student(nuid: str):
         if student_data is None or student_data.empty:
             raise HTTPException(status_code=404, detail=f"Student with NUID {nuid} not found")
         
-        # Convert DataFrame to dict for the first row
         student_dict = student_data.iloc[0].to_dict()
         
-        # Get scores if available
         scores_df = load_scores(nuid)
         if scores_df is not None:
             student_dict["scores"] = scores_df.to_dict(orient="records")
@@ -196,50 +193,39 @@ def generate_recommendations(request: RecommendationRequest):
         if student_data is None or student_data.empty:
             raise HTTPException(status_code=404, detail=f"Student with NUID {nuid} not found")
         
-        # Get completed courses and core subjects
         completed_courses = set(get_student_completed_courses(student_data))
         core_subjects = get_student_core_subjects(student_data)
         core_remaining = [c for c in core_subjects if c not in completed_courses]
         
-        # Load all available subjects
         subjects_df = load_course_data()
         all_subjects = subjects_df['subject_id'].tolist()
         
-        # Get available subjects that aren't blacklisted or already completed
         available_subjects = [s for s in all_subjects if s not in blacklist and s not in completed_courses]
         
         final_list = []
         plan = [[] for _ in range(semesters)]
         taken = completed_courses.copy()
-        
-        # Generate recommendations for each semester
+
         for sem_idx in range(semesters):
-            # Get available subjects that aren't blacklisted or already selected
             current_available = [s for s in available_subjects if s not in final_list]
             
-            # Check if we have enough subjects to continue
             if len(current_available) < courses_per_semester:
                 break
             
-            # Run GA to get the best schedule for this semester
             best_semester = genetic_algorithm(current_available, taken, student_data, core_remaining)
             
-            # Update the plan
             plan[sem_idx] = best_semester
             
-            # Accept this semester
             final_list.extend(best_semester)
             taken.update(best_semester)
             core_remaining = [c for c in core_remaining if c not in best_semester]
         
-        # Optimize the schedule
         best_plan, total_burnout = rerun_genetic_algorithm(
             final_list, 
             student_data, 
             completed_courses
         )
         
-        # Prepare response
         schedule_data = []
         current_taken = completed_courses.copy()
         
@@ -247,13 +233,11 @@ def generate_recommendations(request: RecommendationRequest):
             if semester:
                 semester_courses = []
                 for subject_id in semester:
-                    # Calculate burnout
+
                     burnout = calculate_burnout(student_data, subject_id, subjects_df)
                     
-                    # Get subject details
                     name = get_subject_name(subjects_df, subject_id)
                     
-                    # Add to semester courses
                     semester_courses.append({
                         "subject_id": subject_id,
                         "subject_name": name,
@@ -261,19 +245,15 @@ def generate_recommendations(request: RecommendationRequest):
                         "fitness_score": -total_burnout
                     })
                     
-                    # Update for next subject
                     current_taken.add(subject_id)
                 
-                # Add semester to schedule
                 schedule_data.append({
                     "semester": i,
                     "courses": semester_courses
                 })
         
-        # Save schedule to database
         save_schedules(nuid, schedule_data)
         
-        # Update knowledge profile
         programming_skills, math_skills = update_knowledge_profile(student_data, taken)
         save_knowledge_profile(nuid, programming_skills, math_skills)
         
@@ -290,7 +270,6 @@ def generate_recommendations(request: RecommendationRequest):
 def get_schedule(nuid: str):
     """Get saved schedule for a student"""
     try:
-        # Connect to MongoDB and get the schedule
         from pymongo import MongoClient
         from utils import MONGO_URI
         
@@ -303,8 +282,8 @@ def get_schedule(nuid: str):
         if schedule is None:
             raise HTTPException(status_code=404, detail=f"No schedule found for student {nuid}")
         
-        # Convert MongoDB document to response format
-        schedule["_id"] = str(schedule["_id"])  # Convert ObjectId to string
+
+        schedule["_id"] = str(schedule["_id"]) 
         return schedule
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Error retrieving schedule: {str(e)}")
@@ -634,9 +613,8 @@ async def get_academic_progress(nuid: str):
         completed_courses = get_student_completed_courses(student_data)
         core_subjects = get_student_core_subjects(student_data)
         
-        # Calculate progress metrics
-        total_credits = 32  # You might want to get this from your data
-        completed_credits = len(completed_courses) * 4  # Assuming 4 credits per course
+        total_credits = 32 
+        completed_credits = len(completed_courses) * 4  
         
         completed_core = [c for c in completed_courses if c in core_subjects]
         
@@ -647,7 +625,7 @@ async def get_academic_progress(nuid: str):
                 "completed": len(completed_core),
                 "total": len(core_subjects)
             },
-            "current_gpa": 3.8,  # You might want to calculate this from grades
+            "current_gpa": 3.8,  
             "requirements_met": (completed_credits / total_credits) * 100,
             "degree_requirements": {
                 "core_courses": {
@@ -699,7 +677,6 @@ async def login_user(user_data: UserLoginRequest):
                 data=None
             )
         
-        # Remove MongoDB _id from response
         user.pop('_id', None)
         
         return UserResponse(
@@ -718,7 +695,6 @@ async def login_user(user_data: UserLoginRequest):
 async def register_user(user_data: UserRegisterRequest):
     """Register endpoint to create new user"""
     try:
-        # Connect to MongoDB
         from pymongo import MongoClient
         from utils import MONGO_URI
         
@@ -726,26 +702,36 @@ async def register_user(user_data: UserRegisterRequest):
         db = client["user_details"]
         users_collection = db["users"]
         
-        print("user_data", user_data)
-        
+        # Check for existing user
         existing_user = users_collection.find_one({
             "NUID": user_data.nuid
         })
-
-        
-        print(existing_user, len(user_data.model_dump()))
         
         if existing_user:
-            print("User with this NUID already exists")
-            raise HTTPException(
-                status_code=500,
-                detail=f"Error during registration: User with this NUID already exists"
+            return UserResponse(
+                success=False,
+                message="User with this NUID already exists",
+                data=None
             )
             
-        if existing_user is None and len(user_data.model_dump()) < 3:
-            return 
-
-        users_collection.insert_one(user_data)
+        # Create new user document
+        new_user = {
+            "NUID": user_data.nuid,
+            "name": user_data.name,
+            "completed_courses": [],  # Initialize with empty list
+            "core_subjects": [],      # Initialize with empty list
+            "created_at": datetime.now()
+        }
+        
+        # Insert the new user
+        result = users_collection.insert_one(new_user)
+        
+        if not result.inserted_id:
+            return UserResponse(
+                success=False,
+                message="Failed to create user",
+                data=None
+            )
         
         return UserResponse(
             success=True,
@@ -754,10 +740,11 @@ async def register_user(user_data: UserRegisterRequest):
         )
 
     except Exception as e:
-        print(e)
-        raise HTTPException(
-            status_code=500,
-            detail=f"Error during registration: {str(e)}"
+        print(f"Registration error: {str(e)}")
+        return UserResponse(
+            success=False,
+            message=f"Error during registration: {str(e)}",
+            data=None
         )
 
 # Add this at the end of your main.py file

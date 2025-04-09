@@ -44,10 +44,12 @@ export default function LoginPage() {
 
       // Only proceed if login was successful
       if (data.success && data.data) {
-        // Store user data in localStorage
+        // Store user data in localStorage with default empty objects for experiences
         localStorage.setItem('userData', JSON.stringify({
           nuid,
           fullName,
+          programming_experience: data.data.programming_experience || {},
+          math_experience: data.data.math_experience || {},
           ...data.data
         }));
 
