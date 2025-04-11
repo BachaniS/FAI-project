@@ -59,7 +59,7 @@ export function AppSidebar() {
           );
         })}
       </nav>
-      <div className="border-t p-4">
+      {/* <div className="border-t p-4">
         <div className="flex items-center">
           <div className="h-8 w-8 rounded-full bg-gray-200" />
           <div className="ml-3">
@@ -67,7 +67,7 @@ export function AppSidebar() {
             <p className="text-xs text-gray-500">NUID: 12345</p>
           </div>
         </div>
-      </div>
+      </div> */}
     </div>
   );
 }
