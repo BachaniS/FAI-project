@@ -39,22 +39,6 @@ interface Interest {
   topics: string[];
 }
 
-interface StudentData {
-  NUID: string;
-  name: string;
-  programming_experience: { [key: string]: number };
-  math_experience: { [key: string]: number };
-  completed_courses: Array<{
-    subject_code: string;
-    course_name: string;
-    weekly_workload: number;
-    final_grade: string;
-    experience_rating: number;
-  }>;
-  core_subjects: string[];
-  desired_outcomes: { [key: string]: string[] };
-}
-
 // Define the interest categories and their topics
 const INTEREST_CATEGORIES = {
   'technical-domains': [
@@ -214,7 +198,7 @@ export default function RegisterPage() {
     setError('');
 
     try {
-      const response = await fetch('http://localhost:8000/auth/register', {
+      const response = await fetch('http://localhost:8000/auth/check-user', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

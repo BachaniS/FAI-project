@@ -2,7 +2,6 @@ import type { Metadata } from "next";
 import { Inter } from "next/font/google";
 import "./globals.css";
 import { AppSidebar } from "@/components/app-sidebar";
-import { ClerkProvider } from "@clerk/nextjs";
 
 const inter = Inter({ subsets: ["latin"] });
 
@@ -19,14 +18,12 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body className={inter.className}>
-        <ClerkProvider>
-          <div className="flex h-screen">
-            <AppSidebar />
-            <main className="flex-1 overflow-y-auto bg-gray-50 p-8">
-              {children}
-            </main>
-          </div>
-        </ClerkProvider>
+        <div className="flex h-screen">
+          <AppSidebar />
+          <main className="flex-1 overflow-y-auto bg-gray-50 p-8">
+            {children}
+          </main>
+        </div>
       </body>
     </html>
   );

@@ -1,40 +1,28 @@
 'use client'
 
-import {useUser } from "@clerk/nextjs"
+import { useEffect, useState } from 'react';
+import { useRouter } from 'next/navigation';
 import { FaEnvelope, FaUser, FaCrown, FaBell, FaHistory, FaCog } from "react-icons/fa"
-import { useState } from "react"
 import { motion } from "framer-motion"
 import { Code, Calculator, Target } from "lucide-react"
 import type { LucideIcon } from "lucide-react"
 
 export default function ProfilePage() {
-  const { user } = useUser()
+  const router = useRouter();
+  const [userData, setUserData] = useState(null);
 
-  if (!user) {
-    return (
-      <div className="flex items-center justify-center h-[calc(100vh-4rem)]">
-        <div className="text-center">
-          <h2 className="text-xl font-semibold text-gray-900">Please sign in to view your profile</h2>
-          <p className="mt-2 text-gray-600">You need to be authenticated to access this page</p>
-        </div>
-      </div>
-    )
-  }
-
-  const subscriptionTiers = [
-    {
-      name: 'Basic',
-      price: '$9.99/mo',
-      features: ['Basic Features', 'Email Support', 'Limited Access'],
-      color: 'bg-blue-500'
-    },
-    {
-      name: 'Pro',
-      price: '$19.99/mo',
-      features: ['All Basic Features', 'Priority Support', 'Full Access', 'Advanced Analytics'],
-      color: 'bg-purple-500'
+  useEffect(() => {
+    const storedUserData = localStorage.getItem('userData');
+    if (!storedUserData) {
+      router.push('/login');
+      return;
     }
-  ]
+    setUserData(JSON.parse(storedUserData));
+  }, [router]);
+
+  if (!userData) {
+    return <div>Loading...</div>;
+  }
 
   return (
     <div className="space-y-6">
@@ -55,7 +43,7 @@ export default function ProfilePage() {
                 <input
                   type="text"
                   className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm"
-                  value={user.fullName || `${user.firstName} ${user.lastName}`}
+                  value={userData.fullName || `${userData.firstName} ${userData.lastName}`}
                   readOnly
                 />
               </div>
@@ -64,7 +52,7 @@ export default function ProfilePage() {
                 <input
                   type="text"
                   className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm"
-                  value={user.primaryEmailAddress?.emailAddress}
+                  value={userData.primaryEmailAddress?.emailAddress}
                   readOnly
                 />
               </div>

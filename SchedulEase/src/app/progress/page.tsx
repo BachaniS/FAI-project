@@ -1,186 +1,234 @@
-import { CheckCircle, Clock, GraduationCap, Star } from "lucide-react";
+'use client';
+
+import { useEffect, useState } from "react";
+import { Clock, GraduationCap, Award } from "lucide-react";
+import { useRouter } from 'next/navigation';
+
+interface ProgressResponse {
+  success: boolean;
+  message: string;
+  data: {
+    total_credits: number;
+    total_courses: number;
+    current_grade: string;
+    completed_courses: {
+      [courseId: string]: string;  // Key-value pairs of course ID to course name
+    };
+    programming_experience: {
+      [language: string]: number;
+    };
+    math_experience: {
+      [subject: string]: number;
+    };
+    course_outcomes: string[];
+  }
+}
 
 export default function AcademicProgressPage() {
+  const router = useRouter();
+  const [progressData, setProgressData] = useState<ProgressResponse['data'] | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState('');
+
+  useEffect(() => {
+    const fetchProgressData = async () => {
+      try {
+        const userData = localStorage.getItem('userData');
+        if (!userData) {
+          router.push('/login');
+          return;
+        }
+
+        const { nuid } = JSON.parse(userData);
+        const response = await fetch(`http://localhost:8000/progress/${nuid}`);
+        const responseData: ProgressResponse = await response.json();
+        console.log('Progress data:', responseData);
+
+        if (!response.ok) {
+          throw new Error(responseData.message || 'Failed to fetch progress data');
+        }
+
+        setProgressData(responseData.data);
+      } catch (err) {
+        console.error('Error fetching progress data:', err);
+        setError(err instanceof Error ? err.message : 'Failed to load progress data');
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchProgressData();
+  }, [router]);
+
+  if (isLoading) {
+    return <div className="flex justify-center items-center h-screen">
+      <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+    </div>;
+  }
+
+  if (error) {
+    return <div className="text-red-600 text-center p-4">{error}</div>;
+  }
+
+  if (!progressData) {
+    return <div className="text-center p-4">No progress data available</div>;
+  }
+
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 p-6">
       <div>
         <h1 className="text-2xl font-bold text-gray-900">Academic Progress</h1>
-        <p className="mt-2 text-gray-600">
-          Track your degree completion and academic achievements
-        </p>
+        <p className="mt-2 text-gray-600">Track your academic achievements and progress</p>
       </div>
 
-      <div className="grid gap-6 md:grid-cols-4">
-        <ProgressCard
-          title="Credits Completed"
-          value="24/32"
-          description="Required credits"
-          icon={Clock}
-        />
-        <ProgressCard
-          title="Core Courses"
-          value="4/6"
-          description="Required courses"
-          icon={Star}
-        />
-        <ProgressCard
-          title="Current GPA"
-          value="3.8"
-          description="Cumulative GPA"
-          icon={GraduationCap}
-        />
-        <ProgressCard
-          title="Requirements Met"
-          value="75%"
-          description="Degree progress"
-          icon={CheckCircle}
-        />
-      </div>
-
-      <div className="grid gap-6 lg:grid-cols-2">
-        <div className="bg-white rounded-lg border p-6">
-          <h2 className="text-lg font-semibold text-gray-900">Degree Requirements</h2>
-          <div className="mt-4 space-y-4">
-            {degreeRequirements.map((req) => (
-              <RequirementItem key={req.name} {...req} />
-            ))}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        {/* Credits Card with Progress Bar */}
+        <div className="bg-white rounded-xl shadow-lg p-6">
+          <div className="flex items-center mb-4">
+            <Clock className="h-8 w-8 text-blue-500" />
+            <h2 className="ml-3 text-xl font-semibold text-gray-900">Total Credits</h2>
           </div>
-        </div>
-
-        <div className="bg-white rounded-lg border p-6">
-          <h2 className="text-lg font-semibold text-gray-900">Course History</h2>
-          <div className="mt-4 space-y-4">
-            {courseHistory.map((semester) => (
-              <div key={semester.term}>
-                <h3 className="font-medium text-gray-900 mb-2">{semester.term}</h3>
-                <div className="space-y-2">
-                  {semester.courses.map((course) => (
-                    <div
-                      key={course.code}
-                      className="flex justify-between items-center text-sm"
-                    >
-                      <span className="text-gray-900">{course.code} - {course.name}</span>
-                      <span className={getGradeColor(course.grade)}>{course.grade}</span>
-                    </div>
-                  ))}
-                </div>
+          <div className="mt-2">
+            <div className="flex justify-between items-center">
+              <div className="text-3xl font-bold text-gray-900">
+                {progressData.total_credits}
               </div>
-            ))}
+              <span className="text-gray-600">out of 32</span>
+            </div>
+            <p className="text-gray-600 mt-1">Credits completed</p>
           </div>
+          <div className="mt-4">
+            <div className="flex justify-between text-sm mb-2">
+              <span className="text-blue-600 font-medium">
+                {Math.round((progressData.total_credits / 32) * 100)}% Complete
+              </span>
+              <span className="text-gray-600">
+                {32 - progressData.total_credits} credits remaining
+              </span>
+            </div>
+            <div className="w-full bg-gray-200 rounded-full h-2.5">
+              <div 
+                className="bg-blue-600 h-2.5 rounded-full transition-all duration-500"
+                style={{ width: `${(progressData.total_credits / 32) * 100}%` }}
+              />
+            </div>
+          </div>
+        </div>
+
+        {/* Courses Card */}
+        <div className="bg-white rounded-xl shadow-lg p-6">
+          <div className="flex items-center mb-4">
+            <GraduationCap className="h-8 w-8 text-green-500" />
+            <h2 className="ml-3 text-xl font-semibold text-gray-900">Total Courses</h2>
+          </div>
+          <div className="mt-2">
+            <div className="text-3xl font-bold text-gray-900">
+              {progressData.total_courses}
+            </div>
+            <p className="text-gray-600 mt-1">Courses completed</p>
+          </div>
+        </div>
+
+        {/* Grade Card */}
+        <div className="bg-white rounded-xl shadow-lg p-6">
+          <div className="flex items-center mb-4">
+            <Award className="h-8 w-8 text-purple-500" />
+            <h2 className="ml-3 text-xl font-semibold text-gray-900">Current Grade</h2>
+          </div>
+          <div className="mt-2">
+            <div className="text-3xl font-bold text-gray-900">
+              {progressData.current_grade}
+            </div>
+            <p className="text-gray-600 mt-1">Current Letter Grade</p>
+          </div>
+        </div>
+      </div>
+
+      {/* New Section for Completed Courses */}
+      <div className="bg-white rounded-xl shadow-lg p-6 mt-6">
+        <h2 className="text-xl font-semibold text-gray-900 mb-4">
+          Completed Courses
+        </h2>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          {Object.entries(progressData.completed_courses).map(([courseId, courseName]) => (
+            <div 
+              key={courseId}
+              className="bg-gray-50 p-4 rounded-lg border border-gray-200 hover:border-blue-500 transition-colors"
+            >
+              <h3 className="font-medium text-blue-600">{courseId}</h3>
+              <p className="text-gray-700 mt-1">
+                {courseName === courseId ? 'Course name not available' : courseName}
+              </p>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* Programming Experience Section */}
+      <div className="bg-white rounded-xl shadow-lg p-6">
+        <h2 className="text-xl font-semibold text-gray-900 mb-4">
+          Programming Experience
+        </h2>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          {Object.entries(progressData.programming_experience).map(([language, score]) => (
+            <div key={language} className="bg-gray-50 p-4 rounded-lg">
+              <div className="flex justify-between items-center mb-2">
+                <h3 className="font-medium text-gray-900">{language}</h3>
+                <span className="text-blue-600 font-semibold">{score.toFixed(1)}/5.0</span>
+              </div>
+              <div className="w-full bg-gray-200 rounded-full h-2">
+                <div 
+                  className="bg-blue-600 h-2 rounded-full"
+                  style={{ width: `${(score / 5) * 100}%` }}
+                />
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* Math Experience Section */}
+      <div className="bg-white rounded-xl shadow-lg p-6">
+        <h2 className="text-xl font-semibold text-gray-900 mb-4">
+          Mathematics Experience
+        </h2>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          {Object.entries(progressData.math_experience).map(([subject, score]) => (
+            <div key={subject} className="bg-gray-50 p-4 rounded-lg">
+              <div className="flex justify-between items-center mb-2">
+                <h3 className="font-medium text-gray-900">{subject}</h3>
+                <span className="text-green-600 font-semibold">{score.toFixed(1)}/5.0</span>
+              </div>
+              <div className="w-full bg-gray-200 rounded-full h-2">
+                <div 
+                  className="bg-green-600 h-2 rounded-full"
+                  style={{ width: `${(score / 5) * 100}%` }}
+                />
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* Course Outcomes Section */}
+      <div className="bg-white rounded-xl shadow-lg p-6">
+        <h2 className="text-xl font-semibold text-gray-900 mb-4">
+          Learning Outcomes Achieved
+        </h2>
+        <div className="space-y-3">
+          {progressData.course_outcomes.map((outcome, index) => (
+            <div 
+              key={index}
+              className="flex items-center space-x-3 bg-gray-50 p-4 rounded-lg"
+            >
+              <div className="flex-shrink-0 w-6 h-6 bg-purple-100 rounded-full flex items-center justify-center">
+                <span className="text-purple-600 text-sm font-medium">{index + 1}</span>
+              </div>
+              <p className="text-gray-700">{outcome}</p>
+            </div>
+          ))}
         </div>
       </div>
     </div>
   );
 }
-
-function ProgressCard({
-  title,
-  value,
-  description,
-  icon: Icon,
-}: {
-  title: string;
-  value: string;
-  description: string;
-  icon: React.ElementType;
-}) {
-  return (
-    <div className="bg-white rounded-lg border p-6">
-      <div className="flex items-center">
-        <Icon className="h-5 w-5 text-gray-400" />
-        <h2 className="ml-2 text-sm font-medium text-gray-600">{title}</h2>
-      </div>
-      <div className="mt-2">
-        <span className="text-2xl font-bold text-gray-900">{value}</span>
-      </div>
-      <p className="mt-2 text-sm text-gray-600">{description}</p>
-    </div>
-  );
-}
-
-function RequirementItem({
-  name,
-  completed,
-  total,
-  description,
-}: {
-  name: string;
-  completed: number;
-  total: number;
-  description: string;
-}) {
-  const percentage = (completed / total) * 100;
-  return (
-    <div className="space-y-2">
-      <div className="flex justify-between">
-        <span className="text-sm font-medium text-gray-900">{name}</span>
-        <span className="text-sm text-gray-600">{completed}/{total}</span>
-      </div>
-      <div className="h-2 bg-gray-100 rounded-full overflow-hidden">
-        <div
-          className="h-full bg-blue-600"
-          style={{ width: `${percentage}%` }}
-        />
-      </div>
-      <p className="text-xs text-gray-600">{description}</p>
-    </div>
-  );
-}
-
-const degreeRequirements = [
-  {
-    name: "Core Courses",
-    completed: 4,
-    total: 6,
-    description: "Required foundational courses in computer science",
-  },
-  {
-    name: "AI/ML Specialization",
-    completed: 2,
-    total: 3,
-    description: "Specialized courses in artificial intelligence",
-  },
-  {
-    name: "Electives",
-    completed: 2,
-    total: 3,
-    description: "Choose from approved elective courses",
-  },
-  {
-    name: "Capstone/Thesis",
-    completed: 0,
-    total: 1,
-    description: "Final project or thesis requirement",
-  },
-];
-
-const courseHistory = [
-  {
-    term: "Spring 2024",
-    courses: [
-      { code: "CS5200", name: "Database Management", grade: "A" },
-      { code: "CS5800", name: "Algorithms", grade: "A-" },
-      { code: "CS6140", name: "Machine Learning", grade: "B+" },
-    ],
-  },
-  {
-    term: "Fall 2023",
-    courses: [
-      { code: "CS5001", name: "Programming Fundamentals", grade: "A" },
-      { code: "CS5002", name: "Discrete Math", grade: "A-" },
-    ],
-  },
-];
-
-function getGradeColor(grade: string): string {
-  const colors = {
-    "A": "text-green-600",
-    "A-": "text-green-600",
-    "B+": "text-blue-600",
-    "B": "text-blue-600",
-    "B-": "text-yellow-600",
-    "C+": "text-yellow-600",
-    "C": "text-red-600",
-  };
-  return colors[grade as keyof typeof colors] || "text-gray-600";
-} 
