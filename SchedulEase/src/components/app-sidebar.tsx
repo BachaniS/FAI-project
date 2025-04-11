@@ -18,6 +18,7 @@ const navigation = [
   { name: "My Schedule", href: "/schedule", icon: Calendar },
   { name: "Academic Progress", href: "/progress", icon: GraduationCap },
   { name: "Burnout Analysis", href: "/burnout", icon: LineChart },
+  { name: "Recommendations", href: "/recommendations", icon: Calendar },
   { name: "Profile", href: "/profile", icon: User },
   { name: "Settings", href: "/settings", icon: Settings },
 ];

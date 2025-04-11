@@ -55,7 +55,7 @@ export default function DashboardPage() {
       title: "Course Recommendations",
       description: "Get personalized course suggestions",
       icon: CheckCircle,
-      href: "/recommendations",
+      href: "/schedule",
       color: "blue"
     },
     {

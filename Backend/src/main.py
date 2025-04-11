@@ -4,6 +4,9 @@ from typing import List, Dict, Optional, Set, Any
 from datetime import datetime
 from fastapi.middleware.cors import CORSMiddleware
 from pymongo import MongoClient
+import numpy as np
+from bson import ObjectId
+from urllib.parse import unquote
 
 from utils import (
     load_course_data, save_schedules, get_subject_name, get_unmet_prerequisites, 
@@ -53,10 +56,8 @@ class BurnoutScores(BaseModel):
     courses: List[Dict[str, Any]]
 
 class RecommendationRequest(BaseModel):
-    nuid: str
-    semesters: int = 2
-    courses_per_semester: int = 2
-    blacklist: List[str] = []
+    selected_courses: Optional[List[str]] = None
+    blacklisted_courses: Optional[List[str]] = None
 
 class CourseDetail(BaseModel):
     subject_id: str
@@ -98,6 +99,68 @@ class UserResponse(BaseModel):
     success: bool
     message: str
     data: Optional[Dict[str, Any]] = None
+
+class SaveScheduleRequest(BaseModel):
+    name: str
+    courses: List[str]
+
+# Add this helper class for handling ObjectId serialization
+class PyObjectId(ObjectId):
+    @classmethod
+    def __get_validators__(cls):
+        yield cls.validate
+
+    @classmethod
+    def validate(cls, v):
+        if not ObjectId.is_valid(v):
+            raise ValueError("Invalid ObjectId")
+        return ObjectId(v)
+
+    @classmethod
+    def __modify_schema__(cls, field_schema):
+        field_schema.update(type="string")
+
+# Update the SaveScheduleResponse model to handle ObjectId
+class SaveScheduleResponse(BaseModel):
+    success: bool
+    message: str
+    data: Optional[Dict[str, Any]] = None
+
+    class Config:
+        arbitrary_types_allowed = True
+        json_encoders = {
+            ObjectId: str
+        }
+
+# Add this new model for schedule responses
+class ScheduleListResponse(BaseModel):
+    success: bool
+    message: str
+    data: Optional[List[Dict[str, Any]]] = None
+
+    class Config:
+        arbitrary_types_allowed = True
+        json_encoders = {
+            ObjectId: str
+        }
+
+# Add this new model for delete response
+class DeleteScheduleResponse(BaseModel):
+    success: bool
+    message: str
+    data: Optional[Dict[str, Any]] = None
+
+def convert_numpy_to_native(obj):
+    """Convert NumPy types to native Python types"""
+    if isinstance(obj, np.int64):
+        return int(obj)
+    elif isinstance(obj, np.float64):
+        return float(obj)
+    elif isinstance(obj, dict):
+        return {key: convert_numpy_to_native(value) for key, value in obj.items()}
+    elif isinstance(obj, list):
+        return [convert_numpy_to_native(item) for item in obj]
+    return obj
 
 @app.get("/")
 def read_root():
@@ -247,9 +310,8 @@ async def get_recommendations(nuid: str):
                 "prerequisites": int(len(prereqs)),
                 "reasons": reasons[0]
             })
-        
-        # Calculate average burnout for the pair (using Python float)
-        avg_burnout = float(sum(r["metrics"]["burnout_risk"] for r in recommendations)) / len(recommendations)
+        # Calculate average burnout for the pair
+        avg_burnout = sum(r["burnout_risk"] for r in recommendations) / len(recommendations)
         
         print("recommendations", recommendations)
         return {
@@ -950,6 +1012,453 @@ async def get_course_catalog(nuid: Optional[str] = None):
             "message": f"Error retrieving course catalog: {str(e)}",
             "data": None
         }
+
+@app.post("/recommend-full/{nuid}")
+async def get_full_recommendations(
+    nuid: str,
+    request: RecommendationRequest
+):
+    """
+    Get course recommendations recursively, taking into account previously selected courses.
+    If no previous selections exist, falls back to basic recommendations.
+    """
+    try:
+        # Initialize lists from request model
+        selected_courses = request.selected_courses or []
+        blacklisted_courses = request.blacklisted_courses or []
+        
+        # If no selected courses and no blacklisted courses, use basic recommendations
+        if not selected_courses and not blacklisted_courses:
+            return await get_recommendations(nuid)
+        
+        # Load necessary data
+        student_data = load_student_data(nuid)
+        if student_data is None or student_data.empty:
+            return await get_recommendations(nuid)
+        
+        subjects_df = load_course_data()
+        
+        # Get student's completed courses and core subjects
+        completed_courses = set(get_student_completed_courses(student_data))
+        core_subjects = get_student_core_subjects(student_data)
+        
+        # Add selected courses to completed set for recommendation purposes
+        taken = completed_courses.union(set(selected_courses))
+        
+        # Update core remaining based on selected courses
+        core_remaining = [c for c in core_subjects if c not in taken]
+        
+        # Get all available subjects excluding completed, selected, and blacklisted
+        all_subjects = subjects_df['subject_id'].tolist()
+        available_subjects = [
+            s for s in all_subjects 
+            if s not in taken and s not in blacklisted_courses
+        ]
+        
+        # Apply interest-based filtering
+        interests = get_student_desired_outcomes(student_data)
+        if interests:
+            available_subjects = filter_courses_by_interests(available_subjects, interests, subjects_df)
+            
+        if len(available_subjects) < 2:
+            return {
+                "success": False,
+                "message": "Not enough available courses for recommendations",
+                "data": None
+            }
+            
+        # Run genetic algorithm to get exactly 2 courses
+        best_courses = genetic_algorithm(available_subjects, taken, student_data, core_remaining)
+        best_courses = best_courses[:2]
+        
+        # Format recommendations with detailed information
+        recommendations = []
+        for course in best_courses:
+            burnout = float(calculate_burnout(student_data, course, subjects_df))
+            utility = float(calculate_utility(student_data, course, subjects_df))
+            alignment = float(calculate_outcome_alignment_score(student_data, course, subjects_df))
+            prereqs = get_unmet_prerequisites(subjects_df, course, taken)
+            
+            course_row = subjects_df[subjects_df['subject_id'] == course].iloc[0]
+            
+            recommendations.append({
+                "subject_id": str(course),
+                "subject_name": str(get_subject_name(subjects_df, course)),
+                "description": str(course_row.get('description', '')),
+                "burnout_risk": float(burnout),
+                "workload_level": str("High" if burnout > 0.7 else "Medium" if burnout > 0.4 else "Low"),
+                "utility_score": float(utility),
+                "alignment_score": float(alignment),
+                "prerequisites": int(len(prereqs)),
+                "unmet_prerequisites": list(map(str, prereqs)),
+                "is_core": bool(course in core_subjects),
+                "reasons": [
+                    "Selected by genetic algorithm for optimal academic fit",
+                    "Aligns with your academic progress",
+                    "Fits well with your current knowledge profile"
+                ],
+                "assignment_count": int(course_row.get('assignment_count', 0)),
+                "exam_count": int(course_row.get('exam_count', 0)),
+                "course_outcomes": list(map(str, course_row.get('course_outcomes', []))),
+                "programming_knowledge_needed": list(map(str, course_row.get('programming_knowledge_needed', []))),
+                "math_requirements": list(map(str, course_row.get('math_requirements', [])))
+            })
+        
+        # Calculate summary statistics
+        avg_burnout = float(sum(r["burnout_risk"] for r in recommendations) / len(recommendations))
+        avg_utility = float(sum(r["utility_score"] for r in recommendations) / len(recommendations))
+        
+        response_data = {
+            "success": True,
+            "message": "Recommendations generated successfully",
+            "data": {
+                "recommendations": recommendations,
+                "summary": {
+                    "total_recommended": int(len(recommendations)),
+                    "average_burnout": float(round(avg_burnout, 2)),
+                    "average_utility": float(round(avg_utility, 2)),
+                    "completed_courses": int(len(completed_courses)),
+                    "selected_courses": int(len(selected_courses)),
+                    "remaining_core": int(len(core_remaining)),
+                    "semester_number": int((len(selected_courses) // 2) + 1)
+                }
+            }
+        }
+
+        # Convert any remaining NumPy types
+        response_data = convert_numpy_to_native(response_data)
+        return response_data
+        
+    except Exception as e:
+        print(f"Error generating recommendations: {str(e)}")
+        return {
+            "success": False,
+            "message": f"Error generating recommendations: {str(e)}",
+            "data": None
+        }
+
+@app.post("/save-schedule/{nuid}", response_model=SaveScheduleResponse)
+async def save_schedule(
+    nuid: str,
+    request: SaveScheduleRequest
+):
+    """
+    Save a course schedule for a student
+    
+    Args:
+        nuid: Student ID
+        request: SaveScheduleRequest containing schedule name and list of course IDs
+    """
+    try:
+        # Connect to MongoDB
+        client = MongoClient(MONGO_URI)
+        db = client["user_details"]
+        schedules_collection = db["user_schedules"]
+        
+        # Load necessary data
+        student_data = load_student_data(nuid)
+        if student_data is None or student_data.empty:
+            return SaveScheduleResponse(
+                success=False,
+                message=f"Student with NUID {nuid} not found",
+                data=None
+            )
+        
+        subjects_df = load_course_data()
+        
+        # Validate that all courses exist
+        invalid_courses = [
+            course for course in request.courses 
+            if course not in subjects_df['subject_id'].values
+        ]
+        if invalid_courses:
+            return SaveScheduleResponse(
+                success=False,
+                message=f"Invalid course IDs: {', '.join(invalid_courses)}",
+                data=None
+            )
+        
+        # Calculate schedule metrics
+        course_details = []
+        total_burnout = 0
+        total_utility = 0
+        
+        for course in request.courses:
+            burnout = float(calculate_burnout(student_data, course, subjects_df))
+            utility = float(calculate_utility(student_data, course, subjects_df))
+            course_row = subjects_df[subjects_df['subject_id'] == course].iloc[0]
+            
+            course_details.append({
+                "subject_id": str(course),
+                "subject_name": str(get_subject_name(subjects_df, course)),
+                "burnout_risk": float(burnout),
+                "utility_score": float(utility),
+                "workload_level": "High" if burnout > 0.7 else "Medium" if burnout > 0.4 else "Low",
+                "assignment_count": int(course_row.get('assignment_count', 0)),
+                "exam_count": int(course_row.get('exam_count', 0))
+            })
+            
+            total_burnout += burnout
+            total_utility += utility
+        
+        avg_burnout = total_burnout / len(request.courses) if request.courses else 0
+        avg_utility = total_utility / len(request.courses) if request.courses else 0
+        
+        # Create schedule document
+        schedule_doc = {
+            "nuid": nuid,
+            "name": request.name,
+            "created_at": datetime.now(),
+            "courses": course_details,
+            "metrics": {
+                "total_courses": len(request.courses),
+                "average_burnout": float(round(avg_burnout, 2)),
+                "average_utility": float(round(avg_utility, 2)),
+                "workload_assessment": "High" if avg_burnout > 0.7 else "Medium" if avg_burnout > 0.4 else "Low"
+            }
+        }
+        
+        # Check if schedule with this name already exists for this student
+        existing_schedule = schedules_collection.find_one({
+            "nuid": nuid,
+            "name": request.name
+        })
+        
+        if existing_schedule:
+            # Update existing schedule
+            result = schedules_collection.update_one(
+                {"_id": ObjectId(existing_schedule["_id"])},
+                {
+                    "$set": schedule_doc,
+                    "$push": {
+                        "history": {
+                            "timestamp": datetime.now(),
+                            "previous_state": existing_schedule
+                        }
+                    }
+                }
+            )
+            
+            if result.modified_count > 0:
+                schedule_doc['_id'] = existing_schedule['_id']  # Add the string ID to response
+                return SaveScheduleResponse(
+                    success=True,
+                    message=f"Schedule '{request.name}' updated successfully",
+                    data=convert_numpy_to_native(schedule_doc)
+                )
+            else:
+                return SaveScheduleResponse(
+                    success=False,
+                    message="Failed to update schedule",
+                    data=None
+                )
+        else:
+            # Create new schedule
+            result = schedules_collection.insert_one(schedule_doc)
+            
+            if result.inserted_id:
+                schedule_doc['_id'] = str(result.inserted_id)
+                return SaveScheduleResponse(
+                    success=True,
+                    message=f"Schedule '{request.name}' saved successfully",
+                    data=convert_numpy_to_native(schedule_doc)
+                )
+            else:
+                return SaveScheduleResponse(
+                    success=False,
+                    message="Failed to save schedule",
+                    data=None
+                )
+                
+    except Exception as e:
+        print(f"Error saving schedule: {str(e)}")
+        return SaveScheduleResponse(
+            success=False,
+            message=f"Error saving schedule: {str(e)}",
+            data=None
+        )
+
+@app.get("/schedules/{nuid}", response_model=ScheduleListResponse)
+async def get_schedules(nuid: str):
+    """
+    Get all saved schedules for a student
+    
+    Args:
+        nuid: Student ID
+    """
+    try:
+        # Connect to MongoDB
+        client = MongoClient(MONGO_URI)
+        db = client["user_details"]
+        schedules_collection = db["user_schedules"]
+        
+        # Get all schedules for this student
+        schedules = list(schedules_collection.find({"nuid": nuid}))
+        
+        if not schedules:
+            return ScheduleListResponse(
+                success=True,
+                message="No saved schedules found",
+                data=[]
+            )
+        
+        # Process each schedule
+        formatted_schedules = []
+        for schedule in schedules:
+            # Convert ObjectId to string
+            schedule['_id'] = str(schedule['_id'])
+            
+            # Recalculate metrics for each schedule
+            courses = schedule.get('courses', [])
+            num_courses = len(courses)
+            
+            if num_courses > 0:
+                # Calculate total burnout and utility
+                total_burnout = sum(float(course.get('burnout_risk', 0)) for course in courses)
+                total_utility = sum(float(course.get('utility_score', 0)) for course in courses)
+                
+                # Calculate averages
+                avg_burnout = total_burnout / num_courses
+                avg_utility = total_utility / num_courses
+                
+                # Determine workload assessment based on average burnout
+                workload_assessment = (
+                    "High" if avg_burnout > 0.7 
+                    else "Medium" if avg_burnout > 0.4 
+                    else "Low"
+                )
+            else:
+                avg_burnout = 0.0
+                avg_utility = 0.0
+                workload_assessment = "N/A"
+            
+            # Format the schedule data
+            formatted_schedule = {
+                "id": schedule['_id'],
+                "name": schedule['name'],
+                "created_at": schedule['created_at'],
+                "courses": [
+                    {
+                        "subject_id": str(course['subject_id']),
+                        "subject_name": str(course['subject_name']),
+                        "burnout_risk": float(course['burnout_risk']),
+                        "utility_score": float(course['utility_score']),
+                        "workload_level": str(course['workload_level']),
+                        "assignment_count": int(course['assignment_count']),
+                        "exam_count": int(course['exam_count'])
+                    }
+                    for course in courses
+                ],
+                "metrics": {
+                    "total_courses": int(num_courses),
+                    "average_burnout": float(round(avg_burnout, 2)),
+                    "average_utility": float(round(avg_utility, 2)),
+                    "workload_assessment": workload_assessment
+                }
+            }
+            
+            # Add history if it exists
+            if 'history' in schedule:
+                formatted_schedule['history'] = [
+                    {
+                        "timestamp": entry['timestamp'],
+                        "previous_state": {
+                            k: v for k, v in entry['previous_state'].items()
+                            if k != '_id'
+                        }
+                    }
+                    for entry in schedule['history']
+                ]
+            
+            formatted_schedules.append(formatted_schedule)
+        
+        # Sort schedules by creation date (newest first)
+        formatted_schedules.sort(
+            key=lambda x: x['created_at'],
+            reverse=True
+        )
+        
+        print("formatted_schedules", avg_burnout)
+        
+        return ScheduleListResponse(
+            success=True,
+            message="Schedules retrieved successfully",
+            data=convert_numpy_to_native(formatted_schedules)
+        )
+        
+    except Exception as e:
+        print(f"Error retrieving schedules: {str(e)}")
+        return ScheduleListResponse(
+            success=False,
+            message=f"Error retrieving schedules: {str(e)}",
+            data=None
+        )
+
+@app.delete("/delete-schedule/{nuid}/{schedule_name}", response_model=DeleteScheduleResponse)
+async def delete_schedule(nuid: str, schedule_name: str):
+    """
+    Delete a specific schedule for a student by schedule name
+    
+    Args:
+        nuid: Student ID
+        schedule_name: Name of the schedule to delete
+    """
+    try:
+        # Connect to MongoDB
+        client = MongoClient(MONGO_URI)
+        db = client["user_details"]
+        schedules_collection = db["user_schedules"]
+        
+        # URL decode the schedule name (in case it contains spaces or special characters)
+        decoded_schedule_name = unquote(schedule_name)
+        
+        # Verify that the schedule exists and belongs to the student
+        schedule = schedules_collection.find_one({
+            "nuid": nuid,
+            "name": decoded_schedule_name
+        })
+            
+        if not schedule:
+            return DeleteScheduleResponse(
+                success=False,
+                message=f"Schedule '{decoded_schedule_name}' not found or doesn't belong to student {nuid}",
+                data=None
+            )
+        
+        # Store schedule details before deletion for response
+        deleted_schedule = {
+            "id": str(schedule["_id"]),
+            "name": schedule["name"],
+            "created_at": schedule["created_at"],
+            "deleted_at": datetime.now()
+        }
+        
+        # Delete the schedule
+        result = schedules_collection.delete_one({
+            "nuid": nuid,
+            "name": decoded_schedule_name
+        })
+        
+        if result.deleted_count > 0:
+            return DeleteScheduleResponse(
+                success=True,
+                message=f"Schedule '{decoded_schedule_name}' deleted successfully",
+                data=deleted_schedule
+            )
+        else:
+            return DeleteScheduleResponse(
+                success=False,
+                message=f"Failed to delete schedule '{decoded_schedule_name}'",
+                data=None
+            )
+            
+    except Exception as e:
+        print(f"Error deleting schedule: {str(e)}")
+        return DeleteScheduleResponse(
+            success=False,
+            message=f"Error deleting schedule: {str(e)}",
+            data=None
+        )
 
 # Add this at the end of your main.py file
 if __name__ == "__main__":

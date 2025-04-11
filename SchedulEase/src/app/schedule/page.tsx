@@ -1,278 +1,299 @@
 'use client';
 
-import { Calendar, AlertTriangle, CheckCircle } from "lucide-react";
-import { useEffect, useState } from "react";
+import { useState, useEffect } from "react";
 import axios from "axios";
-import router from "next/router";
+import { useRouter } from "next/navigation";
+import { ChevronDown, ChevronUp, Clock, BookOpen, Activity, Trash2 } from "lucide-react";
 
-// Types
 interface Course {
-  code: string;
-  name: string;
-  credits: number;
-  prerequisites?: string;
+  subject_id: string;
+  subject_name: string;
+  burnout_risk: number;
+  utility_score: number;
+  workload_level: "High" | "Medium" | "Low";
+  assignment_count: number;
+  exam_count: number;
 }
 
-interface Semester {
-  term: string;
-  totalCredits: number;
-  courses: Course[];
+interface Metrics {
+  total_courses: number;
+  average_burnout: number;
+  average_utility: number;
+  workload_assessment: string;
+}
+
+interface HistoryEntry {
+  timestamp: string;
+  previous_state: any; // Type this more specifically if needed
 }
 
 interface Schedule {
-  nuid: string;
-  schedule: {
-    semester: number;
-    courses: {
-      subject_id: string;
-      subject_name: string;
-      burnout: number;
-      fitness_score: number;
-    }[];
-  }[];
-  total_burnout: number;
-}
-
-interface Recommendation {
-  subject_id: string;
-  subject_name: string;
-  description: string;
-  fitness_score: number;
+  id: string;
+  name: string;
+  courses: Course[];
+  created_at: string;
+  metrics: Metrics;
+  history: HistoryEntry[];
 }
 
 export default function SchedulePage() {
-  const [currentSemester, setCurrentSemester] = useState<Semester | null>(null);
-  const [upcomingSemesters, setUpcomingSemesters] = useState<Semester[]>([]);
+  const router = useRouter();
+  const [schedules, setSchedules] = useState<Schedule[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [recommendations, setRecommendations] = useState<Recommendation[]>([]);
+  const [expandedScheduleId, setExpandedScheduleId] = useState<string | null>(null);
+  const [deleteConfirmSchedule, setDeleteConfirmSchedule] = useState<Schedule | null>(null);
 
   useEffect(() => {
-    const fetchSchedule = async () => {
-      try {
-        const userData = localStorage.getItem("userData");
-        if (!userData) {
-          router.push("/login");
-          return;
-        }
-        const { nuid } = JSON.parse(userData);
-        const response = await axios.get<Schedule>(`http://localhost:8000/schedule/${nuid}`);
-        
-        // Transform backend data to frontend format
-        const schedule = response.data;
-        
-        // Set current semester
-        if (schedule.schedule[0]) {
-          setCurrentSemester({
-            term: "Spring 2024",
-            totalCredits: schedule.schedule[0].courses.length * 4,
-            courses: schedule.schedule[0].courses.map(course => ({
-              code: course.subject_id,
-              name: course.subject_name,
-              credits: 4,
-            }))
-          });
-        }
-
-        // Set upcoming semesters
-        const upcoming = schedule.schedule.slice(1).map((sem, index) => ({
-          term: index === 0 ? "Fall 2024" : "Spring 2025",
-          totalCredits: sem.courses.length * 4,
-          courses: sem.courses.map(course => ({
-            code: course.subject_id,
-            name: course.subject_name,
-            credits: 4,
-            prerequisites: "To be fetched", // You can fetch this separately if needed
-          }))
-        }));
-        setUpcomingSemesters(upcoming);
-
-        // Fetch recommendations
-        try {
-          const recommendationsResponse = await axios.get<{ recommendations: Recommendation[] }>(
-            `http://localhost:8000/recommendations/${nuid}`
-          );
-          setRecommendations(recommendationsResponse.data.recommendations || []);
-        } catch (err) {
-          console.error("Error fetching recommendations:", err);
-          setRecommendations([]); // Set empty array on error
-        }
-        
-      } catch (err) {
-        setError("Failed to fetch schedule");
-        console.error("Error fetching schedule:", err);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchSchedule();
+    fetchSchedules();
   }, []);
 
+  const fetchSchedules = async () => {
+    try {
+      const userData = localStorage.getItem("userData");
+      if (!userData) {
+        router.push("/login");
+        return;
+      }
+      const { nuid } = JSON.parse(userData);
+      
+      const response = await axios.get(`http://localhost:8000/schedules/${nuid}`);
+      setSchedules(response.data.data);
+    } catch (err) {
+      setError("Failed to fetch your schedules");
+      console.error("Error fetching schedules:", err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const groupCoursesBySemester = (courses: Course[]) => {
+    const semesters: { [key: string]: Course[] } = {};
+    courses.forEach((course, index) => {
+      const semesterNumber = Math.floor(index / 2) + 1;
+      if (!semesters[`Semester ${semesterNumber}`]) {
+        semesters[`Semester ${semesterNumber}`] = [];
+      }
+      semesters[`Semester ${semesterNumber}`].push(course);
+    });
+    return semesters;
+  };
+
+  const toggleSchedule = (scheduleId: string) => {
+    setExpandedScheduleId(expandedScheduleId === scheduleId ? null : scheduleId);
+  };
+
+  const handleDeleteSchedule = async (schedule: Schedule) => {
+    try {
+      const userData = localStorage.getItem("userData");
+      if (!userData) {
+        router.push("/login");
+        return;
+      }
+      const { nuid } = JSON.parse(userData);
+      
+      await axios.delete(`http://localhost:8000/delete-schedule/${nuid}/${schedule.name}`);
+      
+      setSchedules(schedules.filter(s => s.id !== schedule.id));
+      setDeleteConfirmSchedule(null);
+    } catch (err) {
+      setError("Failed to delete schedule");
+      console.error("Error deleting schedule:", err);
+    }
+  };
+
   if (loading) {
-    return <div>Loading schedule...</div>;
+    return (
+      <div className="flex justify-center items-center min-h-screen">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+      </div>
+    );
   }
 
   if (error) {
-    return <div className="text-red-600">{error}</div>;
+    return (
+      <div className="p-6">
+        <div className="bg-red-50 border border-red-200 rounded-lg p-4 text-red-700">
+          {error}
+        </div>
+      </div>
+    );
   }
 
   return (
-    <div className="space-y-6">
-      <div>
-        <h1 className="text-2xl font-bold text-gray-900">My Schedule</h1>
-        <p className="mt-2 text-gray-600">
-          View and manage your course schedule across semesters
-        </p>
-      </div>
-
-      <div className="grid gap-6 lg:grid-cols-2">
-        <div className="bg-white rounded-lg border p-6">
-          <div className="flex items-center justify-between">
-            <h2 className="text-lg font-semibold text-gray-900">Current Semester</h2>
-            <span className="text-sm text-gray-600">Spring 2024</span>
-          </div>
-          <div className="mt-4 space-y-4">
-            {currentSemester?.courses.map((course) => (
-              <CourseCard key={course.code} course={course} />
-            ))}
-            <div className="mt-4 pt-4 border-t">
-              <div className="flex items-center justify-between text-sm">
-                <span className="text-gray-600">Total Credits:</span>
-                <span className="font-medium">{currentSemester?.totalCredits}</span>
-              </div>
-              <div className="flex items-center justify-between text-sm mt-2">
-                <span className="text-gray-600">Workload Status:</span>
-                <span className="font-medium text-yellow-600">Moderate</span>
-              </div>
-            </div>
-          </div>
+    <div className="p-6 space-y-6">
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-2xl font-bold text-gray-900">My Course Schedules</h1>
+          <p className="mt-2 text-gray-600">View and manage your saved course schedules</p>
         </div>
-
-        <div className="bg-white rounded-lg border p-6">
-          <div className="flex items-center justify-between">
-            <h2 className="text-lg font-semibold text-gray-900">Upcoming Semesters</h2>
-            <button className="text-sm text-blue-600 hover:text-blue-700">
-              Edit Plan
-            </button>
-          </div>
-          <div className="mt-4 space-y-6">
-            {upcomingSemesters.map((semester) => (
-              <div key={semester.term} className="space-y-4">
-                <div className="flex items-center justify-between">
-                  <h3 className="font-medium text-gray-900">{semester.term}</h3>
-                  <span className="text-sm text-gray-600">{semester.totalCredits} Credits</span>
-                </div>
-                {semester.courses.map((course) => (
-                  <CourseCard key={course.code} course={course} isPlanned />
-                ))}
-              </div>
-            ))}
-          </div>
-        </div>
+        <button
+          onClick={() => router.push('/recommendations')}
+          className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+        >
+          Create New Schedule
+        </button>
       </div>
 
-      <div className="bg-white rounded-lg border p-6">
-        <h2 className="text-lg font-semibold text-gray-900">Schedule Analysis</h2>
-        <div className="mt-4 grid gap-4 md:grid-cols-3">
-          <AnalysisCard
-            title="Burnout Risk"
-            value="Medium"
-            status="warning"
-            description="Consider redistributing workload"
-          />
-          <AnalysisCard
-            title="Prerequisites"
-            value="All Met"
-            status="success"
-            description="Current plan is valid"
-          />
-          <AnalysisCard
-            title="Graduation Track"
-            value="On Track"
-            status="success"
-            description="Expected: Spring 2025"
-          />
-        </div>
-      </div>
-
-      <div className="bg-white rounded-lg border p-6">
-        <h2 className="text-lg font-semibold text-gray-900">Recommendations</h2>
-        {recommendations && recommendations.length > 0 ? (
-          recommendations.map((course) => (
-            <div
-              key={course.subject_id}
-              className="bg-white rounded-xl shadow-md hover:shadow-lg transition-shadow duration-300 overflow-hidden"
-            >
-              <div className="p-6">
-                <h3 className="text-lg font-semibold text-gray-900">{course.subject_name}</h3>
-                <p className="text-sm text-gray-600 mt-2">{course.description}</p>
-                <div className="mt-4">
-                  <span className="text-sm font-medium text-blue-600">{course.subject_id}</span>
-                  <span className="ml-2 text-sm text-gray-500">
-                    Fitness Score: {course.fitness_score}
-                  </span>
-                </div>
-              </div>
-            </div>
-          ))
-        ) : (
-          <p className="text-gray-600">No recommendations available at this time.</p>
-        )}
-      </div>
-    </div>
-  );
-}
-
-function CourseCard({ course, isPlanned = false }: { course: Course; isPlanned?: boolean }) {
-  return (
-    <div className="flex items-start space-x-4 p-4 rounded-lg border bg-gray-50">
-      <div className="flex-shrink-0">
-        <Calendar className="h-5 w-5 text-gray-400" />
-      </div>
-      <div className="flex-1 min-w-0">
-        <div className="flex items-center justify-between">
-          <p className="text-sm font-medium text-gray-900">{course.code}</p>
-          <span className="text-xs text-gray-500">{course.credits} Credits</span>
-        </div>
-        <p className="text-sm text-gray-600 truncate">{course.name}</p>
-        {isPlanned && (
-          <p className="text-xs text-gray-500 mt-1">
-            Prerequisites: {course.prerequisites || "None"}
+      {schedules.length === 0 ? (
+        <div className="text-center py-12 bg-gray-50 rounded-lg border border-gray-200">
+          <h3 className="text-lg font-medium text-gray-900">No Schedules Yet</h3>
+          <p className="mt-2 text-gray-600">
+            Start by creating a new schedule from the recommendations page
           </p>
-        )}
-      </div>
-    </div>
-  );
-}
+        </div>
+      ) : (
+        <div className="space-y-4">
+          {schedules.map((schedule) => (
+            <div key={schedule.id} className="border rounded-lg overflow-hidden">
+              <button
+                onClick={() => toggleSchedule(schedule.id)}
+                className="w-full px-6 py-4 bg-white hover:bg-gray-50 flex items-center justify-between transition-colors"
+              >
+                <div className="flex items-center gap-4">
+                  <h2 className="text-lg font-semibold text-gray-900">{schedule.name}</h2>
+                  <div className="flex items-center gap-2 text-sm text-gray-500">
+                    <Clock className="h-4 w-4" />
+                    {new Date(schedule.created_at).toLocaleDateString()}
+                  </div>
+                </div>
+                {expandedScheduleId === schedule.id ? (
+                  <ChevronUp className="h-5 w-5 text-gray-400" />
+                ) : (
+                  <ChevronDown className="h-5 w-5 text-gray-400" />
+                )}
+              </button>
 
-function AnalysisCard({
-  title,
-  value,
-  status,
-  description,
-}: {
-  title: string;
-  value: string;
-  status: "success" | "warning" | "error";
-  description: string;
-}) {
-  const statusColors = {
-    success: "text-green-600",
-    warning: "text-yellow-600",
-    error: "text-red-600",
-  };
+              {expandedScheduleId === schedule.id && (
+                <div className="border-t px-6 py-4 bg-gray-50">
+                  {/* Schedule Metrics */}
+                  <div className="grid grid-cols-4 gap-4 mb-6 p-4 bg-white rounded-lg">
+                    <div className="text-center">
+                      <p className="text-sm text-gray-600">Courses</p>
+                      <p className="text-xl font-semibold text-gray-900">
+                        {schedule.metrics.total_courses}
+                      </p>
+                    </div>
+                    <div className="text-center">
+                      <p className="text-sm text-gray-600">Avg. Burnout Risk</p>
+                      <p className={`text-xl font-semibold ${
+                        schedule.metrics.average_burnout > 0.7 ? 'text-red-600' : 
+                        schedule.metrics.average_burnout > 0.4 ? 'text-yellow-600' : 'text-green-600'
+                      }`}>
+                        {Math.round(schedule.metrics.average_burnout * 100)}%
+                      </p>
+                    </div>
+                    <div className="text-center">
+                      <p className="text-sm text-gray-600">Avg. Utility</p>
+                      <p className="text-xl font-semibold text-blue-600">
+                        {Math.round(schedule.metrics.average_utility * 100)}%
+                      </p>
+                    </div>
+                    <div className="text-center">
+                      <p className="text-sm text-gray-600">Workload</p>
+                      <p className={`text-xl font-semibold ${
+                        schedule.metrics.workload_assessment === "High" ? 'text-red-600' :
+                        schedule.metrics.workload_assessment === "Medium" ? 'text-yellow-600' : 'text-green-600'
+                      }`}>
+                        {schedule.metrics.workload_assessment}
+                      </p>
+                    </div>
+                  </div>
 
-  const StatusIcon = status === "success" ? CheckCircle : AlertTriangle;
+                  {/* Course List */}
+                  <div className="space-y-6">
+                    {Object.entries(groupCoursesBySemester(schedule.courses)).map(([semester, courses]) => (
+                      <div key={semester}>
+                        <h3 className="text-lg font-medium text-gray-900 mb-4">{semester}</h3>
+                        <div className="grid gap-4 md:grid-cols-2">
+                          {courses.map((course) => (
+                            <div 
+                              key={course.subject_id}
+                              className="p-4 bg-white rounded-lg border"
+                            >
+                              <div className="flex justify-between items-start mb-2">
+                                <div>
+                                  <p className="text-sm font-medium text-blue-600">{course.subject_id}</p>
+                                  <h4 className="text-gray-900 font-medium">{course.subject_name}</h4>
+                                </div>
+                                <span className={`px-2 py-1 rounded-full text-xs font-medium ${
+                                  course.workload_level === "High" 
+                                    ? "bg-red-100 text-red-800" 
+                                    : course.workload_level === "Medium"
+                                    ? "bg-yellow-100 text-yellow-800"
+                                    : "bg-green-100 text-green-800"
+                                }`}>
+                                  {course.workload_level} Workload
+                                </span>
+                              </div>
+                              
+                              <div className="mt-3 space-y-2">
+                                <div className="flex items-center gap-4 text-sm text-gray-600">
+                                  <div className="flex items-center gap-1">
+                                    <BookOpen className="h-4 w-4" />
+                                    <span>{course.assignment_count} Assignments</span>
+                                  </div>
+                                  <div className="flex items-center gap-1">
+                                    <Activity className="h-4 w-4" />
+                                    <span>{course.exam_count} Exams</span>
+                                  </div>
+                                </div>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
 
-  return (
-    <div className="rounded-lg border p-4">
-      <h3 className="text-sm font-medium text-gray-900">{title}</h3>
-      <div className="mt-2 flex items-center">
-        <StatusIcon className={`h-5 w-5 ${statusColors[status]} mr-2`} />
-        <span className={`text-lg font-semibold ${statusColors[status]}`}>{value}</span>
-      </div>
-      <p className="mt-2 text-sm text-gray-600">{description}</p>
+                  <div className="mt-6 flex justify-end gap-2">
+                    <button
+                      onClick={() => setDeleteConfirmSchedule(schedule)}
+                      className="px-4 py-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors flex items-center gap-2"
+                    >
+                      <Trash2 className="h-4 w-4" />
+                      Delete
+                    </button>
+                    <button
+                      onClick={() => router.push(`/recommendations?schedule=${schedule.id}`)}
+                      className="px-4 py-2 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
+                    >
+                      Edit Schedule
+                    </button>
+                  </div>
+                </div>
+              )}
+            </div>
+          ))}
+        </div>
+      )}
+
+      {deleteConfirmSchedule && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-lg p-6 w-full max-w-md">
+            <h3 className="text-xl font-semibold text-gray-900 mb-4">
+              Delete Schedule
+            </h3>
+            <p className="text-gray-600 mb-6">
+              Are you sure you want to delete "{deleteConfirmSchedule.name}"? This action cannot be undone.
+            </p>
+            <div className="flex justify-end gap-4">
+              <button
+                onClick={() => setDeleteConfirmSchedule(null)}
+                className="px-4 py-2 text-gray-600 hover:bg-gray-100 rounded-lg transition-colors"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={() => handleDeleteSchedule(deleteConfirmSchedule)}
+                className="px-4 py-2 bg-red-600 text-white hover:bg-red-700 rounded-lg transition-colors"
+              >
+                Delete Schedule
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 } 
