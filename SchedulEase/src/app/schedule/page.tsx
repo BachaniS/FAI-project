@@ -43,29 +43,39 @@ export default function SchedulePage() {
   const [error, setError] = useState<string | null>(null);
   const [expandedScheduleId, setExpandedScheduleId] = useState<string | null>(null);
   const [deleteConfirmSchedule, setDeleteConfirmSchedule] = useState<Schedule | null>(null);
+  const [userData, setUserData] = useState<any>(null);
 
   useEffect(() => {
-    fetchSchedules();
+    const storedData = localStorage.getItem("userData");
+    if (storedData) {
+      setUserData(JSON.parse(storedData));
+    } else {
+      router.push("/login");
+    }
   }, []);
 
+  useEffect(() => {
+    if (userData) {
+      fetchSchedules();
+    }
+  }, [userData]);
+
   const fetchSchedules = async () => {
-      try {
-        const userData = localStorage.getItem("userData");
-        if (!userData) {
-          router.push("/login");
-          return;
-        }
-        const { nuid } = JSON.parse(userData);
+    try {
+      if (!userData) {
+        return;
+      }
+      const { nuid } = userData;
       
       const response = await axios.get(`http://localhost:8000/schedules/${nuid}`);
       setSchedules(response.data.data);
-      } catch (err) {
+    } catch (err) {
       setError("Failed to fetch your schedules");
       console.error("Error fetching schedules:", err);
-      } finally {
-        setLoading(false);
-      }
-    };
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const groupCoursesBySemester = (courses: Course[]) => {
     const semesters: { [key: string]: Course[] } = {};
@@ -85,12 +95,11 @@ export default function SchedulePage() {
 
   const handleDeleteSchedule = async (schedule: Schedule) => {
     try {
-      const userData = localStorage.getItem("userData");
       if (!userData) {
         router.push("/login");
         return;
       }
-      const { nuid } = JSON.parse(userData);
+      const { nuid } = userData;
       
       await axios.delete(`http://localhost:8000/delete-schedule/${nuid}/${schedule.name}`);
       
