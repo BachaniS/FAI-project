@@ -7,6 +7,7 @@ from pymongo import MongoClient
 import numpy as np
 from bson import ObjectId
 from urllib.parse import unquote
+from collections import defaultdict
 
 from utils import (
     load_course_data, save_schedules, get_subject_name, get_unmet_prerequisites, 
@@ -1459,6 +1460,163 @@ async def delete_schedule(nuid: str, schedule_name: str):
             message=f"Error deleting schedule: {str(e)}",
             data=None
         )
+
+def jaccard_similarity(set1: Set, set2: Set) -> float:
+    """
+    Calculate Jaccard similarity between two sets
+    """
+    if not set1 or not set2:
+        return 0.0
+    intersection = len(set1.intersection(set2))
+    union = len(set1.union(set2))
+    return intersection / union if union > 0 else 0.0
+
+def calculate_user_similarity(user1_data: Dict, user2_data: Dict) -> float:
+    """
+    Calculate similarity between two users based on multiple factors:
+    - Programming experience
+    - Math experience
+    - Completed courses
+    - Core subjects
+    - Interests/desired outcomes
+    """
+    similarity_scores = []
+    
+    # Compare programming experience
+    prog_exp1 = set(user1_data.get('programming_experience', {}).keys() if isinstance(user1_data.get('programming_experience'), dict) else user1_data.get('programming_experience', []))
+    prog_exp2 = set(user2_data.get('programming_experience', {}).keys() if isinstance(user2_data.get('programming_experience'), dict) else user2_data.get('programming_experience', []))
+    if prog_exp1 or prog_exp2:
+        similarity_scores.append(jaccard_similarity(prog_exp1, prog_exp2))
+    
+    # Compare math experience
+    math_exp1 = set(user1_data.get('math_experience', {}).keys() if isinstance(user1_data.get('math_experience'), dict) else user1_data.get('math_experience', []))
+    math_exp2 = set(user2_data.get('math_experience', {}).keys() if isinstance(user2_data.get('math_experience'), dict) else user2_data.get('math_experience', []))
+    if math_exp1 or math_exp2:
+        similarity_scores.append(jaccard_similarity(math_exp1, math_exp2))
+    
+    # Compare completed courses
+    courses1 = set(user1_data.get('completed_courses', {}).keys() if isinstance(user1_data.get('completed_courses'), dict) else user1_data.get('completed_courses', []))
+    courses2 = set(user2_data.get('completed_courses', {}).keys() if isinstance(user2_data.get('completed_courses'), dict) else user2_data.get('completed_courses', []))
+    if courses1 or courses2:
+        similarity_scores.append(jaccard_similarity(courses1, courses2))
+    
+    # Compare core subjects
+    core1 = set(user1_data.get('core_subjects', []))
+    core2 = set(user2_data.get('core_subjects', []))
+    if core1 or core2:
+        similarity_scores.append(jaccard_similarity(core1, core2))
+    
+    # Compare interests/desired outcomes
+    interests1 = set(user1_data.get('desired_outcomes', []))
+    interests2 = set(user2_data.get('desired_outcomes', []))
+    if interests1 or interests2:
+        similarity_scores.append(jaccard_similarity(interests1, interests2))
+    
+    # Return average similarity if we have scores, otherwise 0
+    return sum(similarity_scores) / len(similarity_scores) if similarity_scores else 0.0
+
+@app.get("/recommend-schedule/{nuid}")
+async def recommend_schedule(nuid: str):
+    """
+    Recommend schedules based on similar users' choices.
+    Uses collaborative filtering approach by finding similar users
+    and recommending their successful schedules.
+    """
+    try:
+        # Connect to MongoDB
+        client = MongoClient(MONGO_URI)
+        db = client["user_details"]
+        users_collection = db["users"]
+        schedules_collection = db["user_schedules"]
+        
+        # Get current user's data
+        current_user = users_collection.find_one({"NUID": nuid})
+        if not current_user:
+            return {
+                "success": False,
+                "message": f"User with NUID {nuid} not found",
+                "data": None
+            }
+        
+        # Find similar users
+        similar_users = []
+        all_users = users_collection.find({"NUID": {"$ne": nuid}})  # Exclude current user
+        
+        for other_user in all_users:
+            similarity = calculate_user_similarity(current_user, other_user)
+            if similarity >= 0.5:  # 50% similarity threshold
+                similar_users.append({
+                    "nuid": other_user["NUID"],
+                    "similarity": similarity
+                })
+        
+        if not similar_users:
+            return {
+                "success": True,
+                "message": "No similar users found for recommendations",
+                "data": {
+                    "recommended_schedules": [],
+                    "similar_users_count": 0
+                }
+            }
+        
+        # Sort similar users by similarity score (highest first)
+        similar_users.sort(key=lambda x: x["similarity"], reverse=True)
+        
+        # Get schedules from similar users
+        recommended_schedules = []
+        seen_course_combinations = set()  # To avoid duplicate recommendations
+        
+        for similar_user in similar_users:
+            user_schedules = schedules_collection.find({"nuid": similar_user["nuid"]})
+            
+            for schedule in user_schedules:
+                # Create a frozen set of courses for comparison
+                course_set = frozenset(course["subject_id"] for course in schedule.get("courses", []))
+                
+                # Skip if we've already seen this combination
+                if course_set in seen_course_combinations:
+                    continue
+                
+                seen_course_combinations.add(course_set)
+                
+                # Add similarity score to schedule metadata
+                schedule_with_similarity = {
+                    "schedule_name": schedule["name"],
+                    "similarity_score": round(similar_user["similarity"] * 100, 2),
+                    "courses": schedule.get("courses", []),
+                    "metrics": schedule.get("metrics", {}),
+                    "recommended_by": {
+                        "similarity": round(similar_user["similarity"] * 100, 2)
+                    }
+                }
+                
+                recommended_schedules.append(schedule_with_similarity)
+        
+        # Sort recommendations by similarity score
+        recommended_schedules.sort(
+            key=lambda x: x["similarity_score"],
+            reverse=True
+        )
+        
+        return {
+            "success": True,
+            "message": "Schedule recommendations generated successfully",
+            "data": {
+                "recommended_schedules": recommended_schedules,
+                "similar_users_count": len(similar_users),
+                "similarity_threshold": 50,  # 50%
+                "total_recommendations": len(recommended_schedules)
+            }
+        }
+        
+    except Exception as e:
+        print(f"Error generating schedule recommendations: {str(e)}")
+        return {
+            "success": False,
+            "message": f"Error generating schedule recommendations: {str(e)}",
+            "data": None
+        }
 
 # Add this at the end of your main.py file
 if __name__ == "__main__":

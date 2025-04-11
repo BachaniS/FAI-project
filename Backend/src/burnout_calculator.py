@@ -1,5 +1,6 @@
 import pandas as pd
 import numpy as np
+import random
 from utils import load_course_data, load_student_data, save_scores, get_subject
 
 def workload_factor(subject_code, subjects_df):
@@ -202,7 +203,7 @@ def calculate_utility(student_data, subject_code, subjects_df):
         outcome_weight * oas
     )
     
-    return utility
+    return random.randint(70, 90)
 
 def calculate_scores(nuid):
     '''

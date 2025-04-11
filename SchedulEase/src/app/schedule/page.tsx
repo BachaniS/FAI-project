@@ -49,23 +49,23 @@ export default function SchedulePage() {
   }, []);
 
   const fetchSchedules = async () => {
-    try {
-      const userData = localStorage.getItem("userData");
-      if (!userData) {
-        router.push("/login");
-        return;
-      }
-      const { nuid } = JSON.parse(userData);
+      try {
+        const userData = localStorage.getItem("userData");
+        if (!userData) {
+          router.push("/login");
+          return;
+        }
+        const { nuid } = JSON.parse(userData);
       
       const response = await axios.get(`http://localhost:8000/schedules/${nuid}`);
       setSchedules(response.data.data);
-    } catch (err) {
+      } catch (err) {
       setError("Failed to fetch your schedules");
       console.error("Error fetching schedules:", err);
-    } finally {
-      setLoading(false);
-    }
-  };
+      } finally {
+        setLoading(false);
+      }
+    };
 
   const groupCoursesBySemester = (courses: Course[]) => {
     const semesters: { [key: string]: Course[] } = {};
@@ -123,16 +123,10 @@ export default function SchedulePage() {
   return (
     <div className="p-6 space-y-6">
       <div className="flex items-center justify-between">
-        <div>
+      <div>
           <h1 className="text-2xl font-bold text-gray-900">My Course Schedules</h1>
           <p className="mt-2 text-gray-600">View and manage your saved course schedules</p>
         </div>
-        <button
-          onClick={() => router.push('/recommendations')}
-          className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
-        >
-          Create New Schedule
-        </button>
       </div>
 
       {schedules.length === 0 ? (
@@ -186,7 +180,7 @@ export default function SchedulePage() {
                     <div className="text-center">
                       <p className="text-sm text-gray-600">Avg. Utility</p>
                       <p className="text-xl font-semibold text-blue-600">
-                        {Math.round(schedule.metrics.average_utility * 100)}%
+                        {Math.round(schedule.metrics.average_utility)}%
                       </p>
                     </div>
                     <div className="text-center">
@@ -225,26 +219,26 @@ export default function SchedulePage() {
                                 }`}>
                                   {course.workload_level} Workload
                                 </span>
-                              </div>
+          </div>
                               
                               <div className="mt-3 space-y-2">
                                 <div className="flex items-center gap-4 text-sm text-gray-600">
                                   <div className="flex items-center gap-1">
                                     <BookOpen className="h-4 w-4" />
                                     <span>{course.assignment_count} Assignments</span>
-                                  </div>
+              </div>
                                   <div className="flex items-center gap-1">
                                     <Activity className="h-4 w-4" />
                                     <span>{course.exam_count} Exams</span>
-                                  </div>
-                                </div>
-                              </div>
+              </div>
+            </div>
+          </div>
                             </div>
                           ))}
                         </div>
                       </div>
                     ))}
-                  </div>
+        </div>
 
                   <div className="mt-6 flex justify-end gap-2">
                     <button
@@ -254,18 +248,12 @@ export default function SchedulePage() {
                       <Trash2 className="h-4 w-4" />
                       Delete
                     </button>
-                    <button
-                      onClick={() => router.push(`/recommendations?schedule=${schedule.id}`)}
-                      className="px-4 py-2 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
-                    >
-                      Edit Schedule
-                    </button>
                   </div>
                 </div>
               )}
-            </div>
-          ))}
-        </div>
+              </div>
+            ))}
+          </div>
       )}
 
       {deleteConfirmSchedule && (
@@ -290,9 +278,9 @@ export default function SchedulePage() {
               >
                 Delete Schedule
               </button>
-            </div>
-          </div>
-        </div>
+      </div>
+    </div>
+      </div>
       )}
     </div>
   );
