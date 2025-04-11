@@ -3,14 +3,12 @@ from pydantic import BaseModel, Field
 from typing import List, Dict, Optional, Set, Any
 from datetime import datetime
 from fastapi.middleware.cors import CORSMiddleware
+from pymongo import MongoClient
 
-
-
-# Import custom modules
 from utils import (
     load_course_data, save_schedules, get_subject_name, get_unmet_prerequisites, 
     load_student_data, update_knowledge_profile, save_knowledge_profile,
-    get_student_completed_courses, get_student_core_subjects, load_scores, save_scores
+    get_student_completed_courses, get_student_core_subjects, load_scores, save_scores, MONGO_URI
 )
 from burnout_calculator import calculate_burnout, calculate_outcome_alignment_score
 from ga_recommender import (
@@ -280,8 +278,6 @@ async def get_recommendations(nuid: str):
 def get_schedule(nuid: str):
     """Get saved schedule for a student"""
     try:
-        from pymongo import MongoClient
-        from utils import MONGO_URI
         
         client = MongoClient(MONGO_URI)
         db = client["user_details"]
@@ -292,7 +288,6 @@ def get_schedule(nuid: str):
         if schedule is None:
             raise HTTPException(status_code=404, detail=f"No schedule found for student {nuid}")
         
-
         schedule["_id"] = str(schedule["_id"]) 
         return schedule
     except Exception as e:
@@ -509,14 +504,12 @@ async def get_student_schedule(nuid: str):
         completed_courses = get_student_completed_courses(student_data)
         core_subjects = get_student_core_subjects(student_data)
         
-        # Generate schedule using genetic algorithm
         available_subjects = [s for s in subjects_df['subject_id'].tolist() 
                             if s not in completed_courses]
         
-        # Run genetic algorithm for multiple semesters
         schedule = []
         taken = set(completed_courses)
-        for _ in range(2):  # For next 2 semesters
+        for _ in range(2):
             semester_courses = run_genetic_algorithm_with_animation(
                 available_subjects, taken, student_data, core_subjects
             )
@@ -524,10 +517,8 @@ async def get_student_schedule(nuid: str):
             taken.update(semester_courses)
             available_subjects = [s for s in available_subjects if s not in taken]
         
-        # Optimize the schedule
         optimized_schedule, total_burnout = optimize_schedule(schedule, student_data, completed_courses)
         
-        # Format the response
         formatted_schedule = {
             "current_semester": {
                 "term": "Spring 2024",
@@ -545,7 +536,7 @@ async def get_student_schedule(nuid: str):
             },
             "upcoming_semesters": [
                 {
-                    "term": f"Fall 2024",  # You might want to calculate this
+                    "term": f"Fall 2024",
                     "courses": [
                         {
                             "subject_id": course,
@@ -590,6 +581,8 @@ async def get_burnout_analysis(nuid: str):
         avg_burnout = sum(calculate_burnout(student_data, course, subjects_df) 
                          for course in current_courses) / len(current_courses) if current_courses else 0
         
+        print("avg_burnout", avg_burnout)
+        
         return {
             "overall_burnout_risk": {
                 "level": "High" if avg_burnout > 0.7 else "Medium" if avg_burnout > 0.4 else "Low",
@@ -605,7 +598,7 @@ async def get_burnout_analysis(nuid: str):
             },
             "workload_distribution": workload_distribution,
             "stress_factors": {
-                "assignment_deadlines": "High" if avg_burnout > 0.7 else "Medium",
+                "assignment_deadlines": "High" if avg_burnout > 0.85 else "Medium",
                 "course_complexity": "High" if avg_burnout > 0.6 else "Medium",
                 "weekly_workload": "High" if total_hours > 40 else "Medium",
                 "prerequisite_match": "Low" if avg_burnout < 0.3 else "Medium"
@@ -613,8 +606,6 @@ async def get_burnout_analysis(nuid: str):
         }
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
-
-
 
 @app.get("/progress/{nuid}")
 async def get_academic_progress(nuid: str):
@@ -637,7 +628,6 @@ async def get_academic_progress(nuid: str):
                 detail=f"User with NUID {nuid} not found"
             )
         
-        # GPA ranges to letter grade conversion
         def gpa_to_letter(gpa):
             if gpa >= 4.0: return 'A'
             elif gpa >= 3.67: return 'A-'
@@ -650,8 +640,20 @@ async def get_academic_progress(nuid: str):
             elif gpa >= 1.33: return 'D+'
             elif gpa >= 1.0: return 'D'
             else: return 'F'
-        
-        # Grade to GPA conversion
+            
+        def numeric_to_letter(numeric_grade: int):
+            if int(numeric_grade) >= 93: return 'A'
+            elif int(numeric_grade) >= 90: return 'A-'
+            elif int(numeric_grade) >= 87: return 'B+'
+            elif int(numeric_grade) >= 83: return 'B'
+            elif int(numeric_grade) >= 80: return 'B-'
+            elif int(numeric_grade) >= 77: return 'C+'
+            elif int(numeric_grade) >= 73: return 'C'
+            elif int(numeric_grade) >= 70: return 'C-'
+            elif int(numeric_grade) >= 67: return 'D+'
+            elif int(numeric_grade) >= 60: return 'D'
+            else: return 'F'
+    
         grade_to_gpa = {
             'A': 4.0, 'A-': 3.67,
             'B+': 3.33, 'B': 3.0, 'B-': 2.67,
@@ -665,31 +667,29 @@ async def get_academic_progress(nuid: str):
         # Calculate total GPA
         total_gpa_points = 0
         for details in completed_courses.values():
-            grade = details["final_grade"]
-            grade_value = grade_to_gpa.get(grade, 0.0)
+            print("details", details["final_grade"])
+            numeric_grade = details["final_grade"]
+            letter_grade = numeric_to_letter(numeric_grade)
+            print("asdfasdfasdf")
+            grade_value = grade_to_gpa.get(letter_grade, 0.0)
             total_gpa_points += grade_value
         
         num_completed_courses = len(completed_courses)
         cumulative_gpa = total_gpa_points / num_completed_courses if num_completed_courses > 0 else 0.0
         letter_grade = gpa_to_letter(cumulative_gpa)
         
-        # Get completed courses with names from subject_details collection
         formatted_completed_courses = {}
-        course_outcomes = []  # List to store all course outcomes
+        course_outcomes = []
         
         for subject_code in completed_courses.keys():
-            # Try to find the course in subject_details collection
             course_details = courses_collection.find_one({"subject_id": subject_code})
             if course_details:
-                # If found in database, use the official name and collect outcomes
                 formatted_completed_courses[subject_code] = course_details["subject_name"]
                 if "course_outcomes" in course_details:
                     course_outcomes.extend(course_details["course_outcomes"])
             else:
-                # If not found, just use the code
                 formatted_completed_courses[subject_code] = subject_code
 
-        # Get user's programming and math experience
         programming_experience = user.get('programming_experience', {})
         math_experience = user.get('math_experience', {})
         
@@ -862,6 +862,95 @@ async def register_user(user_data: UserRegisterRequest):
             message=f"Error during registration: {str(e)}",
             data=None
         )
+
+@app.get("/course-catalog/{nuid}")
+async def get_course_catalog(nuid: Optional[str] = None):
+    """Get all courses from the database with their subject ID, name, description, core status, and detailed information"""
+    try:
+        # Use the existing load_course_data function
+        courses_df = load_course_data()
+        
+        # Get student's core subjects if NUID is provided
+        core_subjects = set()
+        if nuid:
+            student_data = load_student_data(nuid)
+            if student_data is not None and not student_data.empty:
+                core_subjects = set(get_student_core_subjects(student_data))
+        
+        # Convert to list of dictionaries with all required fields
+        course_list = courses_df[[
+            'subject_id', 
+            'subject_name', 
+            'description', 
+            'seats', 
+            'enrollments',
+            'assignment_count',
+            'exam_count',
+            'course_outcomes',
+            'programming_knowledge_needed',
+            'math_requirements',
+            'prerequisite'
+        ]].to_dict(orient='records')
+        
+        # Create two lists: one for core courses and one for non-core courses
+        core_courses = []
+        non_core_courses = []
+        
+        # Separate courses into core and non-core, and add enrollment demand
+        for course in course_list:
+            # Add core status
+            course['is_core'] = course['subject_id'] in core_subjects
+            
+            # Calculate enrollment demand
+            seats = course.get('seats', 0)
+            enrollments = course.get('enrollments', 0)
+            
+            # Calculate enrollment percentage
+            if seats > 0:
+                enrollment_percentage = (enrollments / seats) * 100
+                if enrollment_percentage >= 100:
+                    course['enrollment_demand'] = "High"
+                elif enrollment_percentage >= 90:
+                    course['enrollment_demand'] = "Medium"
+                else:
+                    course['enrollment_demand'] = "Low"
+            else:
+                course['enrollment_demand'] = "Low"
+            
+            # Remove seats and enrollments from response
+            course.pop('seats')
+            course.pop('enrollments')
+            
+            # Ensure lists are empty lists instead of None
+            course['course_outcomes'] = course.get('course_outcomes', []) or []
+            course['programming_knowledge_needed'] = course.get('programming_knowledge_needed', []) or []
+            course['math_requirements'] = course.get('math_requirements', []) or []
+            course['prerequisite'] = course.get('prerequisite', []) or []
+            
+            # Sort into appropriate list
+            if course['is_core']:
+                core_courses.append(course)
+            else:
+                non_core_courses.append(course)
+        
+        # Combine the lists with core courses first
+        sorted_course_list = core_courses + non_core_courses
+        
+        print("sorted_course_list", sorted_course_list)
+        
+        return {
+            "success": True,
+            "message": "Course catalog retrieved successfully",
+            "data": sorted_course_list
+        }
+        
+    except Exception as e:
+        return {
+            "success": False,
+            "message": f"Error retrieving course catalog: {str(e)}",
+            "data": None
+        }
+
 # Add this at the end of your main.py file
 if __name__ == "__main__":
     import uvicorn

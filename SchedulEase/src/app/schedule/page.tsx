@@ -3,6 +3,7 @@
 import { Calendar, AlertTriangle, CheckCircle } from "lucide-react";
 import { useEffect, useState } from "react";
 import axios from "axios";
+import router from "next/router";
 
 // Types
 interface Course {
@@ -32,19 +33,30 @@ interface Schedule {
   total_burnout: number;
 }
 
+interface Recommendation {
+  subject_id: string;
+  subject_name: string;
+  description: string;
+  fitness_score: number;
+}
+
 export default function SchedulePage() {
   const [currentSemester, setCurrentSemester] = useState<Semester | null>(null);
   const [upcomingSemesters, setUpcomingSemesters] = useState<Semester[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [recommendations, setRecommendations] = useState<Recommendation[]>([]);
 
   useEffect(() => {
     const fetchSchedule = async () => {
       try {
-        // Replace with actual student ID
-        const studentId = "123";
-        // const studentId = "YOUR_STUDENT_ID";
-        const response = await axios.get<Schedule>(`http://localhost:8000/schedule/${studentId}`);
+        const userData = localStorage.getItem("userData");
+        if (!userData) {
+          router.push("/login");
+          return;
+        }
+        const { nuid } = JSON.parse(userData);
+        const response = await axios.get<Schedule>(`http://localhost:8000/schedule/${nuid}`);
         
         // Transform backend data to frontend format
         const schedule = response.data;
@@ -74,6 +86,17 @@ export default function SchedulePage() {
           }))
         }));
         setUpcomingSemesters(upcoming);
+
+        // Fetch recommendations
+        try {
+          const recommendationsResponse = await axios.get<{ recommendations: Recommendation[] }>(
+            `http://localhost:8000/recommendations/${nuid}`
+          );
+          setRecommendations(recommendationsResponse.data.recommendations || []);
+        } catch (err) {
+          console.error("Error fetching recommendations:", err);
+          setRecommendations([]); // Set empty array on error
+        }
         
       } catch (err) {
         setError("Failed to fetch schedule");
@@ -171,6 +194,31 @@ export default function SchedulePage() {
             description="Expected: Spring 2025"
           />
         </div>
+      </div>
+
+      <div className="bg-white rounded-lg border p-6">
+        <h2 className="text-lg font-semibold text-gray-900">Recommendations</h2>
+        {recommendations && recommendations.length > 0 ? (
+          recommendations.map((course) => (
+            <div
+              key={course.subject_id}
+              className="bg-white rounded-xl shadow-md hover:shadow-lg transition-shadow duration-300 overflow-hidden"
+            >
+              <div className="p-6">
+                <h3 className="text-lg font-semibold text-gray-900">{course.subject_name}</h3>
+                <p className="text-sm text-gray-600 mt-2">{course.description}</p>
+                <div className="mt-4">
+                  <span className="text-sm font-medium text-blue-600">{course.subject_id}</span>
+                  <span className="ml-2 text-sm text-gray-500">
+                    Fitness Score: {course.fitness_score}
+                  </span>
+                </div>
+              </div>
+            </div>
+          ))
+        ) : (
+          <p className="text-gray-600">No recommendations available at this time.</p>
+        )}
       </div>
     </div>
   );

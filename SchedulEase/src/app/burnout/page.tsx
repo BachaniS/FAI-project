@@ -1,93 +1,145 @@
+'use client';
+
+import { useEffect, useState } from "react";
 import { Activity, Brain, Clock, BookOpen } from "lucide-react";
 import { LucideIcon } from "lucide-react";
+import { useRouter } from 'next/navigation';
+
+interface BurnoutAnalysis {
+  overall_burnout_risk: {
+    level: "High" | "Medium" | "Low";
+    description: string;
+  };
+  weekly_study_hours: {
+    total: number;
+    trend: "increasing" | "stable";
+  };
+  course_difficulty: {
+    level: "High" | "Moderate";
+    description: string;
+  };
+  stress_factors: {
+    assignment_deadlines: "High" | "Medium" | "Low";
+    course_complexity: "High" | "Medium" | "Low";
+    weekly_workload: "High" | "Medium" | "Low";
+    prerequisite_match: "High" | "Medium" | "Low";
+  };
+}
 
 export default function BurnoutAnalysisPage() {
+  const router = useRouter();
+  const [burnoutData, setBurnoutData] = useState<BurnoutAnalysis | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState('');
+
+  useEffect(() => {
+    const fetchBurnoutData = async () => {
+      try {
+        const userData = localStorage.getItem('userData');
+        if (!userData) {
+          router.push('/login');
+          return;
+        }
+
+        const { nuid } = JSON.parse(userData);
+        const response = await fetch(`http://localhost:8000/burnout-analysis/${nuid}`);
+        const data = await response.json();
+
+        if (!response.ok) {
+          throw new Error(data.message || 'Failed to fetch burnout data');
+        }
+
+        setBurnoutData(data);
+      } catch (err) {
+        console.error('Error fetching burnout data:', err);
+        setError(err instanceof Error ? err.message : 'Failed to load burnout data');
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchBurnoutData();
+  }, [router]);
+
+  if (isLoading) {
+    return <div className="flex justify-center items-center h-screen">
+      <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+    </div>;
+  }
+
+  if (error) {
+    return <div className="text-red-600 text-center p-4">{error}</div>;
+  }
+
+  if (!burnoutData) {
+    return <div className="text-center p-4">No burnout analysis data available</div>;
+  }
+
   return (
-    <div className="space-y-6">
-      <div>
-        <h1 className="text-2xl font-bold text-gray-900">Burnout Analysis</h1>
+    <div className="space-y-8 p-4 sm:p-6 max-w-7xl mx-auto">
+      <div className="text-center sm:text-left">
+        <h1 className="text-3xl font-bold text-gray-900 bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
+          Burnout Analysis
+        </h1>
         <p className="mt-2 text-gray-600">
           Monitor your academic stress levels and workload distribution
         </p>
       </div>
 
-      <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
+      <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
         <MetricCard
           title="Overall Burnout Risk"
-          value="Medium"
+          value={burnoutData.overall_burnout_risk.level}
           trend="stable"
           icon={Activity}
-          description="Based on current schedule"
+          description={burnoutData.overall_burnout_risk.description}
         />
         <MetricCard
           title="Weekly Study Hours"
-          value="28"
-          trend="increasing"
+          value={burnoutData.weekly_study_hours.total.toString()}
+          trend={burnoutData.weekly_study_hours.trend}
           icon={Clock}
           description="Average across courses"
         />
         <MetricCard
           title="Course Difficulty"
-          value="Moderate"
+          value={burnoutData.course_difficulty.level}
           trend="stable"
           icon={Brain}
-          description="Relative to your background"
+          description={burnoutData.course_difficulty.description}
         />
         <MetricCard
           title="Assignment Load"
-          value="High"
-          trend="decreasing"
+          value={burnoutData.stress_factors.assignment_deadlines}
+          trend="stable"
           icon={BookOpen}
-          description="Next 2 weeks forecast"
+          description="Based on current workload"
         />
       </div>
 
-      <div className="grid gap-6 lg:grid-cols-2">
-        <div className="bg-white rounded-lg border p-6">
-          <h2 className="text-lg font-semibold text-gray-900">Workload Distribution</h2>
-          <div className="mt-4 space-y-4">
-            {courses.map((course) => (
-              <WorkloadBar
-                key={course.code}
-                course={course}
-                maxHours={40}
-              />
-            ))}
-          </div>
-        </div>
-
-        <div className="bg-white rounded-lg border p-6">
-          <h2 className="text-lg font-semibold text-gray-900">Stress Factors</h2>
-          <div className="mt-4 space-y-4">
-            {stressFactors.map((factor) => (
-              <StressIndicator
-                key={factor.name}
-                name={factor.name}
-                value={factor.value}
-                impact={factor.impact}
-              />
-            ))}
-          </div>
-        </div>
-      </div>
-
-      <div className="bg-white rounded-lg border p-6">
-        <h2 className="text-lg font-semibold text-gray-900">Recommendations</h2>
-        <div className="mt-4 grid gap-4 md:grid-cols-2">
-          {recommendations.map((rec, index) => (
-            <div
-              key={index}
-              className="rounded-lg border p-4 bg-gray-50"
-            >
-              <h3 className="font-medium text-gray-900">{rec.title}</h3>
-              <p className="mt-1 text-sm text-gray-600">{rec.description}</p>
-              {rec.action && (
-                <button className="mt-3 text-sm text-blue-600 hover:text-blue-700">
-                  {rec.action}
-                </button>
-              )}
-            </div>
-          ))}
+      <div className="bg-white rounded-xl border shadow-sm hover:shadow-md transition-shadow p-6">
+        <h2 className="text-xl font-semibold text-gray-900 mb-4">Stress Factors</h2>
+        <div className="space-y-2">
+          <StressIndicator
+            name="Assignment Deadlines"
+            value={getStressValue(burnoutData.stress_factors.assignment_deadlines)}
+            impact={burnoutData.stress_factors.assignment_deadlines}
+          />
+          <StressIndicator
+            name="Course Complexity"
+            value={getStressValue(burnoutData.stress_factors.course_complexity)}
+            impact={burnoutData.stress_factors.course_complexity}
+          />
+          <StressIndicator
+            name="Weekly Workload"
+            value={getStressValue(burnoutData.stress_factors.weekly_workload)}
+            impact={burnoutData.stress_factors.weekly_workload}
+          />
+          <StressIndicator
+            name="Prerequisite Match"
+            value={getStressValue(burnoutData.stress_factors.prerequisite_match)}
+            impact={burnoutData.stress_factors.prerequisite_match}
+          />
         </div>
       </div>
     </div>
@@ -107,21 +159,31 @@ function MetricCard({
   icon: LucideIcon;
   description: string;
 }) {
-  const trendColors = {
-    increasing: "text-red-600",
-    decreasing: "text-green-600",
-    stable: "text-blue-600",
+  const getBgColor = (value: string) => {
+    if (value === "High") return "bg-gradient-to-br from-red-50 to-red-100 border-red-200";
+    if (value === "Medium") return "bg-gradient-to-br from-yellow-50 to-yellow-100 border-yellow-200";
+    if (value === "Low") return "bg-gradient-to-br from-green-50 to-green-100 border-green-200";
+    if (value === "Moderate") return "bg-gradient-to-br from-blue-50 to-blue-100 border-blue-200";
+    return "bg-gradient-to-br from-gray-50 to-gray-100 border-gray-200";
+  };
+
+  const getIconColor = (value: string) => {
+    if (value === "High") return "text-red-500";
+    if (value === "Medium") return "text-yellow-500";
+    if (value === "Low") return "text-green-500";
+    if (value === "Moderate") return "text-blue-500";
+    return "text-gray-500";
   };
 
   return (
-    <div className="bg-white rounded-lg border p-6">
+    <div className={`rounded-xl border p-6 transition-all duration-300 hover:shadow-lg ${getBgColor(value)}`}>
       <div className="flex items-center">
-        <Icon className="h-5 w-5 text-gray-400" />
-        <h2 className="ml-2 text-sm font-medium text-gray-600">{title}</h2>
+        <Icon className={`h-6 w-6 ${getIconColor(value)}`} />
+        <h2 className="ml-2 text-sm font-medium text-gray-800">{title}</h2>
       </div>
-      <div className="mt-2">
-        <span className="text-2xl font-bold text-gray-900">{value}</span>
-        <span className={`ml-2 text-sm ${trendColors[trend]}`}>
+      <div className="mt-3">
+        <span className={`text-3xl font-bold ${getIconColor(value)}`}>{value}</span>
+        <span className={`ml-2 text-sm animate-pulse ${getIconColor(value)}`}>
           {trend === "stable" ? "●" : trend === "increasing" ? "↑" : "↓"}
         </span>
       </div>
@@ -130,40 +192,6 @@ function MetricCard({
   );
 }
 
-function WorkloadBar({
-  course,
-  maxHours,
-}: {
-  course: {
-    code: string;
-    name: string;
-    weeklyHours: number;
-    difficulty: "Low" | "Medium" | "High";
-  };
-  maxHours: number;
-}) {
-  const percentage = (course.weeklyHours / maxHours) * 100;
-  const difficultyColors = {
-    Low: "bg-green-200",
-    Medium: "bg-yellow-200",
-    High: "bg-red-200",
-  };
-
-  return (
-    <div className="space-y-2">
-      <div className="flex justify-between text-sm">
-        <span className="font-medium text-gray-900">{course.code}</span>
-        <span className="text-gray-600">{course.weeklyHours}h/week</span>
-      </div>
-      <div className="h-4 bg-gray-100 rounded-full overflow-hidden">
-        <div
-          className={`h-full ${difficultyColors[course.difficulty]}`}
-          style={{ width: `${percentage}%` }}
-        />
-      </div>
-    </div>
-  );
-}
 
 function StressIndicator({
   name,
@@ -175,75 +203,45 @@ function StressIndicator({
   impact: "Low" | "Medium" | "High";
 }) {
   const impactColors = {
-    Low: "text-green-600",
-    Medium: "text-yellow-600",
-    High: "text-red-600",
+    Low: "text-green-600 bg-green-50",
+    Medium: "text-yellow-600 bg-yellow-50",
+    High: "text-red-600 bg-red-50"
+  };
+
+  const barColors = {
+    Low: "bg-gradient-to-r from-green-400 to-green-500",
+    Medium: "bg-gradient-to-r from-yellow-400 to-yellow-500",
+    High: "bg-gradient-to-r from-red-400 to-red-500"
   };
 
   return (
-    <div className="flex items-center justify-between">
-      <span className="text-sm font-medium text-gray-900">{name}</span>
-      <div className="flex items-center space-x-4">
-        <div className="w-32 h-2 bg-gray-100 rounded-full overflow-hidden">
-          <div
-            className="h-full bg-blue-600"
-            style={{ width: `${value}%` }}
-          />
+    <div className="p-3 rounded-lg hover:bg-gray-50 transition-colors">
+      <div className="flex items-center gap-4">
+        <div className="min-w-[180px] flex items-center gap-2">
+          <span className="text-sm font-medium text-gray-900">{name}</span>
+          <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${impactColors[impact]}`}>
+            {impact}
+          </span>
         </div>
-        <span className={`text-sm font-medium ${impactColors[impact]}`}>
-          {impact}
-        </span>
+        <div className="flex-1">
+          <div className="h-2.5 bg-gray-100 rounded-full overflow-hidden shadow-inner">
+            <div
+              className={`h-full ${barColors[impact]} transition-all duration-500`}
+              style={{ width: `${value}%` }}
+            />
+          </div>
+        </div>
       </div>
     </div>
   );
 }
 
-const courses = [
-  {
-    code: "CS5200",
-    name: "Database Management Systems",
-    weeklyHours: 12,
-    difficulty: "Medium" as const,
-  },
-  {
-    code: "CS5800",
-    name: "Algorithms",
-    weeklyHours: 15,
-    difficulty: "High" as const,
-  },
-  {
-    code: "CS6140",
-    name: "Machine Learning",
-    weeklyHours: 14,
-    difficulty: "High" as const,
-  },
-];
-
-const stressFactors = [
-  { name: "Assignment Deadlines", value: 75, impact: "High" as const },
-  { name: "Course Complexity", value: 60, impact: "Medium" as const },
-  { name: "Weekly Workload", value: 80, impact: "High" as const },
-  { name: "Prerequisite Match", value: 40, impact: "Low" as const },
-];
-
-const recommendations = [
-  {
-    title: "Redistribute Workload",
-    description: "Consider moving CS6140 to next semester to balance the workload.",
-    action: "View Alternative Schedules",
-  },
-  {
-    title: "Study Group Formation",
-    description: "Join or form study groups for CS5800 to share knowledge and reduce stress.",
-    action: "Find Study Groups",
-  },
-  {
-    title: "Time Management",
-    description: "Block specific study hours for CS5200 assignments to stay on track.",
-  },
-  {
-    title: "Additional Resources",
-    description: "Access supplementary materials for ML prerequisites to reduce complexity.",
-    action: "Browse Resources",
-  },
-]; 
+// Helper function to convert stress levels to numerical values for the progress bars
+function getStressValue(level: "High" | "Medium" | "Low"): number {
+  switch (level) {
+    case "High": return 80;
+    case "Medium": return 50;
+    case "Low": return 20;
+    default: return 0;
+  }
+} 
