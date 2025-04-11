@@ -219,9 +219,10 @@ export default function SchedulePage() {
       );
 
       if (response.data.success) {
-        alert("Schedule successfully saved to your profile!");
         setIsNamingSchedule(false);
         setScheduleName("");
+        // Redirect to the schedule page after successful save
+        router.push('/schedule');
       }
     } catch (err) {
       console.error("Error saving schedule:", err);
