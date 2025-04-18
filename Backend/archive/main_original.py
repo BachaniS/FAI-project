@@ -1,10 +1,7 @@
-import numpy as np
-import random
 import json
-from typing import List, Dict, Set, Tuple
+from typing import List, Dict, Set
 from pymongo import MongoClient
 from StudentDataCollector import StudentDataCollector
-import burnout_calculator
 
 # MongoDB Connection
 MONGO_URI = "mongodb+srv://cliftaus:US1vE3LSIWq379L9@burnout.lpo5x.mongodb.net/"

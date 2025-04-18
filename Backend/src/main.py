@@ -1,4 +1,4 @@
-from fastapi import FastAPI, HTTPException, Query, Body
+from fastapi import FastAPI, HTTPException, Body
 from pydantic import BaseModel, Field
 from typing import List, Dict, Optional, Set, Any
 from datetime import datetime
@@ -7,27 +7,23 @@ from pymongo import MongoClient
 import numpy as np
 from bson import ObjectId
 from urllib.parse import unquote
-from collections import defaultdict
 
 from utils import (
-    load_course_data, save_schedules, get_subject_name, get_unmet_prerequisites, 
+    load_course_data, get_subject_name, get_unmet_prerequisites, 
     load_student_data, update_knowledge_profile, save_knowledge_profile,
     get_student_completed_courses, get_student_core_subjects, load_scores, save_scores, MONGO_URI
 )
 from burnout_calculator import calculate_burnout, calculate_outcome_alignment_score
 from ga_recommender import (
-    genetic_algorithm, rerun_genetic_algorithm
+    genetic_algorithm
 )
 
 from CLI_recommendation_system import (
     load_student_data, load_course_data, get_student_completed_courses,
     get_student_core_subjects, calculate_burnout, calculate_utility,
-    calculate_outcome_alignment_score, get_burnout_score, get_utility_score,
+    calculate_outcome_alignment_score,
     get_student_desired_outcomes, filter_courses_by_interests,
-    run_genetic_algorithm_with_animation, convert_ga_schedule_to_recommendations,
-    identify_competitive_courses, get_unmet_prerequisites, get_subject_name,
-    get_burnout_status, get_difficulty_status, optimize_schedule,
-    rerun_genetic_algorithm, save_plan_to_db
+    run_genetic_algorithm_with_animation, convert_ga_schedule_to_recommendations, get_unmet_prerequisites, get_subject_name, optimize_schedule,
 )
 
 app = FastAPI()
